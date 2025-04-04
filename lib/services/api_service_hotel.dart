@@ -46,11 +46,12 @@ class ApiServiceHotel extends GetxService {
         "GroupCode": groupCode,
         "Currency": currency,
         "RateKeys": {"RateKey": rateKeys},
-      }
+      },
     };
 
     print(
-        'Fetching Cancellation Policy with Request: ${json.encode(requestBody)}');
+      'Fetching Cancellation Policy with Request: ${json.encode(requestBody)}',
+    );
     try {
       final response = await dio.post(
         '/hotel/CancellationPolicy',
@@ -84,7 +85,7 @@ class ApiServiceHotel extends GetxService {
         "GroupCode": groupCode,
         "Currency": currency,
         "RateKeys": {"RateKey": rateKeys},
-      }
+      },
     };
 
     print('Fetching Price Breakup with Request: ${json.encode(requestBody)}');
@@ -123,9 +124,7 @@ class ApiServiceHotel extends GetxService {
         bookingEndpoint,
         data: requestBody,
         options: Options(
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          headers: {'Content-Type': 'application/json'},
           validateStatus: (status) {
             return status! < 500;
           },
@@ -145,7 +144,8 @@ class ApiServiceHotel extends GetxService {
             bookingStr = bookingStr.replaceAll('SHBK-', '');
             bookingcontroller.booking_num.value = int.tryParse(bookingStr) ?? 0;
             print(
-                'Booking number stored: ${bookingcontroller.booking_num.value}');
+              'Booking number stored: ${bookingcontroller.booking_num.value}',
+            );
           }
 
           if (response.data is Map) {
@@ -155,10 +155,9 @@ class ApiServiceHotel extends GetxService {
                 response.data['code'] == 200) {
               return true;
             }
-          } else if (response.data
-              .toString()
-              .toLowerCase()
-              .contains('success')) {
+          } else if (response.data.toString().toLowerCase().contains(
+            'success',
+          )) {
             return true;
           }
         }
@@ -201,113 +200,105 @@ class ApiServiceHotel extends GetxService {
 
     return digest.toString();
   }
-
   Future<void> fetchHotel({
     required String checkInDate,
     required String checkOutDate,
     required List<Map<String, dynamic>> rooms,
   }) async {
-    String signature = getSignature();
-
-    var headers = {
-      'Api-key': apiKey,
-      'X-Signature': signature,
-      'Accept': 'application/json',
-      'Accept-Encoding': 'gzip',
-      'Content-Type': 'application/json'
-    };
-    print(signature);
-
-    var data = json.encode({
-      "stay": {"checkIn": checkInDate, "checkOut": checkOutDate},
-      "occupancies": rooms
-          .map((room) => {
-                "rooms": 1,
-                "adults": room['Adult'],
-                "children": room['Children'],
-                if (room['Children'] > 0) "childAges": room['ChildrenAges']
-              })
-          .toList(),
-      "hotels": {
-        "hotel": [
-          24196,
-          24197,
-          24199,
-          24202,
-          24203,
-          24204,
-          24216,
-          24217,
-          24218,
-          24219,
-          24220,
-          24221,
-          24222,
-          24225,
-          24226,
-          24229,
-          24230,
-          24340,
-          24341,
-          24399,
-          24400,
-          24401,
-          24403,
-          24406,
-          24407,
-          24408,
-          24409,
-          24412,
-          24413,
-          24421,
-          24422,
-          24423
-        ]
-      }
-    });
-
     try {
-      var response = await dio.request(
+      String signature = getSignature();
+
+      // Ensure hotel_ids is not empty and properly formatted
+      if (controller.hotel_ids.isEmpty) {
+        throw Exception('No hotel IDs available');
+      }
+
+      // Convert hotel IDs to proper format
+      List<String> hotelIds =
+      controller.hotel_ids.cast<String>().map((id) => id.trim()).toList();
+
+      var headers = {
+        'Api-key': apiKey,
+        'X-Signature': signature,
+        'Accept': 'application/json',
+        'Accept-Encoding': 'gzip',
+        'Content-Type': 'application/json',
+      };
+
+      // Create the request body with proper formatting
+      var requestBody = {
+        "stay": {"checkIn": checkInDate, "checkOut": checkOutDate},
+        "occupancies":
+        rooms
+            .map(
+              (room) => {
+            "rooms": 1,
+            "adults": room['Adult'],
+            "children": room['Children'],
+            if (room['Children'] > 0)
+              "childAges": room['ChildrenAges'] ?? [],
+          },
+        )
+            .toList(),
+        "hotels": {"hotel": hotelIds},
+      };
+
+      // Log the complete request for debugging
+      print('REQUEST HEADERS:');
+      print(json.encode(headers));
+      print('REQUEST BODY:');
+      print(json.encode(requestBody));
+
+      final response = await dio.request(
         'https://api.hotelbeds.com/hotel-api/1.0/hotels',
         options: Options(method: 'POST', headers: headers),
-        data: data,
+        data: requestBody,
       );
 
       if (response.statusCode == 200) {
-        print(response.data);
+        if (response.data == null) {
+          throw Exception('Empty response received');
+        }
+
         // Store the original response
         controller.originalResponse.value = response.data;
 
-        final hotels = response.data['hotels']['hotels'] as List;
-        controller.sessionId.value = response.data['auditData']['token'];
+        // Safely handle the hotels data
+        final hotels = response.data['hotels']?['hotels'] as List? ?? [];
+        controller.sessionId.value = response.data['auditData']?['token'] ?? '';
 
-        // Transform hotel data for the UI
-        controller.hotels.value = hotels.map((hotel) {
-          final minRate = double.parse(hotel['minRate']);
-          return {
-            'hotelCode': hotel['code'],
-            'name': hotel['name'],
-            'rating': int.parse(hotel['categoryCode'][0]),
-            'address': '${hotel['zoneName']}, ${hotel['destinationName']}',
-            'price': minRate.toStringAsFixed(2),
-            'image': 'assets/images/hotel.jpg',
-            'latitude': hotel['latitude'],
-            'longitude': hotel['longitude'],
-            'hotelCity': hotel['destinationName']
-          };
-        }).toList();
+        // Transform hotel data for the UI with null safety
+        controller.hotels.value =
+            hotels.map((hotel) {
+              final minRate =
+                  double.tryParse(hotel['minRate']?.toString() ?? '0') ?? 0.0;
+              return {
+                'hotelCode': hotel['code']?.toString() ?? '',
+                'name': hotel['name'] ?? 'Unknown Hotel',
+                'rating': int.tryParse(hotel['categoryCode']?[0] ?? '3') ?? 3,
+                'address':
+                '${hotel['zoneName'] ?? ''}, ${hotel['destinationName'] ?? ''}',
+                'price': minRate.toStringAsFixed(2),
+                'image': 'assets/images/hotel.jpg',
+                'latitude': hotel['latitude']?.toString() ?? '0',
+                'longitude': hotel['longitude']?.toString() ?? '0',
+                'hotelCity': hotel['destinationName'] ?? '',
+              };
+            }).toList();
 
         // Store original hotels data
         controller.originalHotels.value = List.from(controller.hotels);
+      } else {
+        throw Exception('Failed to load hotels: ${response.statusCode}');
       }
     } catch (e) {
       print("Error fetching hotels: $e");
       rethrow;
     }
   }
-
-  Future<Map<String, dynamic>?> checkRate(
-      {required List<String> rateKeys}) async {
+  Future<Map<String, dynamic>?> checkRate({
+    required List<String> rateKeys,
+  }) async {
     String signature = getSignature();
 
     final headers = {
@@ -315,7 +306,7 @@ class ApiServiceHotel extends GetxService {
       'X-Signature': signature,
       'Accept': 'application/json',
       'Accept-Encoding': 'gzip',
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
     };
 
     // Format the request body properly
@@ -330,9 +321,10 @@ class ApiServiceHotel extends GetxService {
 
     try {
       final response = await dio.post(
-          'https://api.hotelbeds.com/hotel-api/1.0/checkrates',
-          options: Options(headers: headers),
-          data: data);
+        'https://api.hotelbeds.com/hotel-api/1.0/checkrates',
+        options: Options(headers: headers),
+        data: data,
+      );
 
       if (response.statusCode == 200) {
         // Split the response logging into smaller chunks
@@ -346,7 +338,8 @@ class ApiServiceHotel extends GetxService {
         List<String> chunks = [];
 
         for (var i = 0; i < prettyJson.length; i += chunkSize) {
-          var end = (i + chunkSize < prettyJson.length)
+          var end =
+          (i + chunkSize < prettyJson.length)
               ? i + chunkSize
               : prettyJson.length;
           chunks.add(prettyJson.substring(i, end));
@@ -380,6 +373,182 @@ class ApiServiceHotel extends GetxService {
       }
 
       return null;
+    }
+  }
+
+  String? _sastayToken;
+  DateTime? _tokenExpiry;
+
+  Future<String?> _getOrGenerateToken() async {
+    // If we have a token that hasn't expired, use it
+    if (_sastayToken != null &&
+        _tokenExpiry != null &&
+        _tokenExpiry!.isAfter(DateTime.now())) {
+      return _sastayToken;
+    }
+
+    // Otherwise generate a new token
+    try {
+      _sastayToken = await generateSastayToken();
+      if (_sastayToken != null) {
+        // Set expiry to 1 hour from now (adjust based on actual token expiry)
+        _tokenExpiry = DateTime.now().add(Duration(hours: 1));
+        return _sastayToken;
+      }
+    } catch (e) {
+      print("Error getting token: $e");
+    }
+    return null;
+  }
+
+  Future<String?> generateSastayToken() async {
+    try {
+      var data = json.encode({"req_type": "get_margin"});
+
+      var response = await dio.request(
+        'https://agent1.pk/group_api/generate_token.php',
+        options: Options(method: 'GET', headers: sastayBasicHeaders),
+        data: data,
+      );
+
+      if (response.statusCode == 200) {
+        print("Token response: ${json.encode(response.data)}");
+
+        // Extract token from response - adjust based on actual response structure
+        if (response.data != null && response.data['token'] != null) {
+          return response.data['token'] as String;
+        } else if (response.data != null &&
+            response.data['auth_token'] != null) {
+          return response.data['auth_token'] as String;
+        } else {
+          print("No token found in response");
+          return null;
+        }
+      } else {
+        print("Error generating token: ${response.statusMessage}");
+        return null;
+      }
+    } catch (e) {
+      print("Exception in generateSastayToken: $e");
+      return null;
+    }
+  }
+
+  final Map<String, String> sastayBasicHeaders = {
+    'Userid': 'Group-121',
+    'Username': 'travelocity',
+    'Content-Type': 'application/json',
+  };
+
+  // Fetch Cities using dynamic token
+  Future<List<dynamic>> fetchCities(String keyword) async {
+    try {
+      String? token = await _getOrGenerateToken();
+      if (token == null) {
+        print("Failed to generate token for city search");
+        return [];
+      }
+
+      Map<String, String> headers = {
+        'Userid': 'Group-121',
+        'Username': 'travelocity',
+        'Authorization': token,
+      };
+
+      var requestData = json.encode({
+        "req_type": "get_city",
+        "keyword": keyword,
+      });
+
+      var response = await dio.request(
+        'https://agent1.pk/group_api/sastay_restapi.php',
+        options: Options(method: 'GET', headers: headers),
+        data: requestData,
+      );
+
+      if (response.statusCode == 200) {
+        print("Cities data: ${json.encode(response.data)}");
+
+        // Corrected response parsing
+        if (response.data != null &&
+            response.data['status'] == 'success' &&
+            response.data['response'] != null &&
+            response.data['response']['cities'] != null) {
+          return response.data['response']['cities'] as List<dynamic>;
+        } else {
+          print("No cities found in response");
+          return [];
+        }
+      } else {
+        print("Error fetching cities: ${response.statusMessage}");
+        return [];
+      }
+    } catch (e) {
+      print("Exception in fetchCities: $e");
+      return [];
+    }
+  }
+
+  Future<List<String>> fetchHotelIds({
+    required String countryCode,
+    required String zoneCode,
+    required String cityStateCode,
+  }) async {
+    try {
+      String? token = await _getOrGenerateToken();
+      if (token == null) {
+        print("Failed to generate token for hotel IDs search");
+        return [];
+      }
+
+      Map<String, String> headers = {
+        'Userid': 'Group-121',
+        'Username': 'travelocity',
+        'Authorization': token,
+        'Content-Type': 'application/json',
+      };
+
+      var requestData = json.encode({
+        "req_type": "get_hotel_ids",
+        "country_code": countryCode,
+        "zone_code": zoneCode,
+        "cityState_code": cityStateCode,
+      });
+
+      var response = await dio.request(
+        'https://agent1.pk/group_api/sastay_restapi.php',
+        options: Options(method: 'GET', headers: headers),
+        data: requestData,
+      );
+
+      if (response.statusCode == 200) {
+        print("Hotel IDs data: ${json.encode(response.data)}");
+
+        // Check if the response has the expected structure
+        if (response.data != null &&
+            response.data['status'] == 'success' &&
+            response.data['response'] != null &&
+            response.data['response']['hotel_ids'] != null) {
+          // Convert the comma-separated string to a list of strings
+          String hotelIdsString = response.data['response']['hotel_ids'];
+          List<String> hotelIdsList = hotelIdsString.split(',');
+
+          // Store in controller if needed
+          SearchHotelController().hotel_ids.value = hotelIdsList;
+          print("Hotel IDs data: ${(response.data)}");
+
+          return hotelIdsList;
+        } else {
+          print("No hotel IDs found in response");
+          return [];
+        }
+      } else {
+        print("Error fetching hotel IDs: ${response.statusMessage}");
+        return [];
+      }
+    } catch (e) {
+      print("Exception in fetchHotelIds: $e");
+      return [];
     }
   }
 }

@@ -51,8 +51,8 @@ class FlightBookingController extends GetxController {
   final RxList<CityPair> cityPairs = <CityPair>[].obs;
 
   // City selection for one-way and round trip
-  final RxString fromCity = 'FSD'.obs;
-  final RxString fromCityName = 'FAISALABAD'.obs;
+  final RxString fromCity = 'LHR'.obs;
+  final RxString fromCityName = 'Lahore'.obs;
   final RxString toCity = 'JED'.obs;
   final RxString toCityName = 'JEDDAH'.obs;
 
@@ -109,17 +109,17 @@ class FlightBookingController extends GetxController {
 
     cityPairs.addAll([
       CityPair(
-        fromCity: 'DEL',
-        fromCityName: 'NEW DELHI',
-        toCity: 'BOM',
-        toCityName: 'MUMBAI',
+        fromCity: 'LHR',
+        fromCityName: 'LAHORE',
+        toCity: 'DBX',
+        toCityName: 'DUBAI',
         departureDate: _formatDateForUI(baseDate),
       ),
       CityPair(
-        fromCity: 'BOM',
-        fromCityName: 'MUMBAI',
-        toCity: 'BLR',
-        toCityName: 'BENGALURU',
+        fromCity: 'DBX',
+        fromCityName: 'DUBAI',
+        toCity: 'JED',
+        toCityName: 'JEDDAH',
         departureDate: _formatDateForUI(baseDate.add(const Duration(days: 1))),
       ),
     ]);
@@ -143,8 +143,8 @@ class FlightBookingController extends GetxController {
           CityPair(
             fromCity: cityPairs.last.toCity.value,
             fromCityName: cityPairs.last.toCityName.value,
-            toCity: 'BLR',
-            toCityName: 'BENGALURU',
+            toCity: 'LHR',
+            toCityName: 'LAHORE',
             departureDate: _formatDateForUI(nextDay),
           ),
         );

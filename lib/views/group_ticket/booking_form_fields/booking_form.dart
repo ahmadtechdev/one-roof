@@ -2,13 +2,24 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:oneroof/utility/colors.dart';
-import 'package:oneroof/views/group_ticket/booking_controller.dart';
+import 'package:oneroof/views/group_ticket/booking_form_fields/group_ticket_booking_controller.dart';
 
 class PassengerDetailsScreen extends StatelessWidget {
-  final BookingController controller = Get.put(BookingController());
+  final GroupTicketBookingController controller = Get.put(GroupTicketBookingController());
   final dateFormat = DateFormat('dd-MM-yyyy');
 
-  PassengerDetailsScreen({Key? key}) : super(key: key);
+  PassengerDetailsScreen({super.key}) {
+    // Initialize with passed arguments
+    final args = Get.arguments;
+    if (args != null && args['groupId'] != null) {
+      // Use delayed microtask to avoid state updates during build
+      Future.microtask(() {
+        controller.bookingData.update((val) {
+          val?.groupId = args['groupId'];
+        });
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -26,206 +37,216 @@ class PassengerDetailsScreen extends StatelessWidget {
         ),
       ),
       backgroundColor: Colors.grey[50],
-      body: Obx(
-            () => Form(
-          key: controller.formKey,
-          onChanged: controller.validateForm,
-          child: Column(
-            children: [
-              Expanded(
-                child: SingleChildScrollView(
-                  padding: EdgeInsets.all(16),
-                  child: Column(
+      body: Column(
+        children: [
+          Expanded(
+            child: SingleChildScrollView(
+              padding: EdgeInsets.all(16),
+              child: Form(
+                key: controller.formKey,
+                onChanged: () {
+                  // Debounce the validation to avoid frequent rebuilds
+                  Future.microtask(() => controller.validateForm());
+                },
+                child: Obx(() {
+                  // Wrap the content that needs reactivity in a separate Obx
+                  return Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       // Trip summary card
                       _buildTripSummaryCard(),
-
                       SizedBox(height: 16),
 
                       // Passenger forms
-                      for (
-                      int i = 0;
-                      i < controller.bookingData.value.adults;
-                      i++
-                      )
-                        _buildPassengerForm('Adult ${i + 1}', i, 'adult'),
-                      for (
-                      int i = 0;
-                      i < controller.bookingData.value.children;
-                      i++
-                      )
-                        _buildPassengerForm(
-                          'Child ${i + 1}',
-                          controller.bookingData.value.adults + i,
-                          'child',
-                        ),
-                      for (
-                      int i = 0;
-                      i < controller.bookingData.value.infants;
-                      i++
-                      )
-                        _buildPassengerForm(
-                          'Infant ${i + 1}',
-                          controller.bookingData.value.adults +
-                              controller.bookingData.value.children +
-                              i,
-                          'infant',
-                        ),
+                      ..._buildPassengerForms(),
                       SizedBox(height: 24),
 
                       // Booker Information Section
                       _buildBookerInformationSection(),
                     ],
-                  ),
-                ),
+                  );
+                }),
               ),
-              Container(
-                padding: EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.grey.withOpacity(0.3),
-                      spreadRadius: 2,
-                      blurRadius: 5,
-                      offset: Offset(0, -2),
-                    ),
-                  ],
-                ),
-                child: SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor:
-                      controller.isFormValid.value
-                          ? TColors.secondary
-                          : Colors.grey[300],
-                      padding: EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      elevation: 2,
-                    ),
-                    onPressed:
-                    controller.isFormValid.value
-                        ? controller.submitBooking
-                        : null,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          'Continue to Payment',
-                          style: TextStyle(
-                            color:
-                            controller.isFormValid.value
-                                ? TColors.white
-                                : TColors.grey,
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        SizedBox(width: 8),
-                        Icon(
-                          Icons.arrow_forward,
-                          color:
-                          controller.isFormValid.value
-                              ? TColors.white
-                              : TColors.grey,
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ],
+            ),
           ),
-        ),
+          _buildBottomButton(),
+        ],
       ),
     );
   }
 
-  Widget _buildTripSummaryCard() {
-    return Card(
-      margin: EdgeInsets.only(bottom: 16),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      elevation: 2,
-      child: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [TColors.primary, TColors.primary.withOpacity(0.8)],
-          ),
-          borderRadius: BorderRadius.circular(12),
-        ),
+  List<Widget> _buildPassengerForms() {
+    final passengers = <Widget>[];
+
+    for (int i = 0; i < controller.bookingData.value.adults; i++) {
+      passengers.add(_buildPassengerForm('Adult ${i + 1}', i, 'adult'));
+    }
+
+    for (int i = 0; i < controller.bookingData.value.children; i++) {
+      passengers.add(_buildPassengerForm(
+        'Child ${i + 1}',
+        controller.bookingData.value.adults + i,
+        'child',
+      ));
+    }
+
+    for (int i = 0; i < controller.bookingData.value.infants; i++) {
+      passengers.add(_buildPassengerForm(
+        'Infant ${i + 1}',
+        controller.bookingData.value.adults +
+            controller.bookingData.value.children +
+            i,
+        'infant',
+      ));
+    }
+
+    return passengers;
+  }
+
+  Widget _buildBottomButton() {
+    return Obx(() {
+      return Container(
         padding: EdgeInsets.all(16),
-        child: Column(
-          children: [
-            Row(
-              children: [
-                Icon(Icons.airplanemode_active, color: TColors.white),
-                SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    'Flight Summary',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: TColors.white,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            Divider(color: TColors.white.withOpacity(0.3), height: 24),
-            Row(
-              children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Passengers',
-                      style: TextStyle(
-                        color: TColors.white.withOpacity(0.8),
-                        fontSize: 14,
-                      ),
-                    ),
-                    SizedBox(height: 4),
-                    Text(
-                      '${controller.bookingData.value.adults} Adult${controller.bookingData.value.adults > 1 ? 's' : ''}'
-                          '${controller.bookingData.value.children > 0 ? ', ${controller.bookingData.value.children} Child${controller.bookingData.value.children > 1 ? 'ren' : ''}' : ''}'
-                          '${controller.bookingData.value.infants > 0 ? ', ${controller.bookingData.value.infants} Infant${controller.bookingData.value.infants > 1 ? 's' : ''}' : ''}',
-                      style: TextStyle(
-                        color: TColors.white,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
-                Spacer(),
-                Container(
-                  padding: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                  decoration: BoxDecoration(
-                    color: TColors.third,
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(
-                    'Round Trip',
-                    style: TextStyle(
-                      color: TColors.primary,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 12,
-                    ),
-                  ),
-                ),
-              ],
+        decoration: BoxDecoration(
+          color: Colors.white,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withOpacity(0.3),
+              spreadRadius: 2,
+              blurRadius: 5,
+              offset: Offset(0, -2),
             ),
           ],
         ),
-      ),
-    );
+        child: SizedBox(
+          width: double.infinity,
+          child: ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: controller.isFormValid.value
+                  ? TColors.secondary
+                  : Colors.grey[300],
+              padding: EdgeInsets.symmetric(vertical: 16),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              elevation: 2,
+            ),
+            onPressed: controller.isFormValid.value
+                ? controller.submitBooking
+                : null,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  'Continue to Payment',
+                  style: TextStyle(
+                    color: controller.isFormValid.value
+                        ? TColors.white
+                        : TColors.grey,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                SizedBox(width: 8),
+                Icon(
+                  Icons.arrow_forward,
+                  color: controller.isFormValid.value
+                      ? TColors.white
+                      : TColors.grey,
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    });
   }
+
+  Widget _buildTripSummaryCard() {
+    return Obx(() {
+      return Card(
+        margin: EdgeInsets.only(bottom: 16),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        elevation: 2,
+        child: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [TColors.primary, TColors.primary.withOpacity(0.8)],
+            ),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          padding: EdgeInsets.all(16),
+          child: Column(
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.airplanemode_active, color: TColors.white),
+                  SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'Flight Summary',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: TColors.white,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              Divider(color: TColors.white.withOpacity(0.3), height: 24),
+              Row(
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Passengers',
+                        style: TextStyle(
+                          color: TColors.white.withOpacity(0.8),
+                          fontSize: 14,
+                        ),
+                      ),
+                      SizedBox(height: 4),
+                      Text(
+                        '${controller.bookingData.value.adults} Adult${controller.bookingData.value.adults > 1 ? 's' : ''}'
+                            '${controller.bookingData.value.children > 0 ? ', ${controller.bookingData.value.children} Child${controller.bookingData.value.children > 1 ? 'ren' : ''}' : ''}'
+                            '${controller.bookingData.value.infants > 0 ? ', ${controller.bookingData.value.infants} Infant${controller.bookingData.value.infants > 1 ? 's' : ''}' : ''}',
+                        style: TextStyle(
+                          color: TColors.white,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                  Spacer(),
+                  Container(
+                    padding: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    decoration: BoxDecoration(
+                      color: TColors.third,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      'Round Trip',
+                      style: TextStyle(
+                        color: TColors.primary,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      );
+    });
+  }
+
+
 
   Widget _buildBookerInformationSection() {
     return Card(

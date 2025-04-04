@@ -113,6 +113,7 @@ class HotelForm extends StatelessWidget {
   Widget build(BuildContext context) {
     final cityController = TextEditingController();
     final hotelDateController = Get.find<HotelDateController>();
+    final searchHotelController = Get.find<SearchHotelController>();
 
     return Padding(
       padding: const EdgeInsets.only(top: 10, bottom: 30),
@@ -123,7 +124,11 @@ class HotelForm extends StatelessWidget {
           _buildDecorativeHeader()
               .animate()
               .fadeIn(duration: const Duration(milliseconds: 600))
-              .slideY(begin: -0.2, end: 0, duration: const Duration(milliseconds: 600)),
+              .slideY(
+            begin: -0.2,
+            end: 0,
+            duration: const Duration(milliseconds: 600),
+          ),
 
           const SizedBox(height: 30),
 
@@ -141,15 +146,44 @@ class HotelForm extends StatelessWidget {
               hintText: 'Enter city or destination',
               icon: Icons.location_on,
               controller: cityController,
+              onCitySelected: (city) async {
+                // Show loading indicator
+                Get.dialog(
+                  const LoadingDialog(),
+                  barrierDismissible: false,
+                );
+
+                try {
+                  final hotelIds = await ApiServiceHotel().fetchHotelIds(
+                    countryCode: city.countryCode,
+                    zoneCode: city.zoneCode,
+                    cityStateCode: city.cityStateCode,
+                  );
+                  searchHotelController.hotel_ids.value = hotelIds;
+                  // Store the hotel IDs or use them as needed
+                  print(
+                    "Fetched hotel IDs: ${searchHotelController.hotel_ids}",
+                  );
+
+                  Get.back(); // Close loading dialog
+                } catch (e) {
+                  Get.back(); // Close loading dialog
+                  Get.snackbar('Error', 'Failed to fetch hotel IDs');
+                }
+              },
             ),
-          ).animate()
+          )
+              .animate()
               .fadeIn(delay: const Duration(milliseconds: 300))
               .slideX(begin: 0.1, end: 0),
 
           const SizedBox(height: 24),
 
           // Field Title
-          _buildSectionTitle('When are you planning to travel?', Icons.calendar_today)
+          _buildSectionTitle(
+            'When are you planning to travel?',
+            Icons.calendar_today,
+          )
               .animate()
               .fadeIn(delay: const Duration(milliseconds: 400))
               .slideX(begin: -0.1, end: 0),
@@ -166,7 +200,8 @@ class HotelForm extends StatelessWidget {
                 onNightsChanged: hotelDateController.updateNights,
               ),
             ),
-          ).animate()
+          )
+              .animate()
               .fadeIn(delay: const Duration(milliseconds: 500))
               .slideX(begin: 0.1, end: 0),
 
@@ -181,9 +216,8 @@ class HotelForm extends StatelessWidget {
           const SizedBox(height: 12),
 
           // Guests Field
-          _buildFormField(
-            child: const GuestsField(),
-          ).animate()
+          _buildFormField(child: const GuestsField())
+              .animate()
               .fadeIn(delay: const Duration(milliseconds: 700))
               .slideX(begin: 0.1, end: 0),
 
@@ -196,7 +230,8 @@ class HotelForm extends StatelessWidget {
               height: 55,
               child: _buildSearchButton(),
             ),
-          ).animate()
+          )
+              .animate()
               .fadeIn(delay: const Duration(milliseconds: 800))
               .scale(begin: const Offset(0.95, 0.95), end: const Offset(1, 1)),
 
@@ -225,11 +260,7 @@ class HotelForm extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Icon(
-                Icons.hotel,
-                color: TColors.third,
-                size: 30,
-              ),
+              const Icon(Icons.hotel, color: TColors.third, size: 30),
               const SizedBox(width: 10),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -244,13 +275,10 @@ class HotelForm extends StatelessWidget {
                   ),
                   Text(
                     'Best prices guaranteed',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: TColors.grey,
-                    ),
+                    style: TextStyle(fontSize: 12, color: TColors.grey),
                   ),
                 ],
-              )
+              ),
             ],
           ),
           const SizedBox(height: 10),
@@ -286,11 +314,7 @@ class HotelForm extends StatelessWidget {
       padding: const EdgeInsets.only(left: 5),
       child: Row(
         children: [
-          Icon(
-            icon,
-            size: 18,
-            color: TColors.primary,
-          ),
+          Icon(icon, size: 18, color: TColors.primary),
           const SizedBox(width: 8),
           Text(
             title,
@@ -349,8 +373,10 @@ class HotelForm extends StatelessWidget {
           final hotelDateController = Get.find<HotelDateController>();
           final guestsController = Get.find<GuestsController>();
 
-          String checkInDate = hotelDateController.checkInDate.value.toIso8601String();
-          String checkOutDate = hotelDateController.checkOutDate.value.toIso8601String();
+          String checkInDate =
+          hotelDateController.checkInDate.value.toIso8601String();
+          String checkOutDate =
+          hotelDateController.checkOutDate.value.toIso8601String();
 
           // Create rooms array with the new structure
           List<Map<String, dynamic>> rooms = List.generate(
@@ -360,7 +386,8 @@ class HotelForm extends StatelessWidget {
               "Adult": guestsController.rooms[index].adults.value,
               "Children": guestsController.rooms[index].children.value,
               if (guestsController.rooms[index].children.value > 0)
-                "ChildrenAges": guestsController.rooms[index].childrenAges.toList(),
+                "ChildrenAges":
+                guestsController.rooms[index].childrenAges.toList(),
             },
           );
           print('the rooms is $rooms');
@@ -397,10 +424,7 @@ class HotelForm extends StatelessWidget {
                     gradient: LinearGradient(
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
-                      colors: [
-                        Colors.white,
-                        Colors.grey.shade50,
-                      ],
+                      colors: [Colors.white, Colors.grey.shade50],
                     ),
                   ),
                   child: Column(
@@ -464,10 +488,7 @@ class HotelForm extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(
-              Icons.search,
-              color: TColors.white,
-            ),
+            const Icon(Icons.search, color: TColors.white),
             const SizedBox(width: 8),
             const Text(
               'Find Hotels',

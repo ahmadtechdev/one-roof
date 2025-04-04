@@ -19,6 +19,7 @@ class Passenger {
 
 // booking_data_model.dart
 class BookingData {
+  int groupId;
   String groupName;
   String sector;
   int availableSeats;
@@ -28,9 +29,11 @@ class BookingData {
   double adultPrice;
   double childPrice;
   double infantPrice;
+  int groupPriceDetailId;
   List<Passenger> passengers = [];
 
   BookingData({
+    required this.groupId,
     required this.groupName,
     required this.sector,
     required this.availableSeats,
@@ -40,25 +43,14 @@ class BookingData {
     required this.adultPrice,
     required this.childPrice,
     required this.infantPrice,
+    required this.groupPriceDetailId,
   }) {
-    // Initialize passenger list based on counts
-    for (int i = 0; i < adults; i++) {
-      passengers.add(Passenger(title: 'Mr'));
-    }
-    for (int i = 0; i < children; i++) {
-      passengers.add(Passenger(title: 'Mstr'));
-    }
-    for (int i = 0; i < infants; i++) {
-      passengers.add(Passenger(title: 'INF'));
-    }
+    // Initialize passenger list
+    passengers = List.generate(adults, (_) => Passenger(title: 'Mr'))
+      ..addAll(List.generate(children, (_) => Passenger(title: 'Mstr')))
+      ..addAll(List.generate(infants, (_) => Passenger(title: 'INF')));
   }
 
   int get totalPassengers => adults + children + infants;
-
-  double get totalPrice =>
-      (adults * adultPrice) + (children * childPrice) + (infants * infantPrice);
-
-  bool isValidSeatCount() {
-    return totalPassengers <= availableSeats;
-  }
+  double get totalPrice => (adults * adultPrice) + (children * childPrice) + (infants * infantPrice);
 }

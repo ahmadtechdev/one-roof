@@ -182,7 +182,34 @@ class PackageSelectionDialog extends StatelessWidget {
   // Inside _buildPackageCard method of PackageSelectionDialog
   Widget _buildPackageCard(FlightPackageInfo package, int index) {
     final headerColor = package.isSoldOut ? Colors.grey : TColors.primary;
+    final Rx<Map<String, dynamic>> marginData = Rx<Map<String, dynamic>>({});
+    final RxDouble finalPrice = 0.0.obs;
 
+    // Add this method to fetch margin data
+    Future<void> _fetchMarginData() async {
+      try {
+        final apiService = Get.find<ApiServiceFlight>();
+        final data = await apiService.getMargin();
+        marginData.value = data;
+
+
+        print("flight package price: ");
+        print(package.totalPrice);
+        // Calculate final price with margin
+        finalPrice.value = apiService.calculatePriceWithMargin(
+          package.totalPrice,
+          data,
+        );
+
+        print("flight package price after margin: ");
+        print(finalPrice.value);
+      } catch (e) {
+        print('Error fetching margin data: $e');
+        // If margin fetch fails, use original price
+        finalPrice.value = package.totalPrice;
+      }
+    }
+    _fetchMarginData();
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
@@ -237,14 +264,15 @@ class PackageSelectionDialog extends StatelessWidget {
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                      Text(
-                        package.totalPrice.toStringAsFixed(2),
+                      Obx(() => Text(
+                        finalPrice.value.toStringAsFixed(2),
                         style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
                           color: TColors.background,
                         ),
-                      ),
+                      )),
+
                       Text(
                         package.currency,
                         style: TextStyle(

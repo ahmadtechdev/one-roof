@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:oneroof/views/group_ticket/booking_controller.dart';
-import 'package:oneroof/views/group_ticket/booking_form.dart';
+import 'package:oneroof/views/group_ticket/booking_form_fields/group_ticket_booking_controller.dart';
+import 'package:oneroof/views/group_ticket/booking_form_fields/booking_form.dart';
 
 class BookingSummaryScreen extends StatelessWidget {
-  final BookingController controller = Get.put(BookingController());
+  final GroupTicketBookingController controller = Get.put(GroupTicketBookingController());
 
   BookingSummaryScreen({Key? key}) : super(key: key);
 
@@ -351,7 +351,13 @@ class BookingSummaryScreen extends StatelessWidget {
         onPressed: () {
           if (controller.bookingData.value.totalPassengers <=
               controller.bookingData.value.availableSeats) {
-            Get.to(() => PassengerDetailsScreen());
+            Get.to(
+                  () => PassengerDetailsScreen(),
+              arguments: {
+                'groupId': controller.bookingData.value.groupId,
+                 // Pass the flight model if needed
+              },
+            );
           } else {
             Get.snackbar(
               'Error',

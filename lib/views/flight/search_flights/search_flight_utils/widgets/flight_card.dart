@@ -31,6 +31,9 @@ class _FlightCardState extends State<FlightCard>
   late AnimationController _controller;
   late Animation<double> _expandAnimation;
 
+  final Rx<Map<String, dynamic>> marginData = Rx<Map<String, dynamic>>({});
+  final RxDouble finalPrice = 0.0.obs;
+
   @override
   void initState() {
     super.initState();
@@ -42,6 +45,34 @@ class _FlightCardState extends State<FlightCard>
       parent: _controller,
       curve: Curves.easeInOut,
     );
+
+    // Fetch margin data when widget initializes
+    _fetchMarginData();
+  }
+
+  // Add this method to fetch margin data
+  Future<void> _fetchMarginData() async {
+    try {
+      final apiService = Get.find<ApiServiceFlight>();
+      final data = await apiService.getMargin();
+      marginData.value = data;
+
+
+      print("flight price: ");
+      print(widget.flight.price);
+      // Calculate final price with margin
+      finalPrice.value = apiService.calculatePriceWithMargin(
+        widget.flight.price,
+        data,
+      );
+
+      print("flight price after margin: ");
+      print(finalPrice.value);
+    } catch (e) {
+      print('Error fetching margin data: $e');
+      // If margin fetch fails, use original price
+      finalPrice.value = widget.flight.price;
+    }
   }
 
   @override
@@ -240,7 +271,7 @@ class _FlightCardState extends State<FlightCard>
                                   ),
                                 ),
                                 child: Text(
-                                  '${controller.selectedCurrency.value} ${widget.flight.price.toStringAsFixed(0)}',
+                                  '${controller.selectedCurrency.value} ${finalPrice.value.toStringAsFixed(0)}',
                                   style: const TextStyle(
                                     fontSize: 12,
                                     fontWeight: FontWeight.bold,

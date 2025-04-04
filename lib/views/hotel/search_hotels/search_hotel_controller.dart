@@ -14,6 +14,8 @@ class SearchHotelController extends GetxController {
   final Rx<Map<String, dynamic>> originalResponse =
       Rx<Map<String, dynamic>>({});
 
+  var hotel_ids=[].obs;
+
   var dio = Dio();
 
   filterhotler() {

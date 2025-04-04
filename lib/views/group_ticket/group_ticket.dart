@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../services/api_service_group_tickets.dart';
 import 'package:oneroof/utility/colors.dart';
-import 'package:oneroof/views/group_ticket/flight_pkg/booking_page.dart';
+import 'package:oneroof/views/group_ticket/flight_pkg/select_pkg.dart';
 
 class GroupTicket extends StatelessWidget {
-  const GroupTicket({Key? key}) : super(key: key);
+  const GroupTicket({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -75,7 +75,7 @@ class GroupTicket extends StatelessWidget {
                           title: 'UAE One Way Groups',
                           onTap: () {
                             GroupTicketingController().fetchGroups('UAE');
-
+                            Get.to(() => SelectPkgScreen());
                             Get.snackbar(
                               "Tapped!",
                               "UAE One Way Groups selected",
@@ -115,7 +115,7 @@ class GroupTicket extends StatelessWidget {
                           title: 'OMAN One Way Groups',
                           onTap: () {
                             GroupTicketingController().fetchGroups('OMAN');
-
+                            Get.to(() => SelectPkgScreen());
                             Get.snackbar(
                               "Tapped!",
                               "OMAN One Way Groups selected",
@@ -131,7 +131,7 @@ class GroupTicket extends StatelessWidget {
                           title: 'UK One Way Groups',
                           onTap: () {
                             GroupTicketingController().fetchGroups('UK');
-
+                            Get.to(() => SelectPkgScreen());
                             Get.snackbar(
                               "Tapped!",
                               "UK One Way Groups selected",
@@ -155,7 +155,7 @@ class GroupTicket extends StatelessWidget {
                           title: 'UMRAH',
                           onTap: () {
                             GroupTicketingController().fetchGroups('UMRAH');
-
+                            Get.to(() => SelectPkgScreen());
                             Get.snackbar(
                               "Tapped!",
                               "UMRAH selected",
@@ -171,7 +171,7 @@ class GroupTicket extends StatelessWidget {
                           title: 'All Types',
                           onTap: () {
                             GroupTicketingController().fetchGroups('');
-
+                            Get.to(() => SelectPkgScreen());
                             Get.snackbar(
                               "Tapped!",
                               "All Types selected",

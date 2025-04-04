@@ -5,7 +5,7 @@ import 'package:oneroof/views/group_ticket/group_ticket.dart';
 import 'package:oneroof/views/hotel/hotel/hotel_form.dart';
 
 import '../flight/form/flight_form.dart';
-import '../group_ticket/data_controller.dart';
+import '../group_ticket/airline/data_controller.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -67,6 +67,7 @@ class HomeScreenState extends State<HomeScreen>
         ],
       ),
       body: SingleChildScrollView(
+        physics: BouncingScrollPhysics(),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

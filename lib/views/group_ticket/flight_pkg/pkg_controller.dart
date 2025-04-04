@@ -1,7 +1,7 @@
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
-import 'package:oneroof/views/group_ticket/airline_model.dart';
-import 'package:oneroof/views/group_ticket/data_controller.dart';
+import 'package:oneroof/views/group_ticket/airline/airline_model.dart';
+import 'package:oneroof/views/group_ticket/airline/data_controller.dart';
 import 'package:oneroof/views/group_ticket/flight_pkg/pkg_model.dart';
 
 import '../../../services/api_service_group_tickets.dart';
@@ -22,16 +22,37 @@ class FlightPKGController extends GetxController {
   final DateFormat dateFormatter = DateFormat('yyyy-MM-dd');
   final DateFormat displayFormatter = DateFormat('dd MMM yyyy');
 
-  // Sector options
-  final List<Map<String, String>> sectorOptions = [
-    {'label': 'Lahore-Dammam', 'value': 'lahore-dammam'},
-    {'label': 'Islamabad-Riyadh', 'value': 'islamabad-riyadh'},
-    {'label': 'Islamabad-Dammam', 'value': 'islamabad-dammam'},
-    {'label': 'Lahore-Riyadh', 'value': 'lahore-riyadh'},
-    {'label': 'Lahore-Jeddah', 'value': 'lahore-jeddah'},
-    {'label': 'Faisalabad-Sharjah', 'value': 'faisalabad-sharjah'},
-    {'label': 'Peshawar-Riyadh', 'value': 'peshawar-riyadh'},
-  ];
+  // Dynamic sector options based on available flights
+  RxList<Map<String, String>> get sectorOptions {
+    // Extract unique sectors from groupFlights
+    final sectors = <String>{};
+
+    for (final flight in groupFlights) {
+      final sector = flight['sector']?.toString().toLowerCase();
+      if (sector != null && sector.isNotEmpty) {
+        sectors.add(sector);
+      }
+    }
+
+    // Convert to the format needed for options
+    final options = sectors.map((sector) {
+      // Convert from "lahore-dammam" to "Lahore-Dammam" for display
+      final displayName = sector.split('-')
+          .map((word) => word[0].toUpperCase() + word.substring(1))
+          .join('-');
+
+      return {
+        'label': displayName,
+        'value': sector,
+      };
+    }).toList();
+
+    // Add the "All" option and sort alphabetically
+    options.insert(0, {'label': 'All Sectors', 'value': 'all'});
+    options.sort((a, b) => a['label']!.compareTo(b['label']!));
+
+    return options.obs;
+  }
 
   @override
   void onInit() {
@@ -64,7 +85,7 @@ class FlightPKGController extends GetxController {
     }
   }
 
-  FlightModel convertToFlightModel(dynamic groupFlight) {
+  GroupFlightModel convertToFlightModel(dynamic groupFlight) {
     final airline = groupFlight['airline'] ?? {};
     final int airlineId = airline['id'] ?? 0;
     String logoUrl = _getDefaultLogoUrl();
@@ -81,9 +102,12 @@ class FlightPKGController extends GetxController {
 
     final flightDetails = groupFlight['details']?.first ?? {};
 
-    return FlightModel(
+    return GroupFlightModel(
+      id: flightDetails['id'],
       airline: airline['airline_name'] ?? 'Unknown Airline',
+      sector: airline['sector'] ?? 'Unknown sector',
       shortName: airline['short_name'] ?? '',
+      groupPriceDetailId: groupFlight['group_price_detail_id'] ?? '',
       departure: _parseDate(groupFlight['dept_date']),
       departureTime: flightDetails['dept_time'] ?? '',
       arrivalTime: flightDetails['arv_time'] ?? '',
@@ -91,6 +115,7 @@ class FlightPKGController extends GetxController {
       destination: flightDetails['destination'] ?? '',
       flightNumber: flightDetails['flight_no'] ?? '',
       price: groupFlight['price'] ?? 0,
+      seats: flightDetails['seats'] ?? 0,
       hasLayover: false,
       baggage: flightDetails['baggage'] ?? '',
       logoUrl: logoUrl,
@@ -109,7 +134,7 @@ class FlightPKGController extends GetxController {
     return 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAACklEQVR4nGMAAQAABQABDQottAAAAABJRU5ErkJggg==';
   }
 
-  RxList<FlightModel> get filteredFlights {
+  RxList<GroupFlightModel> get filteredFlights {
     return groupFlights
         .where((groupFlight) {
       final sector = groupFlight['sector']?.toString().toLowerCase() ?? '';

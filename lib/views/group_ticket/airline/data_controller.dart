@@ -1,6 +1,6 @@
 import 'package:get/get.dart';
-import '../../../services/api_service_group_tickets.dart';
-import 'package:oneroof/views/group_ticket/airline_model.dart';
+import '../../../../services/api_service_group_tickets.dart';
+import 'package:oneroof/views/group_ticket/airline/airline_model.dart';
 import 'package:oneroof/views/group_ticket/sector_model.dart';
 
 class TravelDataController extends GetxController {

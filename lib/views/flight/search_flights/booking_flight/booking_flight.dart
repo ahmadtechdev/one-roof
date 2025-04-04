@@ -618,97 +618,98 @@ class _BookingFormState extends State<BookingForm> {
           ElevatedButton(
             onPressed: () async {
               if (_formKey.currentState!.validate()) {
-                // Print all booker details
-                print('Booker Details:');
-                print(
-                    'First Name: ${bookingController.firstNameController.text}');
-                print(
-                    'Last Name: ${bookingController.lastNameController.text}');
-                print('Email: ${bookingController.emailController.text}');
-                print('Phone: ${bookingController.phoneController.text}');
-                print('Address: ${bookingController.addressController.text}');
-                print('City: ${bookingController.cityController.text}');
-
-                // Print all adult details
-                for (var i = 0; i < bookingController.adults.length; i++) {
-                  print('Adult ${i + 1} Details:');
-                  print(
-                      'Title: ${bookingController.adults[i].titleController.text}');
-                  print(
-                      'First Name: ${bookingController.adults[i].firstNameController.text}');
-                  print(
-                      'Last Name: ${bookingController.adults[i].lastNameController.text}');
-                  print(
-                      'Date of Birth: ${bookingController.adults[i].dateOfBirthController.text}');
-                  print(
-                      'Phone: ${bookingController.adults[i].phoneController.text}');
-                  print(
-                      'Email: ${bookingController.adults[i].emailController.text}');
-                  print(
-                      'Nationality: ${bookingController.adults[i].nationalityController.text}');
-                  print(
-                      'Passport Number: ${bookingController.adults[i].passportController.text}');
-                  print(
-                      'Passport Expiry: ${bookingController.adults[i].passportExpiryController.text}');
-                }
-
-                // Print all child details
-                for (var i = 0; i < bookingController.children.length; i++) {
-                  print('Child ${i + 1} Details:');
-                  print(
-                      'Title: ${bookingController.children[i].titleController.text}');
-                  print(
-                      'First Name: ${bookingController.children[i].firstNameController.text}');
-                  print(
-                      'Last Name: ${bookingController.children[i].lastNameController.text}');
-                  print(
-                      'Date of Birth: ${bookingController.children[i].dateOfBirthController.text}');
-                  print(
-                      'Nationality: ${bookingController.children[i].nationalityController.text}');
-                  print(
-                      'Passport Number: ${bookingController.children[i].passportController.text}');
-                  print(
-                      'Passport Expiry: ${bookingController.children[i].passportExpiryController.text}');
-                }
-
-                // Print all infant details
-                for (var i = 0; i < bookingController.infants.length; i++) {
-                  print('Infant ${i + 1} Details:');
-                  print(
-                      'Title: ${bookingController.infants[i].titleController.text}');
-                  print(
-                      'First Name: ${bookingController.infants[i].firstNameController.text}');
-                  print(
-                      'Last Name: ${bookingController.infants[i].lastNameController.text}');
-                  print(
-                      'Date of Birth: ${bookingController.infants[i].dateOfBirthController.text}');
-                  print(
-                      'Nationality: ${bookingController.infants[i].nationalityController.text}');
-                  print(
-                      'Passport Number: ${bookingController.infants[i].passportController.text}');
-                  print(
-                      'Passport Expiry: ${bookingController.infants[i].passportExpiryController.text}');
-                }
-
-                // Get the booker's email and phone from the form
-                final bookerEmail = bookingController.emailController.text;
-                final bookerPhone = bookingController.phoneController.text;
+                // // Print all booker details
+                // print('Booker Details:');
+                // print(
+                //     'First Name: ${bookingController.firstNameController.text}');
+                // print(
+                //     'Last Name: ${bookingController.lastNameController.text}');
+                // print('Email: ${bookingController.emailController.text}');
+                // print('Phone: ${bookingController.phoneController.text}');
+                // print('Address: ${bookingController.addressController.text}');
+                // print('City: ${bookingController.cityController.text}');
+                //
+                // // Print all adult details
+                // for (var i = 0; i < bookingController.adults.length; i++) {
+                //   print('Adult ${i + 1} Details:');
+                //   print(
+                //       'Title: ${bookingController.adults[i].titleController.text}');
+                //   print(
+                //       'First Name: ${bookingController.adults[i].firstNameController.text}');
+                //   print(
+                //       'Last Name: ${bookingController.adults[i].lastNameController.text}');
+                //   print(
+                //       'Date of Birth: ${bookingController.adults[i].dateOfBirthController.text}');
+                //   print(
+                //       'Phone: ${bookingController.adults[i].phoneController.text}');
+                //   print(
+                //       'Email: ${bookingController.adults[i].emailController.text}');
+                //   print(
+                //       'Nationality: ${bookingController.adults[i].nationalityController.text}');
+                //   print(
+                //       'Passport Number: ${bookingController.adults[i].passportController.text}');
+                //   print(
+                //       'Passport Expiry: ${bookingController.adults[i].passportExpiryController.text}');
+                // }
+                //
+                // // Print all child details
+                // for (var i = 0; i < bookingController.children.length; i++) {
+                //   print('Child ${i + 1} Details:');
+                //   print(
+                //       'Title: ${bookingController.children[i].titleController.text}');
+                //   print(
+                //       'First Name: ${bookingController.children[i].firstNameController.text}');
+                //   print(
+                //       'Last Name: ${bookingController.children[i].lastNameController.text}');
+                //   print(
+                //       'Date of Birth: ${bookingController.children[i].dateOfBirthController.text}');
+                //   print(
+                //       'Nationality: ${bookingController.children[i].nationalityController.text}');
+                //   print(
+                //       'Passport Number: ${bookingController.children[i].passportController.text}');
+                //   print(
+                //       'Passport Expiry: ${bookingController.children[i].passportExpiryController.text}');
+                // }
+                //
+                // // Print all infant details
+                // for (var i = 0; i < bookingController.infants.length; i++) {
+                //   print('Infant ${i + 1} Details:');
+                //   print(
+                //       'Title: ${bookingController.infants[i].titleController.text}');
+                //   print(
+                //       'First Name: ${bookingController.infants[i].firstNameController.text}');
+                //   print(
+                //       'Last Name: ${bookingController.infants[i].lastNameController.text}');
+                //   print(
+                //       'Date of Birth: ${bookingController.infants[i].dateOfBirthController.text}');
+                //   print(
+                //       'Nationality: ${bookingController.infants[i].nationalityController.text}');
+                //   print(
+                //       'Passport Number: ${bookingController.infants[i].passportController.text}');
+                //   print(
+                //       'Passport Expiry: ${bookingController.infants[i].passportExpiryController.text}');
+                // }
+                //
+                // // Get the booker's email and phone from the form
+                // final bookerEmail = bookingController.emailController.text;
+                // final bookerPhone = bookingController.phoneController.text;
 
                 // Call the PNR request function
-                final apiService = ApiServiceFlight();
-                await apiService.createPNRRequest(
-                  flight: widget.flight,
-                  adults: bookingController.adults,
-                  children: bookingController.children,
-                  infants: bookingController.infants,
-                  bookerEmail: bookerEmail,
-                  bookerPhone: bookerPhone,
-                );
+                // final apiService = ApiServiceFlight();
+                // await apiService.createPNRRequest(
+                //   flight: widget.flight,
+                //   adults: bookingController.adults,
+                //   children: bookingController.children,
+                //   infants: bookingController.infants,
+                //   bookerEmail: bookerEmail,
+                //   bookerPhone: bookerPhone,
+                // );
 
                 // Optionally, you can navigate to a confirmation screen or show a success message
                 Get.snackbar(
                   'Success',
-                  'PNR request created successfully',
+                  // 'PNR request created successfully',
+                  'Booking created successfully',
                   backgroundColor: Colors.green,
                   colorText: Colors.white,
                 );
