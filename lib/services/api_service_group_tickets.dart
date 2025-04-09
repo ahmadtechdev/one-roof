@@ -1,9 +1,14 @@
+import 'dart:convert';
+
 import 'package:dio/dio.dart' as dio;
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 
 class GroupTicketingController extends GetxController {
   final dio1 = dio.Dio();
+
+  // Store the selected region
+  final RxString selectedRegion = ''.obs;
 
   // Store token separately
   final String authToken =
@@ -54,18 +59,46 @@ class GroupTicketingController extends GetxController {
   }
 
   Future<List<dynamic>> fetchGroups(String type) async {
+    selectedRegion.value = type;
+    print("Fetching groups for region: $type");
+
     try {
-      var data = dio.FormData.fromMap({'type': type});
+      String url = 'https://travelnetwork.pk/api/available/groups';
+
+      if (type.isNotEmpty) {
+        url += '?type=$type';
+      } else {
+        url += '?type=';
+      }
+
+      print("Requesting URL: $url");
 
       var response = await dio1.get(
-        'https://travelnetwork.pk/api/available/groups?type&airline_id&dept_date',
+        url,
         options: dio.Options(headers: getHeaders()),
-
-        data: data,
       );
 
       if (response.statusCode == 200) {
-        print(response.data);
+        // Print summary of response
+        print("Groups count: ${(response.data['groups'] as List).length}");
+
+        // Print the first 3 groups (or fewer if there aren't 3)
+        print("\n--- Sample of first few groups: ---");
+        final groups = response.data['groups'] as List;
+        final sampleSize = groups.length > 3 ? 3 : groups.length;
+
+        for (int i = 0; i < sampleSize; i++) {
+          print("Group ${i + 1}:");
+          print(groups[i]);
+          print("----------------------");
+        }
+
+        // Print available keys in the response data
+        print("\nAvailable keys in response data:");
+        (response.data as Map).keys.forEach((key) {
+          print("- $key");
+        });
+
         return response.data['groups'] as List<dynamic>;
       } else {
         print("Error: ${response.statusMessage}");
@@ -77,32 +110,31 @@ class GroupTicketingController extends GetxController {
     }
   }
 
-  // Add this method to GroupTicketingController
-  Future<int> fetchAvailableSeats(int groupId) async {
-    print("check 4");
-    print(groupId);
-    try {
-      var response = await dio1.get(
-        'https://travelnetwork.test/api/check/available_seats/$groupId',
-        options: dio.Options(headers: getHeaders()),
-      );
+  // // Add this method to GroupTicketingController
+  // Future<int> fetchAvailableSeats(int groupId) async {
+  //   print("check 4");
+  //   print(groupId);
+  //   try {
+  //     var response = await dio1.get(
+  //       'https://travelnetwork.test/api/check/available_seats/$groupId',
+  //       options: dio.Options(headers: getHeaders()),
+  //     );
 
-      print("ssdd");
+  //     print("ssdd");
 
-      if (response.statusCode == 200) {
-        print("seats deon:");
-        print(response.data['seats']);
-        return response.data['seats'] as int;
-
-      } else {
-        print("Error fetching available seats: ${response.statusMessage}");
-        return 0; // Return 0 as fallback
-      }
-    } catch (e) {
-      print("Exception in fetchAvailableSeats: $e");
-      return 0; // Return 0 as fallback
-    }
-  }
+  //     if (response.statusCode == 200) {
+  //       print("seats deon:");
+  //       print(response.data['seats']);
+  //       return response.data['seats'] as int;
+  //     } else {
+  //       print("Error fetching available seats: ${response.statusMessage}");
+  //       return 0; // Return 0 as fallback
+  //     }
+  //   } catch (e) {
+  //     print("Exception in fetchAvailableSeats: $e");
+  //     return 0; // Return 0 as fallback
+  //   }
+  // }
 
   // Add to api_service_group_tickets.dart
   Future<Map<String, dynamic>> saveBooking({
@@ -119,6 +151,32 @@ class GroupTicketingController extends GetxController {
     required int groupPriceDetailId,
   }) async {
     try {
+      // Validate passengers data before creating the request
+      for (var passenger in passengers) {
+        if (passenger['firstName'] == null ||
+            passenger['lastName'] == null ||
+            passenger['title'] == null) {
+          return {
+            'success': false,
+            'message': 'Missing required passenger information (name or title)',
+            'data': null,
+          };
+        }
+
+        // Handle potential null dates safely
+        String? dob = passenger['dateOfBirth'];
+        String? doe = passenger['passportExpiry'];
+
+        // Format dates only if they exist
+        if (dob != null && dob.length >= 10) {
+          passenger['dateOfBirth'] = dob.substring(0, 10);
+        }
+
+        if (doe != null && doe.length >= 10) {
+          passenger['passportExpiry'] = doe.substring(0, 10);
+        }
+      }
+
       final data = {
         "group_id": groupId,
         "agency_info": {
@@ -128,40 +186,50 @@ class GroupTicketingController extends GetxController {
           "email": email,
           "mobile": mobile,
           "adults": adults,
-          "child": children ?? 0, // Instead of null
-          "infant": infants ?? 0, // Instead of null
-          "agent_notes": agentNotes ?? "", // Instead of null
+          "child": children ?? 0,
+          "infant": infants ?? 0,
+          "agent_notes": agentNotes ?? "",
         },
-        "booking_details": passengers.map((passenger) => {
-          "surname": passenger['lastName'],
-          "given_name": passenger['firstName'],
-          "title": passenger['title'],
-          "passport_no": passenger['passportNumber'],
-          "dob": passenger['dateOfBirth']?.substring(0, 10), // "2007-04-20"
-          "doe": passenger['passportExpiry']?.substring(0, 10), // "2026-03-28"
-        }).toList(),
+        "booking_details":
+            passengers
+                .map(
+                  (passenger) => {
+                    "surname": passenger['lastName'],
+                    "given_name": passenger['firstName'],
+                    "title": passenger['title'],
+                    "passport_no": passenger['passportNumber'] ?? "",
+                    "dob": passenger['dateOfBirth'] ?? "",
+                    "doe": passenger['passportExpiry'] ?? "",
+                  },
+                )
+                .toList(),
         "group_price_detail_id": groupPriceDetailId,
       };
 
-      print('Sending booking data: $data');
+      print('Sending booking data: ${jsonEncode(data)}');
 
+      // Add timeout to avoid hanging requests
       var response = await dio1.post(
         'https://travelnetwork.pk/api/create/booking',
         data: data,
         options: dio.Options(
           headers: getHeaders(),
           contentType: 'application/json',
+          receiveTimeout: const Duration(seconds: 30),
+          sendTimeout: const Duration(seconds: 30),
         ),
       );
 
-      if (response.statusCode == 200) {
+      print('Response status: ${response.statusCode}');
+      print('Response data: ${response.data}');
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
         return {
           'success': true,
           'message': 'Booking saved successfully',
           'data': response.data,
         };
       } else {
-        // Add detailed error info
         return {
           'success': false,
           'message': 'Failed to save booking. Status: ${response.statusCode}',
@@ -173,8 +241,37 @@ class GroupTicketingController extends GetxController {
       print('DioException details:');
       print('- Type: ${e.type}');
       print('- Message: ${e.message}');
-      print('- Response: ${e.response?.data}');
-      print('- StackTrace: ${e.stackTrace}');
+      print('- Response status: ${e.response?.statusCode}');
+      print('- Response data: ${e.response?.data}');
+
+      // Check for specific error types
+      if (e.type == dio.DioExceptionType.connectionTimeout ||
+          e.type == dio.DioExceptionType.sendTimeout ||
+          e.type == dio.DioExceptionType.receiveTimeout) {
+        return {
+          'success': false,
+          'message':
+              'Request timed out. Please check your internet connection and try again.',
+          'error_details': e.message,
+          'data': null,
+        };
+      } else if (e.type == dio.DioExceptionType.badResponse) {
+        // Try to parse error response for more details
+        final errorData = e.response?.data;
+        String errorMessage = 'Server returned an error';
+
+        if (errorData is Map<String, dynamic>) {
+          errorMessage = errorData['message'] ?? errorMessage;
+        }
+
+        return {
+          'success': false,
+          'message': errorMessage,
+          'error_details': errorData?.toString(),
+          'status_code': e.response?.statusCode,
+          'data': null,
+        };
+      }
 
       return {
         'success': false,
@@ -182,8 +279,10 @@ class GroupTicketingController extends GetxController {
         'error_details': e.response?.data?.toString() ?? 'No error details',
         'data': null,
       };
-    } catch (e) {
+    } catch (e, stackTrace) {
       print('Unexpected error: $e');
+      print('Stack trace: $stackTrace');
+
       return {
         'success': false,
         'message': 'An unexpected error occurred',

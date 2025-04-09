@@ -9,6 +9,9 @@ class GroupTicket extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Create the controller once and reuse it
+    final GroupTicketingController controller = Get.put(GroupTicketingController(), permanent: true);
+    
     return Scaffold(
       body: SingleChildScrollView(
         child: Container(
@@ -73,12 +76,13 @@ class GroupTicket extends StatelessWidget {
                         child: DestinationCard(
                           image: 'assets/images/1.png',
                           title: 'UAE One Way Groups',
-                          onTap: () {
-                            GroupTicketingController().fetchGroups('UAE');
+                          onTap: () async {
+                            // Await the fetch to complete before navigating
+                            await controller.fetchGroups('UAE');
                             Get.to(() => SelectPkgScreen());
                             Get.snackbar(
-                              "Tapped!",
-                              "UAE One Way Groups selected",
+                              "Loading",
+                              "UAE One Way Groups data loaded",
                               snackPosition: SnackPosition.BOTTOM,
                             );
                           },
@@ -89,12 +93,13 @@ class GroupTicket extends StatelessWidget {
                         child: DestinationCard(
                           image: 'assets/images/2.png',
                           title: 'KSA One Way Groups',
-                          onTap: () {
-                            GroupTicketingController().fetchGroups('KSA');
+                          onTap: () async {
+                            // Await the fetch to complete before navigating
+                            await controller.fetchGroups('KSA');
                             Get.to(() => SelectPkgScreen());
                             Get.snackbar(
-                              "Tapped!",
-                              "KSA One Way Groups selected",
+                              "Loading",
+                              "KSA One Way Groups data loaded",
                               snackPosition: SnackPosition.BOTTOM,
                             );
                           },
@@ -113,12 +118,13 @@ class GroupTicket extends StatelessWidget {
                         child: DestinationCard(
                           image: 'assets/images/4.png',
                           title: 'OMAN One Way Groups',
-                          onTap: () {
-                            GroupTicketingController().fetchGroups('OMAN');
+                          onTap: () async {
+                            // Await the fetch to complete before navigating
+                            await controller.fetchGroups('OMAN');
                             Get.to(() => SelectPkgScreen());
                             Get.snackbar(
-                              "Tapped!",
-                              "OMAN One Way Groups selected",
+                              "Loading",
+                              "OMAN One Way Groups data loaded",
                               snackPosition: SnackPosition.BOTTOM,
                             );
                           },
@@ -129,12 +135,13 @@ class GroupTicket extends StatelessWidget {
                         child: DestinationCard(
                           image: 'assets/images/4.png',
                           title: 'UK One Way Groups',
-                          onTap: () {
-                            GroupTicketingController().fetchGroups('UK');
+                          onTap: () async {
+                            // Await the fetch to complete before navigating
+                            await controller.fetchGroups('UK');
                             Get.to(() => SelectPkgScreen());
                             Get.snackbar(
-                              "Tapped!",
-                              "UK One Way Groups selected",
+                              "Loading",
+                              "UK One Way Groups data loaded",
                               snackPosition: SnackPosition.BOTTOM,
                             );
                           },
@@ -153,12 +160,13 @@ class GroupTicket extends StatelessWidget {
                         child: DestinationCard(
                           image: 'assets/images/5.png',
                           title: 'UMRAH',
-                          onTap: () {
-                            GroupTicketingController().fetchGroups('UMRAH');
+                          onTap: () async {
+                            // Await the fetch to complete before navigating
+                            await controller.fetchGroups('UMRAH');
                             Get.to(() => SelectPkgScreen());
                             Get.snackbar(
-                              "Tapped!",
-                              "UMRAH selected",
+                              "Loading",
+                              "UMRAH data loaded",
                               snackPosition: SnackPosition.BOTTOM,
                             );
                           },
@@ -169,12 +177,13 @@ class GroupTicket extends StatelessWidget {
                         child: DestinationCard(
                           image: 'assets/images/6.png',
                           title: 'All Types',
-                          onTap: () {
-                            GroupTicketingController().fetchGroups('');
+                          onTap: () async {
+                            // Await the fetch to complete before navigating
+                            await controller.fetchGroups('');
                             Get.to(() => SelectPkgScreen());
                             Get.snackbar(
-                              "Tapped!",
-                              "All Types selected",
+                              "Loading",
+                              "All Types data loaded",
                               snackPosition: SnackPosition.BOTTOM,
                             );
                           },
@@ -193,6 +202,7 @@ class GroupTicket extends StatelessWidget {
   }
 }
 
+// DestinationCard class remains the same
 class DestinationCard extends StatelessWidget {
   final String image;
   final String title;

@@ -7,7 +7,9 @@ import 'package:oneroof/views/group_ticket/flight_pkg/pkg_model.dart';
 import '../../../services/api_service_group_tickets.dart';
 
 class FlightPKGController extends GetxController {
-  final GroupTicketingController apiController = Get.put(GroupTicketingController());
+  final GroupTicketingController apiController = Get.put(
+    GroupTicketingController(),
+  );
   final TravelDataController travelController = Get.put(TravelDataController());
 
   // Observables
@@ -75,10 +77,19 @@ class FlightPKGController extends GetxController {
     isLoading.value = true;
     errorMessage.value = '';
     try {
-      final response = await apiController.fetchGroups('KSA');
+      // Use the stored selected region
+      final region = apiController.selectedRegion.value;
+      print("FlightPKGController fetching flights for region: $region");
+      
+      // Important: We're not calling fetchGroups again here - we're getting the data that was already fetched
+      // when the user tapped on a destination card
+      final response = await apiController.fetchGroups(region);
+      
+      print("Got ${response.length} flights for region: $region");
       groupFlights.assignAll(response);
     } catch (e) {
       errorMessage.value = 'Failed to load flights: ${e.toString()}';
+      print("Error in fetchGroupFlights: $e");
       groupFlights.clear();
     } finally {
       isLoading.value = false;
@@ -94,9 +105,10 @@ class FlightPKGController extends GetxController {
     if (airlineId != 0) {
       final matchedAirline = travelController.getAirlineById(airlineId);
       if (matchedAirline != null) {
-        logoUrl = matchedAirline.logoUrl.isNotEmpty
-            ? matchedAirline.logoUrl
-            : _getDefaultLogoUrl();
+        logoUrl =
+            matchedAirline.logoUrl.isNotEmpty
+                ? matchedAirline.logoUrl
+                : _getDefaultLogoUrl();
       }
     }
 
@@ -137,21 +149,27 @@ class FlightPKGController extends GetxController {
   RxList<GroupFlightModel> get filteredFlights {
     return groupFlights
         .where((groupFlight) {
-      final sector = groupFlight['sector']?.toString().toLowerCase() ?? '';
-      final airlineName = groupFlight['airline']?['airline_name']?.toString().toLowerCase() ?? '';
-      final flightDate = groupFlight['dept_date']?.toString() ?? '';
+          final sector = groupFlight['sector']?.toString().toLowerCase() ?? '';
+          final airlineName =
+              groupFlight['airline']?['airline_name']
+                  ?.toString()
+                  .toLowerCase() ??
+              '';
+          final flightDate = groupFlight['dept_date']?.toString() ?? '';
 
-      bool sectorMatch = selectedSector.value == 'all' ||
-          sector.contains(selectedSector.value.toLowerCase());
+          bool sectorMatch =
+              selectedSector.value == 'all' ||
+              sector.contains(selectedSector.value.toLowerCase());
 
-      bool airlineMatch = selectedAirline.value == 'all' ||
-          airlineName.contains(selectedAirline.value.toLowerCase());
+          bool airlineMatch =
+              selectedAirline.value == 'all' ||
+              airlineName.contains(selectedAirline.value.toLowerCase());
 
-      bool dateMatch = selectedDate.value == 'all' ||
-          flightDate == selectedDate.value;
+          bool dateMatch =
+              selectedDate.value == 'all' || flightDate == selectedDate.value;
 
-      return sectorMatch && airlineMatch && dateMatch;
-    })
+          return sectorMatch && airlineMatch && dateMatch;
+        })
         .map((groupFlight) => convertToFlightModel(groupFlight))
         .toList()
         .obs;
