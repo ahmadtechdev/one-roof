@@ -49,7 +49,7 @@ class GroupTicketingController extends GetxController {
       if (response.statusCode == 200) {
         return response.data['sectors'] as List<dynamic>;
       } else {
-        print("Error: ${response.statusMessage}");
+        print("Eror: ${response.statusMessage}");
         return [];
       }
     } catch (e) {
