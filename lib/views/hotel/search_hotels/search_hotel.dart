@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:get/get.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:oneroof/services/api_service_hotel.dart';
 import '../../../utility/colors.dart';
 import 'search_hotel_controller.dart';
 import 'select_room/selectroom.dart';
@@ -21,10 +22,8 @@ class _HotelScreenState extends State<HotelScreen> {
     Widget buildRatingBar(double rating) {
       return RatingBarIndicator(
         rating: rating,
-        itemBuilder: (context, index) => const Icon(
-          Icons.star,
-          color: Colors.orange,
-        ),
+        itemBuilder:
+            (context, index) => const Icon(Icons.star, color: Colors.orange),
         itemCount: 5,
         itemSize: 20.0,
         direction: Axis.horizontal,
@@ -36,94 +35,98 @@ class _HotelScreenState extends State<HotelScreen> {
         context: context,
         isScrollControlled: true,
         builder: (BuildContext context) {
-          return Obx(() => Padding(
-                padding: MediaQuery.of(context).viewInsets,
-                child: Container(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Filter by Rating',
-                        style: TextStyle(
-                            fontSize: 18, fontWeight: FontWeight.bold),
+          return Obx(
+                () => Padding(
+              padding: MediaQuery.of(context).viewInsets,
+              child: Container(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Filter by Rating',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
                       ),
-                      const SizedBox(height: 16),
-                      Column(
-                        children: List.generate(6, (index) {
-                          if (index == 5) {
-                            return Row(
-                              children: [
-                                Checkbox(
-                                  value: !controller.selectedRatings
-                                      .contains(true),
-                                  onChanged: (value) {
-                                    if (value == true) {
-                                      controller.resetFilters();
-                                    }
-                                  },
-                                  activeColor: TColors.primary,
-                                ),
-                                const Text('All Hotels'),
-                              ],
-                            );
-                          }
+                    ),
+                    const SizedBox(height: 16),
+                    Column(
+                      children: List.generate(6, (index) {
+                        if (index == 5) {
                           return Row(
                             children: [
                               Checkbox(
-                                value: controller.selectedRatings[index],
+                                value:
+                                !controller.selectedRatings.contains(true),
                                 onChanged: (value) {
-                                  controller.selectedRatings[index] = value!;
+                                  if (value == true) {
+                                    controller.resetFilters();
+                                  }
                                 },
                                 activeColor: TColors.primary,
                               ),
-                              buildRatingBar((5 - index).toDouble()),
-                              const SizedBox(width: 8),
-                              Text(
-                                '(${controller.hotels.where((hotel) => hotel['rating'] == 5 - index).length})',
-                                style: const TextStyle(color: Colors.grey),
-                              ),
+                              const Text('All Hotels'),
                             ],
                           );
-                        }),
-                      ),
-                      const SizedBox(height: 16),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          ElevatedButton(
-                            onPressed: () {
-                              Get.back();
+                        }
+                        return Row(
+                          children: [
+                            Checkbox(
+                              value: controller.selectedRatings[index],
+                              onChanged: (value) {
+                                controller.selectedRatings[index] = value!;
+                              },
+                              activeColor: TColors.primary,
+                            ),
+                            buildRatingBar((5 - index).toDouble()),
+                            const SizedBox(width: 8),
+                            Text(
+                              '(${controller.hotels.where((hotel) => hotel['rating'] == 5 - index).length})',
+                              style: const TextStyle(color: Colors.grey),
+                            ),
+                          ],
+                        );
+                      }),
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        ElevatedButton(
+                          onPressed: () {
+                            Get.back();
 
-                              // setState(() {
-                              //   selectedOption = 'Recommended';
-                              // });
-                              controller.resetFilters();
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.grey[200],
-                              foregroundColor: Colors.black,
-                            ),
-                            child: const Text('Reset'),
+                            // setState(() {
+                            //   selectedOption = 'Recommended';
+                            // });
+                            controller.resetFilters();
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.grey[200],
+                            foregroundColor: Colors.black,
                           ),
-                          ElevatedButton(
-                            onPressed: () {
-                              controller.filterByRating();
-                              Get.back();
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: TColors.primary,
-                              foregroundColor: Colors.white,
-                            ),
-                            child: const Text('Confirm'),
+                          child: const Text('Reset'),
+                        ),
+                        ElevatedButton(
+                          onPressed: () {
+                            controller.filterByRating();
+                            Get.back();
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: TColors.primary,
+                            foregroundColor: Colors.white,
                           ),
-                        ],
-                      ),
-                    ],
-                  ),
+                          child: const Text('Confirm'),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
-              ));
+              ),
+            ),
+          );
         },
       );
     }
@@ -134,10 +137,7 @@ class _HotelScreenState extends State<HotelScreen> {
           onPressed: () {
             Get.back();
           },
-          icon: const Icon(
-            Icons.arrow_back,
-            color: TColors.primary,
-          ),
+          icon: const Icon(Icons.arrow_back, color: TColors.primary),
         ),
       ),
       body: Column(
@@ -159,8 +159,10 @@ class _HotelScreenState extends State<HotelScreen> {
                     decoration: InputDecoration(
                       hintText: 'Search for hotels...',
                       hintStyle: const TextStyle(color: TColors.black),
-                      prefixIcon:
-                          const Icon(Icons.search, color: TColors.primary),
+                      prefixIcon: const Icon(
+                        Icons.search,
+                        color: TColors.primary,
+                      ),
                       fillColor: Colors.white,
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -216,8 +218,12 @@ class _HotelScreenState extends State<HotelScreen> {
     );
   }
 
-  Widget _buildButton(BuildContext context, IconData icon, String label,
-      VoidCallback onPressed) {
+  Widget _buildButton(
+      BuildContext context,
+      IconData icon,
+      String label,
+      VoidCallback onPressed,
+      ) {
     return ElevatedButton.icon(
       onPressed: onPressed,
       icon: Icon(icon, color: TColors.text),
@@ -225,15 +231,15 @@ class _HotelScreenState extends State<HotelScreen> {
       style: ElevatedButton.styleFrom(
         backgroundColor: TColors.primary.withOpacity(0.3),
         elevation: 0,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       ),
     );
   }
 
   void _showSortOptionsBottomSheet(
-      BuildContext context, SearchHotelController controller) {
+      BuildContext context,
+      SearchHotelController controller,
+      ) {
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
@@ -330,17 +336,23 @@ class _HotelScreenState extends State<HotelScreen> {
   }
 
   void _showPriceRangeBottomSheet(
-      BuildContext context, SearchHotelController controller) {
+      BuildContext context,
+      SearchHotelController controller,
+      ) {
     // Calculate min and max prices dynamically from the hotels list
-    final prices = controller.hotels
-        .map((hotel) =>
-            double.parse(hotel['price'].toString().replaceAll(',', '').trim()))
+    final prices =
+    controller.hotels
+        .map(
+          (hotel) => double.parse(
+        hotel['price'].toString().replaceAll(',', '').trim(),
+      ),
+    )
         .toList();
 
     double minPrice =
-        prices.isNotEmpty ? prices.reduce((a, b) => a < b ? a : b) : 0.0;
+    prices.isNotEmpty ? prices.reduce((a, b) => a < b ? a : b) : 0.0;
     double maxPrice =
-        prices.isNotEmpty ? prices.reduce((a, b) => a > b ? a : b) : 0.0;
+    prices.isNotEmpty ? prices.reduce((a, b) => a > b ? a : b) : 0.0;
 
     double lowerValue = minPrice;
     double upperValue = maxPrice;
@@ -436,20 +448,60 @@ class _HotelScreenState extends State<HotelScreen> {
   }
 }
 
-class HotelCard extends StatelessWidget {
+class HotelCard extends StatefulWidget {
   final Map hotel;
 
-  HotelCard({super.key, required this.hotel});
+  const HotelCard({super.key, required this.hotel});
 
+  @override
+  State<HotelCard> createState() => _HotelCardState();
+}
+
+class _HotelCardState extends State<HotelCard> {
   final SearchHotelController controller = Get.find<SearchHotelController>();
+  final ApiServiceHotel apiService = Get.find<ApiServiceHotel>();
+  String? imageUrl;
+  bool isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchHotelImage();
+  }
+
+  Future<void> _fetchHotelImage() async {
+    try {
+      final hotelCode = widget.hotel['hotelCode']?.toString();
+      if (hotelCode != null && hotelCode.isNotEmpty) {
+        final images = await apiService.getHotelImage(hotelCode);
+        if (images != null && images.isNotEmpty) {
+          setState(() {
+            imageUrl = images.first;
+            isLoading = false;
+          });
+        } else {
+          setState(() {
+            isLoading = false;
+          });
+        }
+      } else {
+        setState(() {
+          isLoading = false;
+        });
+      }
+    } catch (e) {
+      print("Error fetching hotel image: $e");
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       elevation: 4,
       child: Column(
         children: <Widget>[
@@ -469,7 +521,7 @@ class HotelCard extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            hotel['name'] ?? 'Unknown Hotel',
+                            widget.hotel['name'] ?? 'Unknown Hotel',
                             style: const TextStyle(
                               fontSize: 20,
                               fontWeight: FontWeight.bold,
@@ -480,7 +532,7 @@ class HotelCard extends StatelessWidget {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            hotel['address'] ?? 'Address not available',
+                            widget.hotel['address'] ?? 'Address not available',
                             style: TextStyle(
                               fontSize: 12,
                               color: Colors.grey[700],
@@ -494,14 +546,18 @@ class HotelCard extends StatelessWidget {
                     GestureDetector(
                       onTap: () {
                         Get.to(
-                          () => MapScreen(
-                            latitude: double.tryParse(
-                                    hotel['latitude']?.toString() ?? '') ??
+                              () => MapScreen(
+                            latitude:
+                            double.tryParse(
+                              widget.hotel['latitude']?.toString() ?? '',
+                            ) ??
                                 0.0,
-                            longitude: double.tryParse(
-                                    hotel['longitude']?.toString() ?? '') ??
+                            longitude:
+                            double.tryParse(
+                              widget.hotel['longitude']?.toString() ?? '',
+                            ) ??
                                 0.0,
-                            hotelName: hotel['name'] ?? 'Unknown Hotel',
+                            hotelName: widget.hotel['name'] ?? 'Unknown Hotel',
                           ),
                         );
                       },
@@ -510,33 +566,33 @@ class HotelCard extends StatelessWidget {
                         color: TColors.primary,
                         size: 30,
                       ),
-                    )
+                    ),
                   ],
                 ),
                 const SizedBox(height: 8),
                 Row(
                   children: [
                     RatingBar.builder(
-                      initialRating: (hotel['rating'] ?? 3.0).toDouble(),
+                      initialRating: (widget.hotel['rating'] ?? 3.0).toDouble(),
                       minRating: 1,
                       direction: Axis.horizontal,
                       allowHalfRating: true,
                       itemCount: 5,
                       itemSize: 15,
                       itemPadding: const EdgeInsets.symmetric(horizontal: 1.0),
-                      itemBuilder: (context, _) => const Icon(
-                        Icons.star,
-                        color: Colors.amber,
-                      ),
+                      itemBuilder:
+                          (context, _) =>
+                      const Icon(Icons.star, color: Colors.amber),
                       onRatingUpdate: (rating) {},
                     ),
                     const Spacer(),
                     Text(
-                      'PKR ${(double.parse(hotel['price'] ?? '0') * 278.5).toStringAsFixed(2)}',
+                      'PKR ${(double.parse(widget.hotel['price'] ?? '0') * 278.5).toStringAsFixed(2)}',
                       style: const TextStyle(
-                          fontSize: 18,
-                          color: TColors.text,
-                          fontWeight: FontWeight.bold),
+                        fontSize: 18,
+                        color: TColors.text,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ],
                 ),
@@ -545,35 +601,45 @@ class HotelCard extends StatelessWidget {
           ),
           Container(
             height: 60,
-            padding:
-                const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 12.0,
+              vertical: 8.0,
+            ),
             child: ElevatedButton(
               onPressed: () {
                 // Update hotel information
-                controller.hotelCode.value = hotel['hotelCode'].toString();
-                controller.hotelCity.value = hotel['hotelCity'] ?? '';
-                controller.hotelName.value = hotel['name'] ?? 'Unknown Hotel';
-                controller.destinationName.value = hotel['address'] ?? '';
-                controller.zoneName.value = hotel['zoneName'] ?? '';
-                controller.categoryName.value = hotel['rating'].toString();
-                controller.lat.value = hotel['latitude'];
-                controller.lon.value = hotel['longitude'];
+                controller.hotelCode.value =
+                    widget.hotel['hotelCode'].toString();
+                controller.hotelCity.value = widget.hotel['hotelCity'] ?? '';
+                controller.hotelName.value =
+                    widget.hotel['name'] ?? 'Unknown Hotel';
+                controller.destinationName.value =
+                    widget.hotel['address'] ?? '';
+                controller.zoneName.value = widget.hotel['zoneName'] ?? '';
+                controller.categoryName.value =
+                    widget.hotel['rating'].toString();
+                controller.lat.value = widget.hotel['latitude'];
+                controller.lon.value = widget.hotel['longitude'];
 
                 // Clear previous room data
                 controller.roomsdata.clear();
 
                 // Transform rooms data from the original response
                 final hotelData = controller
-                    .originalResponse.value['hotels']?['hotels']
+                    .originalResponse
+                    .value['hotels']?['hotels']
                     ?.firstWhere(
-                        (h) =>
-                            h['code'].toString() ==
-                            hotel['hotelCode'].toString(),
-                        orElse: () => null);
+                      (h) =>
+                  h['code'].toString() ==
+                      widget.hotel['hotelCode'].toString(),
+                  orElse: () => null,
+                );
 
                 if (hotelData != null && hotelData['rooms'] != null) {
-                  final roomsData = (hotelData['rooms'] as List).map((room) {
-                    final rates = (room['rates'] as List?)?.map((rate) {
+                  final roomsData =
+                  (hotelData['rooms'] as List).map((room) {
+                    final rates =
+                        (room['rates'] as List?)?.map((rate) {
                           return {
                             'rateKey': rate['rateKey'],
                             'rateClass': rate['rateClass'],
@@ -582,18 +648,22 @@ class HotelCard extends StatelessWidget {
                             'boardName': rate['boardName'],
                             'meal': rate['boardName'],
                             'price': {
-                              'net': double.tryParse(
-                                      rate['net']?.toString() ?? '0') ??
+                              'net':
+                              double.tryParse(
+                                rate['net']?.toString() ?? '0',
+                              ) ??
                                   0,
-                              'total': double.tryParse(
-                                      rate['net']?.toString() ?? '0') ??
+                              'total':
+                              double.tryParse(
+                                rate['net']?.toString() ?? '0',
+                              ) ??
                                   0,
                             },
                             'cancellationPolicies':
-                                rate['cancellationPolicies'] ?? [],
+                            rate['cancellationPolicies'] ?? [],
                           };
                         }).toList() ??
-                        [];
+                            [];
 
                     return {
                       'roomCode': room['code'],
@@ -616,49 +686,56 @@ class HotelCard extends StatelessWidget {
                 ),
                 minimumSize: const Size(double.infinity, 40),
               ),
-              child: const Text('Select Room',
-                  style: TextStyle(color: TColors.background)),
+              child: const Text(
+                'Select Room',
+                style: TextStyle(color: TColors.background),
+              ),
             ),
-          )
+          ),
         ],
       ),
     );
   }
 
   Widget _buildHotelImage() {
-    String imageUrl = hotel['image'] ?? '';
-
-    // Check if the image is a URL
-    if (imageUrl.startsWith('http')) {
-      return CachedNetworkImage(
-        imageUrl: imageUrl,
+    if (isLoading) {
+      return Container(
         height: 200,
         width: double.infinity,
-        fit: BoxFit.cover,
-        placeholder: (context, url) => Container(
-          color: Colors.grey[300],
-          child: const Center(
-            child: CircularProgressIndicator(
-              color: TColors.primary,
-            ),
-          ),
+        color: Colors.grey[300],
+        child: const Center(
+          child: CircularProgressIndicator(color: TColors.primary),
         ),
-        errorWidget: (context, url, error) => Image.asset(
-          'assets/img/cardbg/4.jpg',
-          height: 200,
-          width: double.infinity,
-          fit: BoxFit.cover,
-        ),
-      );
-    } else {
-      // If not a URL, assume it's a local asset path
-      return Image.asset(
-        imageUrl.isEmpty ? 'assets/img/cardbg/4.jpg' : imageUrl,
-        height: 200,
-        width: double.infinity,
-        fit: BoxFit.cover,
       );
     }
+
+    if (imageUrl != null && imageUrl!.startsWith('http')) {
+      return CachedNetworkImage(
+        imageUrl: imageUrl!,
+        height: 200,
+        width: double.infinity,
+        fit: BoxFit.cover,
+        placeholder:
+            (context, url) => Container(
+          color: Colors.grey[300],
+          child: const Center(
+            child: CircularProgressIndicator(color: TColors.primary),
+          ),
+        ),
+        errorWidget: (context, url, error) => _buildDefaultImage(),
+      );
+    } else {
+      return _buildDefaultImage();
+    }
+  }
+
+  Widget _buildDefaultImage() {
+    return Image.asset(
+      'assets/images/hotel.jpg',
+      height: 200,
+      width: double.infinity,
+      fit: BoxFit.cover,
+    );
   }
 }
 
@@ -687,10 +764,7 @@ class MapScreen extends StatelessWidget {
           onPressed: () {
             Get.back();
           },
-          icon: const Icon(
-            Icons.arrow_back,
-            color: TColors.primary,
-          ),
+          icon: const Icon(Icons.arrow_back, color: TColors.primary),
         ),
       ),
       body: GoogleMap(

@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:crypto/crypto.dart';
 import 'package:dio/dio.dart';
 import 'package:get/get.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../views/hotel/search_hotels/booking_hotel/booking_controller.dart';
 import '../views/hotel/search_hotels/search_hotel_controller.dart';
@@ -30,82 +31,6 @@ class ApiServiceHotel extends GetxService {
         'Content-Type': 'application/json',
       },
     );
-  }
-
-  Future<Map<String, dynamic>?> getCancellationPolicy({
-    required String sessionId,
-    required String hotelCode,
-    required int groupCode,
-    required String currency,
-    required List<String> rateKeys,
-  }) async {
-    final requestBody = {
-      "SessionId": sessionId,
-      "SearchParameter": {
-        "HotelCode": hotelCode,
-        "GroupCode": groupCode,
-        "Currency": currency,
-        "RateKeys": {"RateKey": rateKeys},
-      },
-    };
-
-    print(
-      'Fetching Cancellation Policy with Request: ${json.encode(requestBody)}',
-    );
-    try {
-      final response = await dio.post(
-        '/hotel/CancellationPolicy',
-        data: requestBody,
-        options: _defaultHeaders(),
-      );
-
-      if (response.statusCode == 200) {
-        print('Cancellation Policy Response: ${response.data}');
-        return response.data as Map<String, dynamic>;
-      } else {
-        print('Cancellation Policy Failed: ${response.statusMessage}');
-      }
-    } catch (e) {
-      print('Error fetching cancellation policy: $e');
-    }
-    return null;
-  }
-
-  Future<Map<String, dynamic>?> getPriceBreakup({
-    required String sessionId,
-    required String hotelCode,
-    required int groupCode,
-    required String currency,
-    required List<String> rateKeys,
-  }) async {
-    final requestBody = {
-      "SessionId": sessionId,
-      "SearchParameter": {
-        "HotelCode": hotelCode,
-        "GroupCode": groupCode,
-        "Currency": currency,
-        "RateKeys": {"RateKey": rateKeys},
-      },
-    };
-
-    print('Fetching Price Breakup with Request: ${json.encode(requestBody)}');
-    try {
-      final response = await dio.post(
-        '/hotel/PriceBreakup',
-        data: requestBody,
-        options: _defaultHeaders(),
-      );
-
-      if (response.statusCode == 200) {
-        print('Price Breakup Response: ${response.data}');
-        return response.data as Map<String, dynamic>;
-      } else {
-        print('Price Breakup Failed: ${response.statusMessage}');
-      }
-    } catch (e) {
-      print('Error fetching price breakup: $e');
-    }
-    return null;
   }
 
   Future<bool> bookHotel(Map<String, dynamic> requestBody) async {
@@ -200,6 +125,7 @@ class ApiServiceHotel extends GetxService {
 
     return digest.toString();
   }
+
   Future<void> fetchHotel({
     required String checkInDate,
     required String checkOutDate,
@@ -256,6 +182,7 @@ class ApiServiceHotel extends GetxService {
       );
 
       if (response.statusCode == 200) {
+        print(response.data);
         if (response.data == null) {
           throw Exception('Empty response received');
         }
@@ -268,6 +195,7 @@ class ApiServiceHotel extends GetxService {
         controller.sessionId.value = response.data['auditData']?['token'] ?? '';
 
         // Transform hotel data for the UI with null safety
+        // In the fetchHotel method, change the hotel data mapping to:
         controller.hotels.value =
             hotels.map((hotel) {
               final minRate =
@@ -279,13 +207,11 @@ class ApiServiceHotel extends GetxService {
                 'address':
                 '${hotel['zoneName'] ?? ''}, ${hotel['destinationName'] ?? ''}',
                 'price': minRate.toStringAsFixed(2),
-                'image': 'assets/images/hotel.jpg',
                 'latitude': hotel['latitude']?.toString() ?? '0',
                 'longitude': hotel['longitude']?.toString() ?? '0',
                 'hotelCity': hotel['destinationName'] ?? '',
               };
             }).toList();
-
         // Store original hotels data
         controller.originalHotels.value = List.from(controller.hotels);
       } else {
@@ -296,6 +222,7 @@ class ApiServiceHotel extends GetxService {
       rethrow;
     }
   }
+
   Future<Map<String, dynamic>?> checkRate({
     required List<String> rateKeys,
   }) async {
@@ -376,24 +303,44 @@ class ApiServiceHotel extends GetxService {
     }
   }
 
-  String? _sastayToken;
-  DateTime? _tokenExpiry;
+  // Make these static to persist across instances
+  String TOKEN_KEY = "sastay_token";
+  String TOKEN_EXPIRY_KEY = "sastay_token_expiry";
 
+  // Modify your token management functions
   Future<String?> _getOrGenerateToken() async {
-    // If we have a token that hasn't expired, use it
-    if (_sastayToken != null &&
-        _tokenExpiry != null &&
-        _tokenExpiry!.isAfter(DateTime.now())) {
-      return _sastayToken;
+    // Try to get token from SharedPreferences first
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? savedToken = prefs.getString(TOKEN_KEY);
+    String? expiryString = prefs.getString(TOKEN_EXPIRY_KEY);
+
+    DateTime? savedExpiry;
+    if (expiryString != null) {
+      savedExpiry = DateTime.parse(expiryString);
+    }
+
+    // If we have a valid saved token that hasn't expired, use it
+    if (savedToken != null &&
+        savedExpiry != null &&
+        savedExpiry.isAfter(DateTime.now())) {
+      print("Using saved token from SharedPreferences");
+      return savedToken;
     }
 
     // Otherwise generate a new token
+    print("Generating new token...");
     try {
-      _sastayToken = await generateSastayToken();
-      if (_sastayToken != null) {
+      String? newToken = await generateSastayToken();
+      if (newToken != null) {
         // Set expiry to 1 hour from now (adjust based on actual token expiry)
-        _tokenExpiry = DateTime.now().add(Duration(hours: 1));
-        return _sastayToken;
+        DateTime newExpiry = DateTime.now().add(Duration(hours: 1));
+
+        // Save to SharedPreferences
+        await prefs.setString(TOKEN_KEY, newToken);
+        await prefs.setString(TOKEN_EXPIRY_KEY, newExpiry.toIso8601String());
+
+        print("New token generated and saved, valid until: $newExpiry");
+        return newToken;
       }
     } catch (e) {
       print("Error getting token: $e");
@@ -549,6 +496,100 @@ class ApiServiceHotel extends GetxService {
     } catch (e) {
       print("Exception in fetchHotelIds: $e");
       return [];
+    }
+  }
+
+  // Add this function to ApiServiceHotel class
+  Future<List<String>?> getHotelImage(String hotelId) async {
+    try {
+      String? token = await _getOrGenerateToken();
+      if (token == null) {
+        print("Failed to generate token for hotel image fetch");
+        return null;
+      }
+
+      Map<String, String> headers = {
+        'Userid': 'Group-121',
+        'Username': 'travelocity',
+        'Authorization': token,
+        'Content-Type': 'application/json',
+      };
+
+      var requestData = json.encode({
+        "req_type": "get_hotel_details",
+        "hotel_id": hotelId.toString(),
+      });
+
+      var response = await dio.request(
+        'https://agent1.pk/group_api/sastay_restapi.php',
+        options: Options(method: 'POST', headers: headers),
+        data: requestData,
+      );
+
+      if (response.statusCode == 200) {
+        // Check if response has expected structure
+        if (response.data is Map<String, dynamic> &&
+            response.data.containsKey('response') &&
+            response.data['response'] is Map<String, dynamic> &&
+            response.data['response'].containsKey('hotel_details') &&
+            response.data['response']['hotel_details'] is List &&
+            response.data['response']['hotel_details'].isNotEmpty) {
+          // Get the first hotel details object (since it's a list)
+          var hotelDetails = response.data['response']['hotel_details'][0];
+
+          if (hotelDetails is Map<String, dynamic> &&
+              hotelDetails.containsKey('images')) {
+            // Get the images string and split by 'sep'
+            String imagesString = hotelDetails['images'];
+            List<String> rawImagesList = imagesString.split('sep');
+
+            // Format image URLs properly with fixed logic
+            List<String> formattedImageUrls =
+            rawImagesList.map((rawPath) {
+              // Find the second occurrence of "con" in the string
+              int firstConPosition = rawPath.indexOf('con');
+              if (firstConPosition != -1) {
+                int secondConPosition = rawPath.indexOf(
+                  'con',
+                  firstConPosition + 1,
+                );
+                if (secondConPosition != -1) {
+                  // Extract the path starting after the second "con"
+                  String cleanPath = rawPath.substring(
+                    secondConPosition + 3,
+                  );
+                  return 'https://photos.hotelbeds.com/giata/$cleanPath';
+                }
+              }
+
+              // Fallback: If we can't find the pattern, use the raw path
+              return 'https://photos.hotelbeds.com/giata/$rawPath';
+            }).toList();
+
+            print("the hotel code is ${hotelDetails['hotel_code']}");
+
+            // Print for debugging
+            print("Hotel images found: ${formattedImageUrls.length}");
+            if (formattedImageUrls.isNotEmpty) {
+              print("First formatted image URL: ${formattedImageUrls.first}");
+            }
+
+            return formattedImageUrls;
+          }
+        }
+
+        print("Invalid response structure: ${json.encode(response.data)}");
+        return null;
+      } else {
+        print(
+          "Error fetching hotel images: ${response.statusCode} - ${response.statusMessage}",
+        );
+        return null;
+      }
+    } catch (e, stackTrace) {
+      print("Exception in getHotelImage: $e");
+      print("Stack trace: $stackTrace");
+      return null;
     }
   }
 }
