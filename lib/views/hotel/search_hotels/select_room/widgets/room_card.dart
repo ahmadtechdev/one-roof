@@ -8,7 +8,8 @@ class RoomCard extends StatelessWidget {
   final Function(dynamic) onSelect;
   final bool isSelected;
   final bool showBookNowButton;
-  final bool isLoading; // Add this new parameter
+  final bool isLoading;
+  final int roomIndex; // Added parameter to identify this specific room
 
   const RoomCard({
     super.key,
@@ -17,7 +18,8 @@ class RoomCard extends StatelessWidget {
     required this.onSelect,
     required this.isSelected,
     this.showBookNowButton = false,
-    this.isLoading = false, // Default to false
+    this.isLoading = false,
+    required this.roomIndex,
   });
 
   List<Map<String, dynamic>> _getCancellationPolicies() {
@@ -26,7 +28,8 @@ class RoomCard extends StatelessWidget {
 
     final firstRate = rates.first as Map<String, dynamic>;
     return List<Map<String, dynamic>>.from(
-        firstRate['cancellationPolicies'] ?? []);
+      firstRate['cancellationPolicies'] ?? [],
+    );
   }
 
   String _getRateType() {
@@ -97,18 +100,18 @@ class RoomCard extends StatelessWidget {
                 // Meal Plan Section
                 Row(
                   children: [
-                    const Icon(Icons.restaurant_menu,
-                        color: TColors.primary, size: 20),
+                    const Icon(
+                      Icons.restaurant_menu,
+                      color: TColors.primary,
+                      size: 20,
+                    ),
                     const SizedBox(width: 8),
                     Text(
                       _getMealPlan(),
-                      style: const TextStyle(
-                        color: TColors.grey,
-                        fontSize: 14,
-                      ),
+                      style: const TextStyle(color: TColors.grey, fontSize: 14),
                     ),
                   ],
-                ), 
+                ),
                 const SizedBox(height: 8),
 
                 // Rate Type Badge
@@ -124,10 +127,7 @@ class RoomCard extends StatelessWidget {
                       children: [
                         const Text(
                           'Price per night',
-                          style: TextStyle(
-                            color: TColors.grey,
-                            fontSize: 12,
-                          ),
+                          style: TextStyle(color: TColors.grey, fontSize: 12),
                         ),
                         Text(
                           'PKR ${(_getPricePerNight() * 278.5).toStringAsFixed(2)}',
@@ -167,22 +167,21 @@ class RoomCard extends StatelessWidget {
                 if (cancellationPolicies.isNotEmpty) ...[
                   const Text(
                     'Cancellation Policy',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
-                    ),
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                   ),
                   const SizedBox(height: 8),
-                  ...cancellationPolicies.map((policy) => Padding(
-                        padding: const EdgeInsets.only(bottom: 4),
-                        child: Text(
-                          '• ${policy['text'] ?? 'No cancellation policy available'}',
-                          style: const TextStyle(
-                            color: TColors.grey,
-                            fontSize: 12,
-                          ),
+                  ...cancellationPolicies.map(
+                    (policy) => Padding(
+                      padding: const EdgeInsets.only(bottom: 4),
+                      child: Text(
+                        '• ${policy['text'] ?? 'No cancellation policy available'}',
+                        style: const TextStyle(
+                          color: TColors.grey,
+                          fontSize: 12,
                         ),
-                      )),
+                      ),
+                    ),
+                  ),
                   const SizedBox(height: 16),
                 ],
 
@@ -198,9 +197,12 @@ class RoomCard extends StatelessWidget {
                         child: ElevatedButton(
                           onPressed: isLoading ? null : () => onSelect(room),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: showBookNowButton
-                                ? Colors.green
-                                : (isSelected ? Colors.green : TColors.primary),
+                            backgroundColor:
+                                showBookNowButton
+                                    ? Colors.green
+                                    : (isSelected
+                                        ? Colors.green
+                                        : TColors.primary),
                             padding: const EdgeInsets.symmetric(vertical: 12),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(8),
@@ -230,7 +232,7 @@ class RoomCard extends StatelessWidget {
                         ),
                     ],
                   ),
-                )
+                ),
               ],
             ),
           ),

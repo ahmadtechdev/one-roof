@@ -6,21 +6,24 @@ import '../../../services/api_service_group_tickets.dart';
 import '../flight_pkg/pkg_model.dart';
 
 class GroupTicketBookingController extends GetxController {
-  final Rx<BookingData> bookingData = BookingData(
-    groupId: 0,
-    groupName: '',
-    sector: '',
-    availableSeats: 1,
-    adults: 1,
-    children: 0,
-    infants: 0,
-    adultPrice: 0,
-    childPrice: 0,
-    infantPrice: 0,
-    groupPriceDetailId: 0,
-  ).obs;
+  final Rx<BookingData> bookingData =
+      BookingData(
+        groupId: 0,
+        groupName: '',
+        sector: '',
+        availableSeats: 1,
+        adults: 1,
+        children: 0,
+        infants: 0,
+        adultPrice: 0,
+        childPrice: 0,
+        infantPrice: 0,
+        groupPriceDetailId: 0,
+      ).obs;
 
-  final GroupTicketingController apiController = Get.put(GroupTicketingController());
+  final GroupTicketingController apiController = Get.put(
+    GroupTicketingController(),
+  );
   final formKey = GlobalKey<FormState>();
   final RxBool isFormValid = false.obs;
 
@@ -29,14 +32,15 @@ class GroupTicketBookingController extends GetxController {
   List<String> infantTitles = ['INF'];
 
   /// Initializes booking data from flight model
-  void initializeFromFlight(GroupFlightModel flight, int groupId) async  {
+  void initializeFromFlight(GroupFlightModel flight, int groupId) async {
     print("check 2");
     print(groupId);
     bookingData.update((val) {
       if (val == null) return;
 
       val.groupId = groupId;
-      val.groupName = '${flight.airline}-${flight.origin}-${flight.destination}';
+      val.groupName =
+          '${flight.airline}-${flight.origin}-${flight.destination}';
       val.sector = '${flight.origin}-${flight.destination}';
       val.adultPrice = flight.price.toDouble();
       val.childPrice = flight.price.toDouble();
@@ -82,14 +86,19 @@ class GroupTicketBookingController extends GetxController {
     }
 
     try {
-      final passengers = bookingData.value.passengers.map((passenger) => {
-        'firstName': passenger.firstName,
-        'lastName': passenger.lastName,
-        'title': passenger.title,
-        'passportNumber': passenger.passportNumber,
-        'dateOfBirth': passenger.dateOfBirth?.toIso8601String(),
-        'passportExpiry': passenger.passportExpiry?.toIso8601String(),
-      }).toList();
+      final passengers =
+          bookingData.value.passengers
+              .map(
+                (passenger) => {
+                  'firstName': passenger.firstName,
+                  'lastName': passenger.lastName,
+                  'title': passenger.title,
+                  'passportNumber': passenger.passportNumber,
+                  'dateOfBirth': passenger.dateOfBirth?.toIso8601String(),
+                  'passportExpiry': passenger.passportExpiry?.toIso8601String(),
+                },
+              )
+              .toList();
 
       final result = await apiController.saveBooking(
         groupId: bookingData.value.groupId,
@@ -98,8 +107,10 @@ class GroupTicketBookingController extends GetxController {
         email: 'usama@travelnetwork.com',
         mobile: '+923137358881',
         adults: bookingData.value.adults,
-        children: bookingData.value.children > 0 ? bookingData.value.children : null,
-        infants: bookingData.value.infants > 0 ? bookingData.value.infants : null,
+        children:
+            bookingData.value.children > 0 ? bookingData.value.children : null,
+        infants:
+            bookingData.value.infants > 0 ? bookingData.value.infants : null,
         passengers: passengers,
         groupPriceDetailId: bookingData.value.groupPriceDetailId,
       );
@@ -118,7 +129,6 @@ class GroupTicketBookingController extends GetxController {
 
   // Passenger count management
   // ========================
-
 
   void incrementAdults() {
     if (bookingData.value.totalPassengers < bookingData.value.availableSeats) {
@@ -281,7 +291,8 @@ class GroupTicketBookingController extends GetxController {
   }
 
   bool _isSeatLimitReached() {
-    return bookingData.value.totalPassengers >= bookingData.value.availableSeats;
+    return bookingData.value.totalPassengers >=
+        bookingData.value.availableSeats;
   }
 
   void _updateAdultCount(BookingData val, bool increment) {
@@ -346,6 +357,8 @@ class GroupTicketBookingController extends GetxController {
   }
 
   void _showSeatLimitError() {
-    showErrorSnackbar('Cannot add more passengers. Available seats limit reached.');
+    showErrorSnackbar(
+      'Cannot add more passengers. Available seats limit reached.',
+    );
   }
 }
