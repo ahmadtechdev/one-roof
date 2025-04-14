@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/route_manager.dart';
+import 'package:oneroof/B-TO-B/all_flight_booking/all_flight_booking.dart';
+import 'package:oneroof/B-TO-B/all_group_booking/all_group_booking.dart';
 import 'package:oneroof/utility/colors.dart';
 import 'package:oneroof/views/group_ticket/group_ticket.dart';
 import 'package:oneroof/views/hotel/hotel/hotel_form.dart';
@@ -90,13 +92,13 @@ class HomeScreenState extends State<HomeScreen>
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
                   GestureDetector(
-                    onTap: (){
-                      Get.to(() => FlightBookingScreen());
-      },
+                    onTap: () {
+                      Get.to(() => AllGroupBooking());
+                    },
                     child: _buildTravelOption(
                       'Flights',
                       Icons.flight,
-                      TColors.primary,
+                      TColors.primary,                       
                     ),
                   ),
                   GestureDetector(
@@ -164,7 +166,10 @@ class HomeScreenState extends State<HomeScreen>
               height: 120,
               decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [TColors.secondary.withOpacity(0.4), TColors.secondary.withOpacity(0.9)],
+                  colors: [
+                    TColors.secondary.withOpacity(0.4),
+                    TColors.secondary.withOpacity(0.9),
+                  ],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),

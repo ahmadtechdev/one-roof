@@ -1503,16 +1503,7 @@ class HotelVoucherScreen extends StatelessWidget {
     await launchUrl(launchUri);
   }
 
-  Future<void> _launchMaps(address, lat, lon) async {
-    // try {
-    //   // You can use coordinates if you have them
-    //   await MapsLauncher.launchCoordinates(lat, lon, 'Hotel Location');
-    //   // Or just the address
-    //   await MapsLauncher.launchQuery(address);
-    // } catch (e) {
-    //   print('Could not launch maps: $e');
-    // }
-  }
+ 
 }
 
 class MapScreen extends StatelessWidget {
