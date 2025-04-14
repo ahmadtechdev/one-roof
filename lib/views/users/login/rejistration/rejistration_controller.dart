@@ -280,7 +280,7 @@ var selectedCountryCode = ''.obs;
 var isRecaptchaChecked = false.obs;
 
 // List of country codes - add more as needed
-final List<String> countryCodes = ['+1', '+44', '+91', '+61', '+81'];
+final List<String> countryCodes = ['+1', '+44', '+92', '+61', '+81'];
 
 @override
 void onClose() {
@@ -331,9 +331,3 @@ void register() {
   );
 }
 
-void navigateToLogin() {
-  // Navigate to login page
-  print('Navigating to login page');
-  // Replace with your actual navigation logic
-  // Get.to(() => LoginScreen());
-}

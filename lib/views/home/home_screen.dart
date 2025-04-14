@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:get/route_manager.dart';
+import 'package:oneroof/B-TO-B/agent_dashboard/agent_dashboard.dart';
 import 'package:oneroof/B-TO-B/all_flight_booking/all_flight_booking.dart';
 import 'package:oneroof/B-TO-B/all_group_booking/all_group_booking.dart';
 import 'package:oneroof/utility/colors.dart';
 import 'package:oneroof/views/group_ticket/group_ticket.dart';
 import 'package:oneroof/views/hotel/hotel/hotel_form.dart';
+import 'package:oneroof/views/users/login/login.dart';
 
 import '../flight/form/flight_form.dart';
 import '../group_ticket/airline/data_controller.dart';
@@ -63,8 +65,10 @@ class HomeScreenState extends State<HomeScreen>
         ),
         actions: [
           IconButton(
-            icon: Icon(Icons.help, color: TColors.primary),
-            onPressed: () {},
+            icon: Icon(Icons.login, color: TColors.primary),
+            onPressed: () {
+              Get.to(() => AgentDashboard());
+            },
           ),
         ],
       ),
@@ -93,12 +97,12 @@ class HomeScreenState extends State<HomeScreen>
                 children: [
                   GestureDetector(
                     onTap: () {
-                      Get.to(() => AllGroupBooking());
+                      Get.to(() => FlightBookingScreen());
                     },
                     child: _buildTravelOption(
                       'Flights',
                       Icons.flight,
-                      TColors.primary,                       
+                      TColors.primary,
                     ),
                   ),
                   GestureDetector(

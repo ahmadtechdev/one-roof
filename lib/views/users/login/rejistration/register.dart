@@ -431,7 +431,7 @@ class RegisterAccount extends StatelessWidget {
                                   ? null
                                   : controller.register,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: TColors.primary,
+                            backgroundColor: TColors.secondary,
                             disabledBackgroundColor: TColors.primary
                                 .withOpacity(0.5),
                             minimumSize: Size(double.infinity, 48),
