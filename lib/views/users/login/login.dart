@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 
-import 'package:oneroof/views/users/login/register.dart';
+import 'package:oneroof/views/users/login/rejistration/register.dart';
 
 import '../../../common/bottom_navbar.dart';
 import '../../../sizes_helpers.dart';
@@ -20,7 +20,8 @@ class _LoginState extends State<Login> {
   Widget build(BuildContext context) {
     // Get screen size for responsive calculations
     final size = MediaQuery.of(context).size;
-    final textScaleFactor = size.width / 375; // Base scale on standard device width
+    final textScaleFactor =
+        size.width / 375; // Base scale on standard device width
 
     return Material(
       child: Container(
@@ -43,7 +44,8 @@ class _LoginState extends State<Login> {
                 children: <Widget>[
                   Container(
                     margin: EdgeInsets.only(
-                        top: displaySize(context).height * 0.35),
+                      top: displaySize(context).height * 0.35,
+                    ),
                     child: Column(
                       children: <Widget>[
                         Padding(
@@ -69,10 +71,7 @@ class _LoginState extends State<Login> {
 
             // Email input field
             Container(
-              margin: const EdgeInsets.only(
-                left: 16,
-                right: 16,
-              ),
+              margin: const EdgeInsets.only(left: 16, right: 16),
               child: Material(
                 elevation: 10,
                 shadowColor: TColors.white,
@@ -95,7 +94,10 @@ class _LoginState extends State<Login> {
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(15),
-                      borderSide: BorderSide(color: TColors.secondary, width: 1.0),
+                      borderSide: BorderSide(
+                        color: TColors.secondary,
+                        width: 1.0,
+                      ),
                     ),
                   ),
                 ),
@@ -104,11 +106,7 @@ class _LoginState extends State<Login> {
 
             // Password input field
             Container(
-              margin: const EdgeInsets.only(
-                left: 16,
-                right: 16,
-                top: 20,
-              ),
+              margin: const EdgeInsets.only(left: 16, right: 16, top: 20),
               child: Material(
                 elevation: 10,
                 shadowColor: TColors.white,
@@ -132,7 +130,10 @@ class _LoginState extends State<Login> {
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(15),
-                      borderSide: BorderSide(color: TColors.secondary, width: 1.0),
+                      borderSide: BorderSide(
+                        color: TColors.secondary,
+                        width: 1.0,
+                      ),
                     ),
                   ),
                 ),
@@ -141,20 +142,16 @@ class _LoginState extends State<Login> {
 
             // Login button
             Container(
-              margin: const EdgeInsets.only(
-                top: 24,
-                left: 16,
-                right: 16,
-              ),
+              margin: const EdgeInsets.only(top: 24, left: 16, right: 16),
               child: ElevatedButton(
                 onPressed: () {
                   // Navigation logic
-                  Get.off(()=>BottomNavbar());
+                  Get.off(() => BottomNavbar());
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: TColors.secondary,
                   shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10.0)
+                    borderRadius: BorderRadius.circular(10.0),
                   ),
                   minimumSize: Size(
                     double.infinity,
@@ -192,10 +189,7 @@ class _LoginState extends State<Login> {
                         backgroundColor: TColors.white,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10.0),
-                          side: BorderSide(
-                            width: 0.5,
-                            color: TColors.grey,
-                          ),
+                          side: BorderSide(width: 0.5, color: TColors.grey),
                         ),
                         elevation: 0,
                         minimumSize: Size(
@@ -208,9 +202,7 @@ class _LoginState extends State<Login> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: <Widget>[
                           Container(
-                            padding: EdgeInsets.only(
-                              right: 8,
-                            ),
+                            padding: EdgeInsets.only(right: 8),
                             child: SvgPicture.asset(
                               ('assets/images/google.svg'),
                               width: 20,
@@ -239,10 +231,7 @@ class _LoginState extends State<Login> {
                         backgroundColor: TColors.white,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10.0),
-                          side: BorderSide(
-                            width: 0.5,
-                            color: TColors.grey,
-                          ),
+                          side: BorderSide(width: 0.5, color: TColors.grey),
                         ),
                         elevation: 0,
                         minimumSize: Size(
@@ -254,9 +243,7 @@ class _LoginState extends State<Login> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: <Widget>[
                           Container(
-                            padding: EdgeInsets.only(
-                              right: 8,
-                            ),
+                            padding: EdgeInsets.only(right: 8),
                             child: SvgPicture.asset(
                               ('assets/images/facebook.svg'),
                               width: 20,
@@ -280,10 +267,7 @@ class _LoginState extends State<Login> {
 
             // Register account link
             Container(
-              margin: EdgeInsets.only(
-                top: 24,
-                bottom: 24,
-              ),
+              margin: EdgeInsets.only(top: 24, bottom: 24),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: <Widget>[
@@ -300,7 +284,8 @@ class _LoginState extends State<Login> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                            builder: (context) => registerNewAccount()),
+                          builder: (context) => RegisterAccount(),
+                        ),
                       );
                     },
                     child: Text(
