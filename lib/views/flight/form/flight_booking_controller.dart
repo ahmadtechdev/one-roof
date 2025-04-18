@@ -6,6 +6,7 @@ import '../../../services/api_service_flight.dart';
 import '../../../widgets/city_selection_bottom_sheet.dart';
 import '../../../widgets/class_selection_bottom_sheet.dart';
 import '../../../widgets/travelers_selection_bottom_sheet.dart';
+import '../search_flights/search_flight_utils/airblue_flight_controller.dart';
 import '../search_flights/search_flight_utils/flight_controller.dart';
 import '../search_flights/search_flights.dart';
 
@@ -51,7 +52,7 @@ class FlightBookingController extends GetxController {
   final RxList<CityPair> cityPairs = <CityPair>[].obs;
 
   // City selection for one-way and round trip
-  final RxString fromCity = 'LHR'.obs;
+  final RxString fromCity = 'LHE'.obs;
   final RxString fromCityName = 'Lahore'.obs;
   final RxString toCity = 'JED'.obs;
   final RxString toCityName = 'JEDDAH'.obs;
@@ -109,7 +110,7 @@ class FlightBookingController extends GetxController {
 
     cityPairs.addAll([
       CityPair(
-        fromCity: 'LHR',
+        fromCity: 'LHE',
         fromCityName: 'LAHORE',
         toCity: 'DBX',
         toCityName: 'DUBAI',
@@ -143,7 +144,7 @@ class FlightBookingController extends GetxController {
           CityPair(
             fromCity: cityPairs.last.toCity.value,
             fromCityName: cityPairs.last.toCityName.value,
-            toCity: 'LHR',
+            toCity: 'LHE',
             toCityName: 'LAHORE',
             departureDate: _formatDateForUI(nextDay),
           ),
@@ -256,40 +257,163 @@ class FlightBookingController extends GetxController {
     }
   }
 
+// Add to FlightBookingController class
+  final AirBlueFlightController airBlueFlightController = Get.put(AirBlueFlightController());
+
+// Update the searchFlights method
+//   Future<void> searchFlights() async {
+//     try {
+//       isSearching.value = true;
+//
+//       // Debugging: Print all search parameters
+//       print('Search parameters:');
+//       print('Trip type: ${tripType.value}');
+//       print('From City: ${fromCity.value}');
+//       print('To City: ${toCity.value}');
+//       print('Departure Date: ${departureDate.value}');
+//       print('Return Date: ${returnDate.value}');
+//       print('Adults: ${adultCount.value}');
+//       print('Children: ${childrenCount.value}');
+//       print('Infants: ${infantCount.value}');
+//       print('Cabin: ${travelClass.value}');
+//
+//       // Validate inputs
+//       if (fromCity.value.isEmpty || toCity.value.isEmpty) {
+//         Get.snackbar(
+//           'Error',
+//           'Please select both departure and destination cities.',
+//           snackPosition: SnackPosition.BOTTOM,
+//           backgroundColor: Colors.red,
+//           colorText: Colors.white,
+//         );
+//         return;
+//       }
+//
+//       // Prepare parameters for API call with leading commas to match API expectations
+//       String origin = '';
+//       String destination = '';
+//       String formattedDates = '';
+//
+//       if (tripType.value == TripType.multiCity) {
+//         // For multi-city trips, populate origins and destinations from cityPairs
+//         origins.clear();
+//         destinations.clear();
+//
+//         for (var pair in cityPairs) {
+//           origins.add(pair.fromCity.value);
+//           destinations.add(pair.toCity.value);
+//         }
+//
+//         // Format dates for multi-city with leading comma
+//         formattedDates = ','; // Start with a comma
+//         for (int i = 0; i < cityPairs.length; i++) {
+//           if (i > 0) formattedDates += ',';
+//           formattedDates += _formatDateForAPI(
+//             DateFormat('dd/MM/yyyy').parse(cityPairs[i].departureDate.value),
+//           );
+//         }
+//
+//         // Use formattedOrigins and formattedDestinations which add a leading comma
+//         origin = formattedOrigins;
+//         destination = formattedDestinations;
+//       } else {
+//         // For one-way and round-trip, add a leading comma to match API expectations
+//         origin = ',${fromCity.value}';
+//         destination = ',${toCity.value}';
+//
+//         // Format dates for one-way and round-trip with leading comma
+//         formattedDates =
+//         ',${_formatDateForAPI(DateFormat('dd/MM/yyyy').parse(departureDate.value))}';
+//         if (tripType.value == TripType.roundTrip) {
+//           formattedDates +=
+//           ',${_formatDateForAPI(DateFormat('dd/MM/yyyy').parse(returnDate.value))}';
+//         }
+//       }
+//
+//       // Debugging: Print formatted parameters
+//       print('Formatted Dates: $formattedDates');
+//       print('Origin: $origin');
+//       print('Destination: $destination');
+//
+//       // Call both APIs in parallel
+//       final sabreFuture = apiServiceFlight.searchFlights(
+//         type: tripType.value == TripType.multiCity
+//             ? 2
+//             : (tripType.value == TripType.roundTrip ? 1 : 0),
+//         origin: origin,
+//         destination: destination,
+//         depDate: formattedDates,
+//         adult: adultCount.value,
+//         child: childrenCount.value,
+//         infant: infantCount.value,
+//         stop: 2, // Assuming max 2 stops
+//         cabin: travelClass.value.toUpperCase(),
+//         flight: 0
+//       );
+//
+//       final airBlueFuture = apiServiceFlight.searchFlights(
+//         type: tripType.value == TripType.multiCity
+//             ? 2
+//             : (tripType.value == TripType.roundTrip ? 1 : 0),
+//         origin: origin,
+//         destination: destination,
+//         depDate: formattedDates,
+//         adult: adultCount.value,
+//         child: childrenCount.value,
+//         infant: infantCount.value,
+//         stop: 2, // AirBlue expects string
+//         cabin: travelClass.value,
+//         flight: 1
+//       );
+//
+//       // Wait for both to complete
+//       await Future.wait([sabreFuture, airBlueFuture]);
+//
+//       // Load Sabre results into FlightController
+//       flightController.loadFlights(await sabreFuture);
+//       airBlueFlightController.loadFlights(await airBlueFuture);
+//
+//       // Navigate to the results page
+//       Get.to(
+//             () => FlightBookingPage(
+//           scenario: tripType.value == TripType.roundTrip
+//               ? FlightScenario.returnFlight
+//               : (tripType.value == TripType.multiCity
+//               ? FlightScenario.multiCity
+//               : FlightScenario.oneWay),
+//         ),
+//       );
+//     } catch (e, stackTrace) {
+//       // Debugging: Print the error and stack trace
+//       print('Error in searchFlights: $e');
+//       print('Stack trace: $stackTrace');
+//
+//       // Show error message to the user
+//       Get.snackbar(
+//         'Error',
+//         'Error searching flights: $e',
+//         snackPosition: SnackPosition.BOTTOM,
+//         backgroundColor: Colors.red,
+//         colorText: Colors.white,
+//       );
+//     } finally {
+//       isSearching.value = false;
+//     }
+//   }
   Future<void> searchFlights() async {
     try {
       isSearching.value = true;
-      // Debugging: Print all search parameters
-      print('Search parameters:');
-      print('Trip type: ${tripType.value}');
-      print('From City: ${fromCity.value}');
-      print('To City: ${toCity.value}');
-      print('Departure Date: ${departureDate.value}');
-      print('Return Date: ${returnDate.value}');
-      print('Adults: ${adultCount.value}');
-      print('Children: ${childrenCount.value}');
-      print('Infants: ${infantCount.value}');
-      print('Cabin: ${travelClass.value}');
 
-      // Validate inputs
-      if (fromCity.value.isEmpty || toCity.value.isEmpty) {
-        Get.snackbar(
-          'Error',
-          'Please select both departure and destination cities.',
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.red,
-          colorText: Colors.white,
-        );
-        return;
-      }
+      // Clear previous results
+      flightController.clearFlights();
+      airBlueFlightController.clearFlights();
 
-      // Prepare parameters for API call with leading commas to match API expectations
+      // Prepare parameters (same as before)
       String origin = '';
       String destination = '';
       String formattedDates = '';
 
       if (tripType.value == TripType.multiCity) {
-        // For multi-city trips, populate origins and destinations from cityPairs
         origins.clear();
         destinations.clear();
 
@@ -298,8 +422,7 @@ class FlightBookingController extends GetxController {
           destinations.add(pair.toCity.value);
         }
 
-        // Format dates for multi-city with leading comma
-        formattedDates = ','; // Start with a comma
+        formattedDates = ',';
         for (int i = 0; i < cityPairs.length; i++) {
           if (i > 0) formattedDates += ',';
           formattedDates += _formatDateForAPI(
@@ -307,76 +430,131 @@ class FlightBookingController extends GetxController {
           );
         }
 
-        // Use formattedOrigins and formattedDestinations which add a leading comma
         origin = formattedOrigins;
         destination = formattedDestinations;
       } else {
-        // For one-way and round-trip, add a leading comma to match API expectations
         origin = ',${fromCity.value}';
         destination = ',${toCity.value}';
-
-        // Format dates for one-way and round-trip with leading comma
         formattedDates =
         ',${_formatDateForAPI(DateFormat('dd/MM/yyyy').parse(departureDate.value))}';
         if (tripType.value == TripType.roundTrip) {
           formattedDates +=
           ',${_formatDateForAPI(DateFormat('dd/MM/yyyy').parse(returnDate.value))}';
-        }
-      }
+          }
+          }
 
-      // Debugging: Print formatted parameters
-      print('Formatted Dates: $formattedDates');
-      print('Origin: $origin');
-      print('Destination: $destination');
+          // Call both APIs but don't wait for both
+          _callSabreApi(
+          type: tripType.value == TripType.multiCity
+          ? 2
+              : (tripType.value == TripType.roundTrip ? 1 : 0),
+    origin: origin,
+    destination: destination,
+    depDate: formattedDates,
+    adult: adultCount.value,
+    child: childrenCount.value,
+    infant: infantCount.value,
+    cabin: travelClass.value.toUpperCase(),
+    );
 
-      // Call the API with parameters correctly formatted with leading commas
-      final results = await apiServiceFlight.searchFlights(
-        type:
-        tripType.value == TripType.multiCity
-            ? 2
-            : (tripType.value == TripType.roundTrip ? 1 : 0),
-        origin: origin,
-        destination: destination,
-        depDate: formattedDates,
-        adult: adultCount.value,
-        child: childrenCount.value,
-        infant: infantCount.value,
-        stop: 2, // Assuming max 2 stops
-        cabin: travelClass.value.toUpperCase(),
-      );
+    _callAirBlueApi(
+    type: tripType.value == TripType.multiCity
+    ? 2
+        : (tripType.value == TripType.roundTrip ? 1 : 0),
+    origin: origin,
+    destination: destination,
+    depDate: formattedDates,
+    adult: adultCount.value,
+    child: childrenCount.value,
+    infant: infantCount.value,
+    cabin: travelClass.value,
+    );
 
-      // Load results into FlightController
-      flightController.loadFlights(results);
+    // Navigate immediately to results page
+    Get.to(
+    () => FlightBookingPage(
+    scenario: tripType.value == TripType.roundTrip
+    ? FlightScenario.returnFlight
+        : (tripType.value == TripType.multiCity
+    ? FlightScenario.multiCity
+        : FlightScenario.oneWay),
+    ),
+    );
 
-      // Navigate to the results page
-      Get.to(
-            () => FlightBookingPage(
-          scenario:
-          tripType.value == TripType.roundTrip
-              ? FlightScenario.returnFlight
-              : (tripType.value == TripType.multiCity
-              ? FlightScenario.multiCity
-              : FlightScenario.oneWay),
-        ),
-      );
     } catch (e, stackTrace) {
-      // Debugging: Print the error and stack trace
-      print('Error in searchFlights: $e');
-      print('Stack trace: $stackTrace');
-
-      // Show error message to the user
-      Get.snackbar(
-        'Error',
-        'Error searching flights: $e',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
-    }finally {
-      isSearching.value = false;
+    print('Error in searchFlights: $e');
+    print('Stack trace: $stackTrace');
+    Get.snackbar(
+    'Error',
+    'Error searching flights: $e',
+    snackPosition: SnackPosition.BOTTOM,
+    backgroundColor: Colors.red,
+    colorText: Colors.white,
+    );
+    } finally {
+    isSearching.value = false;
     }
   }
 
+  Future<void> _callSabreApi({
+    required int type,
+    required String origin,
+    required String destination,
+    required String depDate,
+    required int adult,
+    required int child,
+    required int infant,
+    required String cabin,
+  }) async {
+    try {
+      final result = await apiServiceFlight.searchFlights(
+        type: type,
+        origin: origin,
+        destination: destination,
+        depDate: depDate,
+        adult: adult,
+        child: child,
+        infant: infant,
+        stop: 2,
+        cabin: cabin,
+        flight: 0,
+      );
+      flightController.loadFlights(result);
+    } catch (e) {
+      print('Sabre API error: $e');
+      // Optionally show error in UI
+    }
+  }
+
+  Future<void> _callAirBlueApi({
+    required int type,
+    required String origin,
+    required String destination,
+    required String depDate,
+    required int adult,
+    required int child,
+    required int infant,
+    required String cabin,
+  }) async {
+    try {
+      final result = await apiServiceFlight.searchFlights(
+        type: type,
+        origin: origin,
+        destination: destination,
+        depDate: depDate,
+        adult: adult,
+        child: child,
+        infant: infant,
+        stop: 2,
+        cabin: cabin,
+        flight: 1,
+      );
+      airBlueFlightController.loadFlights(result);
+    } catch (e) {
+      print('AirBlue API error: $e');
+      airBlueFlightController.setErrorMessage('Failed to load AirBlue flights');
+    }
+  }
   String _formatDateForUI(DateTime date) {
     return DateFormat('dd/MM/yyyy').format(date);
   }

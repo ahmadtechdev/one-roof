@@ -10,8 +10,11 @@ class GroupTicket extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Create the controller once and reuse it
-    final GroupTicketingController controller = Get.put(GroupTicketingController(), permanent: true);
-    
+    final GroupTicketingController controller = Get.put(
+      GroupTicketingController(),
+      permanent: true,
+    );
+
     return Scaffold(
       body: SingleChildScrollView(
         child: Container(
@@ -78,7 +81,12 @@ class GroupTicket extends StatelessWidget {
                           title: 'UAE One Way Groups',
                           onTap: () async {
                             // Await the fetch to complete before navigating
-                            await controller.fetchGroups('UAE');
+                            // await controller.fetchGroups('UAE');
+                            await controller.fetchCombinedGroups(
+                              'UAE',
+                              'UAE     ',
+                            );
+
                             Get.to(() => SelectPkgScreen());
                             Get.snackbar(
                               "Loading",
@@ -95,7 +103,10 @@ class GroupTicket extends StatelessWidget {
                           title: 'KSA One Way Groups',
                           onTap: () async {
                             // Await the fetch to complete before navigating
-                            await controller.fetchGroups('KSA');
+                            await controller.fetchCombinedGroups(
+                              'KSA',
+                              'KSA ONEWAY',
+                            );
                             Get.to(() => SelectPkgScreen());
                             Get.snackbar(
                               "Loading",
@@ -120,7 +131,11 @@ class GroupTicket extends StatelessWidget {
                           title: 'OMAN One Way Groups',
                           onTap: () async {
                             // Await the fetch to complete before navigating
-                            await controller.fetchGroups('OMAN');
+                            // await controller.fetchGroups('OMAN');
+                            await controller.fetchCombinedGroups(
+                              'OMAN',
+                              ' OMANN    ',
+                            );
                             Get.to(() => SelectPkgScreen());
                             Get.snackbar(
                               "Loading",
@@ -137,7 +152,8 @@ class GroupTicket extends StatelessWidget {
                           title: 'UK One Way Groups',
                           onTap: () async {
                             // Await the fetch to complete before navigating
-                            await controller.fetchGroups('UK');
+                            // await controller.fetchGroups('UK');
+                            await controller.fetchCombinedGroups('UK', 'UK ');
                             Get.to(() => SelectPkgScreen());
                             Get.snackbar(
                               "Loading",
@@ -162,7 +178,11 @@ class GroupTicket extends StatelessWidget {
                           title: 'UMRAH',
                           onTap: () async {
                             // Await the fetch to complete before navigating
-                            await controller.fetchGroups('UMRAH');
+                            // await controller.fetchGroups('UMRAH');
+                            await controller.fetchCombinedGroups(
+                              'OMRAH',
+                              'OMRAH',
+                            );
                             Get.to(() => SelectPkgScreen());
                             Get.snackbar(
                               "Loading",
@@ -179,7 +199,10 @@ class GroupTicket extends StatelessWidget {
                           title: 'All Types',
                           onTap: () async {
                             // Await the fetch to complete before navigating
-                            await controller.fetchGroups('');
+                            await controller.fetchCombinedGroups(
+                              '     ',
+                              '     ',
+                            );
                             Get.to(() => SelectPkgScreen());
                             Get.snackbar(
                               "Loading",

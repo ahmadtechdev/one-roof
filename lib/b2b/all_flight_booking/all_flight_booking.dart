@@ -2,8 +2,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
-import 'package:oneroof/B-TO-B/all_flight_booking/all_flight_booking_controler.dart';
-import 'package:oneroof/B-TO-B/all_flight_booking/model.dart';
+import 'package:oneroof/b2b/all_flight_booking/all_flight_booking_controler.dart';
+import 'package:oneroof/b2b/all_flight_booking/model.dart';
 import 'package:oneroof/utility/colors.dart';
 
 class AllFlightBookingScreen extends StatelessWidget {

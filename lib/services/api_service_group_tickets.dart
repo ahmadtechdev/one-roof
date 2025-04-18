@@ -2,13 +2,13 @@ import 'dart:convert';
 
 import 'package:dio/dio.dart' as dio;
 import 'package:get/get.dart';
-import 'package:intl/intl.dart';
 
 class GroupTicketingController extends GetxController {
   final dio1 = dio.Dio();
 
   // Store the selected region
   final RxString selectedRegion = ''.obs;
+  final RxString selectedRegion2 = ''.obs;
 
   // Store token separately
   final String authToken =
@@ -109,32 +109,7 @@ class GroupTicketingController extends GetxController {
       return [];
     }
   }
-
-  // // Add this method to GroupTicketingController
-  // Future<int> fetchAvailableSeats(int groupId) async {
-  //   print("check 4");
-  //   print(groupId);
-  //   try {
-  //     var response = await dio1.get(
-  //       'https://travelnetwork.test/api/check/available_seats/$groupId',
-  //       options: dio.Options(headers: getHeaders()),
-  //     );
-
-  //     print("ssdd");
-
-  //     if (response.statusCode == 200) {
-  //       print("seats deon:");
-  //       print(response.data['seats']);
-  //       return response.data['seats'] as int;
-  //     } else {
-  //       print("Error fetching available seats: ${response.statusMessage}");
-  //       return 0; // Return 0 as fallback
-  //     }
-  //   } catch (e) {
-  //     print("Exception in fetchAvailableSeats: $e");
-  //     return 0; // Return 0 as fallback
-  //   }
-  // }
+  // Fetch Group Details - fixed to return Map instead of List
 
   // Add to api_service_group_tickets.dart
   Future<Map<String, dynamic>> saveBooking({
@@ -191,18 +166,18 @@ class GroupTicketingController extends GetxController {
           "agent_notes": agentNotes ?? "",
         },
         "booking_details":
-            passengers
-                .map(
-                  (passenger) => {
-                    "surname": passenger['lastName'],
-                    "given_name": passenger['firstName'],
-                    "title": passenger['title'],
-                    "passport_no": passenger['passportNumber'] ?? "",
-                    "dob": passenger['dateOfBirth'] ?? "",
-                    "doe": passenger['passportExpiry'] ?? "",
-                  },
-                )
-                .toList(),
+        passengers
+            .map(
+              (passenger) => {
+            "surname": passenger['lastName'],
+            "given_name": passenger['firstName'],
+            "title": passenger['title'],
+            "passport_no": passenger['passportNumber'] ?? "",
+            "dob": passenger['dateOfBirth'] ?? "",
+            "doe": passenger['passportExpiry'] ?? "",
+          },
+        )
+            .toList(),
         "group_price_detail_id": groupPriceDetailId,
       };
 
@@ -251,7 +226,7 @@ class GroupTicketingController extends GetxController {
         return {
           'success': false,
           'message':
-              'Request timed out. Please check your internet connection and try again.',
+          'Request timed out. Please check your internet connection and try again.',
           'error_details': e.message,
           'data': null,
         };
@@ -289,6 +264,138 @@ class GroupTicketingController extends GetxController {
         'error_details': e.toString(),
         'data': null,
       };
+    }
+  }
+  // ALLHAIDER_APIS
+
+  var alhaidertoken =
+      'eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiI5ZTc4OTIxMS0zZjc0LTQ1ZTUtOWE3NC03YzZhYzNmMWVjZGQiLCJqdGkiOiIxNDE0NDE2YmNlNjE5OTk3YTJkNzE4MWYzYWY3YTRkMTA1YzZmZGUxNDYwNDFhZTJjYjVjZDA5ZTlhYTVhYjQ1Y2Q2M2EyNDI2MzBhZjdiZiIsImlhdCI6MTc0MzA3MjA1NC4yMDk1MTgsIm5iZiI6MTc0MzA3MjA1NC4yMDk1MjMsImV4cCI6MTc3NDYwODA1NC4xOTM4MzYsInN1YiI6Ijc0Iiwic2NvcGVzIjpbXX0.mv6GXni4w0wCJAUKWAtFOcfnH9fmI5bWTSIddDzkS3H3UUgk-0CcehU86U_m_91XRUwljgO_X06VtS3VQs29m3wwjBcNxZcL74gkmWk5zSzgjezhoaMSSuYsF_yHb3-XXODLFe6yq0-6yQ8nydhr57ifa1CLvRZRfVYdfPTCnkZqb6Y6pH_FXex4EjC5vHWHPPUOU9n6jrIvL1TM4sSs7Ie4PznkazOLdJME1XZqwrge1gdVhA7MYSVvEbPZBw7nuRdNAuA1xUHWgS2PC-qvrO_4atWEeWA__2jI6_0_Hr1nE1vUqVbRmtg3eiudmZgqo2Zfb2xjhwNfPdNgVqveFSZDiN2HmweWylN-7oGM6yKZyfa8RMSR1OH1-ubyr2TEcggUiv7Dew0gUGgq5J-kjUTWMIKpWJ_o_yZUXMCrMaBheKqDMXTZQ2w3C4CNqKf96Ky2YIU3kuQHtfgTOwhzysZSzU1Fpd9fCPo6UGbsPbzFut2vTj413dlvu1NdXWT6n-ZGhhbGxoi3JVUuOvWksKP-W1XugsbAUIeh5hyp_tr8iiORpf5DGiGjphD2PEksIxE7n9NTp1iR4TQZlSY_nUXyuW1TNd3KmdWb7eZFhP_lWc2Ycfkmt8Kq9ii_DbtTlrjtimTn24Nud33szwK19mFOfkXN55wA1DXAKA4anDs';
+
+  // Add a method to fetch combined groups from both services
+  Future<List<dynamic>> fetchCombinedGroups(String type, String type2) async {
+    selectedRegion.value = type;
+
+    print("Fetching combined groups for region: $type");
+    print("Fetching combined groups for region: $type2 ");
+
+    try {
+      // Fetch groups from both APIs concurrently
+      final travelNetworkFuture = fetchGroups(type);
+      final alhaiderFuture = fetchAlhaiderGroups(type2);
+
+      // Wait for both to complete
+      final travelNetworkGroups = await travelNetworkFuture;
+      final alhaiderGroups = await alhaiderFuture;
+
+      // Combine the results (ensure alhaiderGroups is also a List)
+      final combinedGroups = [...travelNetworkGroups, ...alhaiderGroups];
+
+      print("Combined ${combinedGroups.length} groups from both services");
+      return combinedGroups;
+    } catch (e) {
+      print("Exception in fetchCombinedGroups: $e");
+      return [];
+    }
+  }
+
+  // Modify fetchAlhaiderGroups to return a List just like fetchGroups
+  Future<List<dynamic>> fetchAlhaiderGroups(String type) async {
+    selectedRegion2.value = type;
+
+    final headers = {
+      'Accept': 'application/json',
+      'Authorization': 'Bearer $alhaidertoken',
+      'Cookie':
+      'XSRF-TOKEN=your_xsrf_token_here; al_haider_international_travels_tours_session=your_session_token_here',
+    };
+
+    try {
+      final response = await dio1.request(
+        'https://alhaidertravel.pk/api/available/groups?type=$type',
+        options: dio.Options(method: 'GET', headers: headers),
+      );
+
+      if (response.statusCode == 200) {
+        print(
+          "Alhaider groups count: ${(response.data['groups'] as List).length}",
+        );
+        print("\n--- Sample of first few groups: ---");
+        final groups = response.data['groups'] as List;
+        final sampleSize = groups.length > 3 ? 3 : groups.length;
+
+        for (int i = 0; i < sampleSize; i++) {
+          print("Group ${i + 1}:");
+          print(groups[i]);
+          print("----------------------");
+        }
+
+        // Print available keys in the response data
+        print("\nAvailable keys in response data:");
+        (response.data as Map).keys.forEach((key) {
+          print("- $key");
+        });
+        return response.data['groups'] as List<dynamic>;
+      } else {
+        print("Error fetching Alhaider groups: ${response.statusMessage}");
+        return [];
+      }
+    } catch (e) {
+      print("Exception in fetchAlhaiderGroups: $e");
+      return [];
+    }
+  }
+
+  // Add method to fetch all airlines from both services
+  Future<List<dynamic>> fetchCombinedAirlines() async {
+    try {
+      // Fetch airlines from both APIs concurrently
+      final travelNetworkFuture = fetchAirlines();
+      final alhaiderFuture = fetchAlhaiderAirlines();
+
+      // Wait for both to complete
+      final travelNetworkAirlines = await travelNetworkFuture;
+      final alhaiderAirlines = await alhaiderFuture;
+
+      // Combine the results
+      final combinedAirlines = [...travelNetworkAirlines, ...alhaiderAirlines];
+
+      print("Combined ${combinedAirlines.length} airlines from both services");
+      return combinedAirlines;
+    } catch (e) {
+      print("Exception in fetchCombinedAirlines: $e");
+      return [];
+    }
+  }
+
+  // Modify fetchAlhaiderAirlines to return a List
+  Future<List<dynamic>> fetchAlhaiderAirlines() async {
+    final String url = 'https://alhaidertravel.pk/api/available/airlines';
+
+    final headers = {
+      'Accept': 'application/json',
+      'Authorization': 'Bearer $alhaidertoken',
+    };
+
+    try {
+      final response = await dio1.request(
+        url,
+        options: dio.Options(method: 'GET', headers: headers),
+      );
+
+      if (response.statusCode == 200) {
+        print(
+          "Alhaider airlines count: ${(response.data['airlines'] as List).length}",
+        );
+        return response.data['airlines'] as List<dynamic>;
+      } else {
+        print(
+          'Failed to fetch Alhaider airlines. Status: ${response.statusCode}',
+        );
+        return [];
+      }
+    } catch (e) {
+      print('Error occurred in fetchAlhaiderAirlines: $e');
+      return [];
     }
   }
 }

@@ -5,10 +5,15 @@ import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../views/flight/search_flights/booking_flight/booking_flight_controller.dart';
-import '../views/flight/search_flights/search_flight_utils/filter_modal.dart';
+import '../views/flight/search_flights/search_flight_utils/helper_functions.dart';
+import '../views/flight/search_flights/search_flight_utils/models/flight_models.dart';
+import 'api_service_airblue.dart';
 
 class ApiServiceFlight extends GetxService {
   late final Dio dio;
+  // Initialize directly instead of using late
+  final FlightShoppingService flightShoppingService = FlightShoppingService();
+
   static const String _baseUrl = 'https://api.havail.sabre.com';
   static const String _tokenKey = 'flight_api_token';
   static const String _tokenExpiryKey = 'flight_token_expiry';
@@ -79,12 +84,13 @@ class ApiServiceFlight extends GetxService {
           headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
             'Authorization':
-                'Basic VmpFNk5UVTFOVG8yVFVRNE9rRkI6Ykhsd2EyaHBNak09',
+                'Basic VmpFNk5EY3pNVGcxT2paTlJEZzZRVUU9OlUxTlhVa1ZUT1RrPQ==',
             'grant_type': 'client_credentials'
           },
         ),
         // data: {'grant_type': 'client_credentials'},
       );
+
 
       if (response.statusCode == 200 && response.data['access_token'] != null) {
         final token = response.data['access_token'];
@@ -98,6 +104,9 @@ class ApiServiceFlight extends GetxService {
     }
   }
 
+  // Sabre 0
+  // AirBlue 1
+
   Future<Map<String, dynamic>> searchFlights({
     required int type,
     required String origin,
@@ -108,12 +117,80 @@ class ApiServiceFlight extends GetxService {
     required int infant,
     required int stop,
     required String cabin,
+    required int flight,
   }) async {
     try {
 
-      final token = await getValidToken() ?? await generateToken();
+
+      if(flight==0){
+        final token = await getValidToken() ?? await generateToken();
+        // Original Sabre API call
+        final sabreResponse = await _searchFlightsWithSabre(
+          type: type,
+          origin: origin,
+          destination: destination,
+          depDate: depDate,
+          adult: adult,
+          child: child,
+          infant: infant,
+          stop: stop,
+          cabin: cabin,
+          token: token,
+        );
+
+        return sabreResponse;
+      }else if(flight==1){
+        // New Air Blue API call with same parameters
+        try {
+          print("Calling Air Blue API with same parameters...");
 
 
+          final airBlueResponse = await _searchFlightsWithAirBlue(
+            type: type,
+            origin: origin,
+            destination: destination,
+            depDate: depDate,
+            adult: adult,
+            child: child,
+            infant: infant,
+            stop: stop.toString(), // Convert int to string as Air Blue expects string
+            cabin: cabin,
+          );
+
+          // print("Air Blue API Response received:");
+          // _printJsonPretty(airBlueResponse);
+
+          // Here you would normally process the Air Blue response and merge with Sabre results
+          // For now, we're just logging it to console
+          return airBlueResponse;
+        } catch (airBlueError) {
+          // If Air Blue API fails, just log the error but continue with Sabre results
+          print('Error in Air Blue API call: $airBlueError');
+        }
+      }
+
+
+
+
+        return {};
+    } catch (e) {
+      // print('Error in searchFlights: $e');
+      throw Exception('Error searching flights: $e');
+    }
+  }
+  Future<Map<String, dynamic>> _searchFlightsWithSabre({
+    required int type,
+    required String origin,
+    required String destination,
+    required String depDate,
+    required int adult,
+    required int child,
+    required int infant,
+    required int stop,
+    required String cabin,
+    required String token,
+  }) async {
+    try {
       final originArray = origin.split(',');
       final destinationArray = destination.split(',');
       final depDateArray = depDate.split(',');
@@ -157,7 +234,6 @@ class ApiServiceFlight extends GetxService {
         ]);
       } else if (type == 2) {
         // Multi-city trip
-        // Skip the first empty element in the arrays (due to leading comma)
         for (int i = 1; i < depDateArray.length; i++) {
           if (i < originArray.length && i < destinationArray.length) {
             originDestinations.add({
@@ -244,10 +320,6 @@ class ApiServiceFlight extends GetxService {
         }
       };
 
-      // Print request body (formatted)
-      // print('Request Body:');
-      // _printJsonPretty(requestBody);
-
       final response = await dio.post(
         '/v3/offers/shop',
         options: Options(
@@ -259,18 +331,57 @@ class ApiServiceFlight extends GetxService {
         data: requestBody,
       );
 
-      // print('Response Status Code: ${response.statusCode}');
-
       if (response.statusCode == 200) {
-        // print('Response Data:');
-        // _printJsonPretty(response.data['statistics']);
         return response.data;
       } else {
         throw Exception('Failed to search flights: ${response.statusCode}');
       }
     } catch (e) {
-      print('Error in searchFlights: $e');
-      throw Exception('Error searching flights: $e');
+      print('Error in _searchFlightsWithSabre: $e');
+      throw Exception('Error searching flights with Sabre: $e');
+    }
+  }
+
+
+
+  // Helper method to search flights with Air Blue
+  Future<Map<String, dynamic>> _searchFlightsWithAirBlue({
+    required int type,
+    required String origin,
+    required String destination,
+    required String depDate,
+    required int adult,
+    required int child,
+    required int infant,
+    required String stop,
+    required String cabin,
+  }) async {
+    try {
+      // Format parameters for Air Blue API
+      // Air Blue expects comma-prefixed strings for origin, destination, and depDate
+      String formattedOrigin = origin;
+      String formattedDestination = destination;
+      String formattedDepDate = depDate;
+
+      // Ensure they start with comma
+      if (!formattedOrigin.startsWith(',')) formattedOrigin = ',$formattedOrigin';
+      if (!formattedDestination.startsWith(',')) formattedDestination = ',$formattedDestination';
+      if (!formattedDepDate.startsWith(',')) formattedDepDate = ',$formattedDepDate';
+
+      return await flightShoppingService.airBlueFlightSearch(
+        type: type,
+        origin: formattedOrigin,
+        destination: formattedDestination,
+        depDate: formattedDepDate,
+        adult: adult,
+        child: child,
+        infant: infant,
+        stop: stop,
+        cabin: cabin,
+      );
+    } catch (e) {
+      print('Error in _searchFlightsWithAirBlue: $e');
+      throw Exception('Error searching flights with Air Blue: $e');
     }
   }
 
@@ -909,6 +1020,12 @@ class ApiServiceFlight extends GetxService {
 //       throw Exception('Error getting booking details: $e');
 //     }
 //   }
+
+
+
+// ************************************* Air BLue
+
+
 }
 
 

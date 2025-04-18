@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get/utils.dart';
-import 'package:oneroof/B-TO-B/all_flight_booking/all_flight_booking.dart';
-import 'package:oneroof/B-TO-B/all_group_booking/all_group_booking.dart';
+import 'package:oneroof/b2b/all_flight_booking/all_flight_booking.dart';
+import 'package:oneroof/b2b/all_group_booking/all_group_booking.dart';
 import 'package:oneroof/utility/colors.dart';
 
 class AgentDashboard extends StatefulWidget {

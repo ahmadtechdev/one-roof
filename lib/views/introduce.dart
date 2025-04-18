@@ -3,6 +3,7 @@ import 'package:introduction_screen/introduction_screen.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:oneroof/views/users/login/login.dart';
 
+import '../common/bottom_navbar.dart';
 import '../sizes_helpers.dart';
 import '../utility/colors.dart';
 import 'users/login/slash-screen.dart';
@@ -19,7 +20,7 @@ class _IntroduceState extends State<Introduce> {
 
   void _onIntroEnd(context) {
     Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => Login()),
+      MaterialPageRoute(builder: (_) => BottomNavbar()),
     );
   }
 

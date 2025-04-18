@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:oneroof/views/flight/search_flights/search_flight_utils/airblue_flight_controller.dart';
+import 'package:oneroof/views/flight/search_flights/search_flight_utils/widgets/airblue_flight_card.dart';
 
 import '../../../utility/colors.dart';
 import 'search_flight_utils/flight_controller.dart';
 import 'search_flight_utils/widgets/currency_dialog.dart';
 import 'search_flight_utils/widgets/flight_bottom_sheet.dart';
-import 'search_flight_utils/widgets/flight_card.dart';
+import 'search_flight_utils/widgets/sabre_flight_card.dart';
 
 enum FlightScenario { oneWay, returnFlight, multiCity }
 
@@ -65,15 +67,14 @@ class ReturnCaseScenario extends StatelessWidget {
 class FlightBookingPage extends StatelessWidget {
   final FlightScenario scenario;
   final FlightController controller = Get.put(FlightController());
+  final AirBlueFlightController airBlueController = Get.put(AirBlueFlightController());
 
   FlightBookingPage({super.key, required this.scenario}) {
     controller.setScenario(scenario);
   }
 
-
   @override
   Widget build(BuildContext context) {
-
     return Scaffold(
       backgroundColor: TColors.background,
       appBar: AppBar(
@@ -81,74 +82,41 @@ class FlightBookingPage extends StatelessWidget {
         backgroundColor: TColors.background,
         leading: const BackButton(),
         title: Obx(() {
-          // Get the first flight to extract route information
-
-          // if (firstFlight == null) {
-          //   return const CircularProgressIndicator();
-          // }
+          // Get total flight count
+          final totalFlights = controller.filteredFlights.length + airBlueController.flights.length;
+          final isLoading = controller.isLoading.value || airBlueController.isLoading.value;
 
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Row(
-              //   children: [
-              //     Text(
-              //       '${searchConroller.origins.first} ',
-              //       style: const TextStyle(
-              //         fontSize: 16,
-              //         color: TColors.text,
-              //         fontWeight: FontWeight.bold,
-              //       ),
-              //     ),
-              //     const Icon(
-              //       Icons.swap_horiz,
-              //       size: 20,
-              //       color: TColors.text,
-              //     ),
-              //     Text(
-              //       ' ${searchConroller.origins.last}',
-              //       style: const TextStyle(
-              //         fontSize: 16,
-              //         color: TColors.text,
-              //         fontWeight: FontWeight.bold,
-              //       ),
-              //     ),
-              //   ],
-              // ),
               Row(
                 children: [
-                  Text(
-                    '${controller.flights.length} Flights Found',
-                    style: const TextStyle(
-                      fontSize: 16,
-                      color: TColors.text,
-                      fontWeight: FontWeight.bold,
+                  if (isLoading)
+                    const Text(
+                      'Searching flights...',
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: TColors.text,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    )
+                  else
+                    Text(
+                      '$totalFlights Flights Found',
+                      style: const TextStyle(
+                        fontSize: 16,
+                        color: TColors.text,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                  ),
                   const SizedBox(width: 8),
-                  // GestureDetector(
-                  //   onTap: () {
-                  //     Get.off(() => const HomeScreen());
-                  //   },
-                  //   child: const Row(
-                  //     children: [
-                  //       Icon(
-                  //         Icons.edit,
-                  //         size: 16,
-                  //         color: TColors.text,
-                  //       ),
-                  //       SizedBox(width: 4),
-                  //       Text(
-                  //         'Change',
-                  //         style: TextStyle(
-                  //           fontSize: 16,
-                  //           color: TColors.text,
-                  //           fontWeight: FontWeight.bold,
-                  //         ),
-                  //       ),
-                  //     ],
-                  //   ),
-                  // ),
+                  // Show loading indicator in the title
+                  if (isLoading)
+                    const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
                 ],
               ),
             ],
@@ -177,7 +145,6 @@ class FlightBookingPage extends StatelessWidget {
       ),
       body: Column(
         children: [
-
           _buildFilterSection(),
           _buildFlightList(),
         ],
@@ -241,10 +208,83 @@ class FlightBookingPage extends StatelessWidget {
     );
   }
 
+  // Update the _buildFlightList method in FlightBookingPage
+// Update the _buildFlightList method
+  // In search_flights.dart, update the _buildFlightList method:
+  // Widget _buildFlightList() {
+  //   final airBlueController = Get.put(AirBlueFlightController());
+  //
+  //   return Expanded(
+  //     child: Obx(() {
+  //       if (controller.filteredFlights.isEmpty && airBlueController.flights.isEmpty) {
+  //         return Center(
+  //           child: Column(
+  //             mainAxisAlignment: MainAxisAlignment.center,
+  //             children: [
+  //               const Text(
+  //                 'No flights match your criteria.',
+  //                 style: TextStyle(color: TColors.grey),
+  //               ),
+  //               if (airBlueController.errorMessage.isNotEmpty)
+  //                 Padding(
+  //                   padding: const EdgeInsets.only(top: 8.0),
+  //                   child: Text(
+  //                     airBlueController.errorMessage.value,
+  //                     style: const TextStyle(color: Colors.red),
+  //                   ),
+  //                 ),
+  //             ],
+  //           ),
+  //         );
+  //       }
+  //
+  //       return ListView.builder(
+  //         itemCount: controller.filteredFlights.length + airBlueController.flights.length,
+  //         itemBuilder: (context, index) {
+  //           if (index < controller.filteredFlights.length) {
+  //             // Sabre flight
+  //             final flight = controller.filteredFlights[index];
+  //             return GestureDetector(
+  //               onTap: () => controller.handleFlightSelection(flight),
+  //               child: FlightCard(flight: flight),
+  //             );
+  //           } else {
+  //             // AirBlue flight
+  //             final airBlueIndex = index - controller.filteredFlights.length;
+  //             final airBlueFlight = airBlueController.flights[airBlueIndex];
+  //             return GestureDetector(
+  //               onTap: () => airBlueController.handleAirBlueFlightSelection(airBlueFlight),
+  //               child: AirBlueFlightCard(flight: airBlueFlight),
+  //             );
+  //           }
+  //         },
+  //       );
+  //     }),
+  //   );
+  // }
+
   Widget _buildFlightList() {
+    final airBlueController = Get.put(AirBlueFlightController());
+    final flightController = Get.find<FlightController>();
+
     return Expanded(
       child: Obx(() {
-        if (controller.filteredFlights.isEmpty) {
+        // Show loading indicator if either API is still loading
+        if (flightController.isLoading.value || airBlueController.isLoading.value) {
+          return const Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  CircularProgressIndicator(),
+                  SizedBox(height: 16),
+                  Text('Searching for flights...', style: TextStyle(color: TColors.grey))
+                ],
+              )
+          );
+        }
+
+        // Show empty state if both APIs returned no results
+        if (flightController.filteredFlights.isEmpty && airBlueController.flights.isEmpty) {
           return const Center(
             child: Text(
               'No flights match your criteria.',
@@ -252,20 +292,32 @@ class FlightBookingPage extends StatelessWidget {
             ),
           );
         }
+
+        // Show combined results
         return ListView.builder(
-          itemCount: controller.filteredFlights.length,
+          // Add a key for better performance when list changes
+          key: ValueKey('${flightController.filteredFlights.length}-${airBlueController.flights.length}'),
+          itemCount: flightController.filteredFlights.length + airBlueController.flights.length,
           itemBuilder: (context, index) {
-            final flight = controller.filteredFlights[index];
-            return GestureDetector(
-              onTap: () => controller.handleFlightSelection(flight),
-              child: FlightCard(flight: flight),
-            );
+            if (index < flightController.filteredFlights.length) {
+              final flight = flightController.filteredFlights[index];
+              return GestureDetector(
+                onTap: () => flightController.handleFlightSelection(flight),
+                child: FlightCard(flight: flight),
+              );
+            } else {
+              final airBlueIndex = index - flightController.filteredFlights.length;
+              final airBlueFlight = airBlueController.flights[airBlueIndex];
+              return GestureDetector(
+                onTap: () => airBlueController.handleAirBlueFlightSelection(airBlueFlight),
+                child: AirBlueFlightCard(flight: airBlueFlight),
+              );
+            }
           },
         );
       }),
     );
   }
-
   Widget _filterButton(String text, bool isSelected) {
     return TextButton(
       onPressed: () {

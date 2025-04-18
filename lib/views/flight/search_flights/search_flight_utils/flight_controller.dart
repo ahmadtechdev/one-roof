@@ -6,7 +6,9 @@ import '../../../../services/api_service_flight.dart';
 import '../flight_package/flight_package.dart';
 import '../flight_package/package_modal.dart';
 import '../search_flights.dart';
-import 'filter_modal.dart';
+import 'helper_functions.dart';
+import 'models/airblue_flight_model.dart';
+import 'models/flight_models.dart';
 
 class FilterState {
   final RangeValues priceRange;
@@ -74,6 +76,7 @@ class FilterState {
 class FlightController extends GetxController {
   var selectedCurrency = 'PKR'.obs;
   var flights = <Flight>[].obs;
+  final isLoading = true.obs;
   var availabilityFlights = <Flight>[].obs; // Separate list for availability check
   var filteredFlights = <Flight>[].obs;
   var filterState = Rx<FilterState>(FilterState(
@@ -85,6 +88,19 @@ class FlightController extends GetxController {
     arrivalTimeRanges: {},
     selectedStops: {},
   ));
+
+  // Error message
+  final RxString errorMessage = ''.obs;
+
+
+  void clearFlights() {
+    flights.clear();
+    errorMessage.value = '';
+  }
+
+  void setErrorMessage(String message) {
+    errorMessage.value = message;
+  }
 
   void toggleRefundableAll(bool value) {
     filterState.value = filterState.value.copyWith(
@@ -203,8 +219,7 @@ class FlightController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    // loadDummyFlights();
-    // loadDummyFlights();
+
     initializeFilterRanges();
 
     // Initialize filter state with "All" options selected by default
@@ -619,6 +634,8 @@ extension FlightDateTimeExtension on FlightController {
 
   void parseApiResponse(Map<String, dynamic>? response, {bool isAvailabilityCheck = false}) {
     try {
+      isLoading.value = true;
+
       if (response == null || response['groupedItineraryResponse'] == null) {
         print('Error: Invalid API response structure');
         if (isAvailabilityCheck) {
@@ -961,6 +978,8 @@ extension FlightDateTimeExtension on FlightController {
         flights.value = [];
         filteredFlights.value = [];
       }
+    }finally {
+      isLoading.value = false;
     }
   }
   // Helper method to determine cabin code from brand information
@@ -1008,21 +1027,7 @@ extension FlightDateTimeExtension on FlightController {
   }
 }
 
-class FlightSegmentInfo {
-  final String bookingCode;
-  final String cabinCode;
-  final String mealCode;
-  final String seatsAvailable;
-  final String fareBasisCode; // Added fareBasisCode
 
-  FlightSegmentInfo({
-    required this.bookingCode,
-    required this.cabinCode,
-    required this.mealCode,
-    required this.seatsAvailable,
-    this.fareBasisCode = '', // Default empty string
-  });
-}
 
 // Update the extension for parsing all segment info
 extension FlightSegmentExtension on FlightController {
@@ -1158,4 +1163,7 @@ extension FlightSegmentExtension on FlightController {
 
     return allSegmentInfoLists;
   }
+
+
+
 }

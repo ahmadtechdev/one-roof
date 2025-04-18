@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
-import 'package:oneroof/B-TO-B/all_group_booking/all_group_booking_controller.dart';
-import 'package:oneroof/B-TO-B/all_group_booking/model.dart';
+import 'package:oneroof/b2b/all_group_booking/all_group_booking_controller.dart';
+import 'package:oneroof/b2b/all_group_booking/model.dart';
 import 'package:oneroof/utility/colors.dart';
 
 // Model for the booking data with proper passenger status structure

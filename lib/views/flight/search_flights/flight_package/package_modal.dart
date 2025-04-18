@@ -1,4 +1,5 @@
-import '../search_flight_utils/filter_modal.dart';
+import '../search_flight_utils/helper_functions.dart';
+import '../search_flight_utils/models/flight_models.dart';
 
 class FlightPackageInfo {
   final String cabinCode;

@@ -1,7 +1,7 @@
 // all_flight_booking_controller.dart
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:oneroof/B-TO-B/all_flight_booking/model.dart';
+import 'package:oneroof/b2b/all_flight_booking/model.dart';
 
 class AllFlightBookingController extends GetxController {
   // Date filter variables

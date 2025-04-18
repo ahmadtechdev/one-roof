@@ -9,9 +9,10 @@ import '../../../../widgets/travelers_selection_bottom_sheet.dart';
 import '../../form/controllers/flight_date_controller.dart';
 import '../../form/travelers/traveler_controller.dart';
 import '../review_flight/review_flight.dart';
-import '../search_flight_utils/filter_modal.dart';
+import '../search_flight_utils/helper_functions.dart';
 import '../search_flight_utils/flight_controller.dart';
-import '../search_flight_utils/widgets/flight_card.dart';
+import '../search_flight_utils/models/flight_models.dart';
+import '../search_flight_utils/widgets/sabre_flight_card.dart';
 import 'package_modal.dart';
 
 class PackageSelectionDialog extends StatelessWidget {

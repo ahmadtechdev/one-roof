@@ -1,12 +1,11 @@
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../../../../services/api_service_flight.dart';
 import '../../../../utility/colors.dart';
 import '../../../../widgets/travelers_selection_bottom_sheet.dart';
-import '../../form/travelers/traveler_controller.dart';
-import '../search_flight_utils/filter_modal.dart';
-import '../search_flight_utils/widgets/flight_card.dart';
+
+import '../search_flight_utils/models/flight_models.dart';
+import '../search_flight_utils/widgets/sabre_flight_card.dart';
 import 'booking_flight_controller.dart';
 import 'flight_print_voucher.dart';
 

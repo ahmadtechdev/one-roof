@@ -1,6 +1,6 @@
 
 import 'package:get/get.dart';
-import 'package:oneroof/B-TO-B/all_group_booking/model.dart';
+import 'package:oneroof/b2b/all_group_booking/model.dart';
 
 class AllGroupBookingController extends GetxController {
   final fromDate = DateTime.now().obs;

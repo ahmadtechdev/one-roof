@@ -37,17 +37,16 @@ class FlightPKGController extends GetxController {
     }
 
     // Convert to the format needed for options
-    final options = sectors.map((sector) {
-      // Convert from "lahore-dammam" to "Lahore-Dammam" for display
-      final displayName = sector.split('-')
-          .map((word) => word[0].toUpperCase() + word.substring(1))
-          .join('-');
+    final options =
+        sectors.map((sector) {
+          // Convert from "lahore-dammam" to "Lahore-Dammam" for display
+          final displayName = sector
+              .split('-')
+              .map((word) => word[0].toUpperCase() + word.substring(1))
+              .join('-');
 
-      return {
-        'label': displayName,
-        'value': sector,
-      };
-    }).toList();
+          return {'label': displayName, 'value': sector};
+        }).toList();
 
     // Add the "All" option and sort alphabetically
     options.insert(0, {'label': 'All Sectors', 'value': 'all'});
@@ -64,14 +63,13 @@ class FlightPKGController extends GetxController {
 
   Future<void> loadInitialData() async {
     try {
-      await Future.wait([
-        travelController.loadAirlines(),
-        fetchGroupFlights(),
-      ]);
+      await Future.wait([travelController.loadAirlines(), fetchGroupFlights()]);
     } catch (e) {
       errorMessage.value = 'Failed to load data: ${e.toString()}';
     }
   }
+
+  // Modification for pkg_controller.dart
 
   Future<void> fetchGroupFlights() async {
     isLoading.value = true;
@@ -79,13 +77,14 @@ class FlightPKGController extends GetxController {
     try {
       // Use the stored selected region
       final region = apiController.selectedRegion.value;
+      final region2 = apiController.selectedRegion2.value;
+
       print("FlightPKGController fetching flights for region: $region");
-      
-      // Important: We're not calling fetchGroups again here - we're getting the data that was already fetched
-      // when the user tapped on a destination card
-      final response = await apiController.fetchGroups(region);
-      
-      print("Got ${response.length} flights for region: $region");
+
+      // Use the combined method instead of just fetchGroups
+      final response = await apiController.fetchCombinedGroups(region, region2);
+
+      print("Got ${response.length} combined flights for region: $region");
       groupFlights.assignAll(response);
     } catch (e) {
       errorMessage.value = 'Failed to load flights: ${e.toString()}';
