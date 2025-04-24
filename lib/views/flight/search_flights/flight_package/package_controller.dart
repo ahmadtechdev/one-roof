@@ -1,6 +1,6 @@
 // import 'package:get/get.dart';
 //
-// import 'package_modal.dart';
+// import 'sabre_package_modal.dart';
 //
 // class PackageController extends GetxController {
 //   final packages = <FlightPackage>[].obs;

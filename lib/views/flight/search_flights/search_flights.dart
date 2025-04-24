@@ -269,22 +269,18 @@ class FlightBookingPage extends StatelessWidget {
 
     return Expanded(
       child: Obx(() {
-        // Show loading indicator if either API is still loading
-        if (flightController.isLoading.value || airBlueController.isLoading.value) {
-          return const Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  CircularProgressIndicator(),
-                  SizedBox(height: 16),
-                  Text('Searching for flights...', style: TextStyle(color: TColors.grey))
-                ],
-              )
-          );
-        }
+        // Handle cases when data is still loading
+        bool sabreLoading = flightController.isLoading.value;
+        bool airBlueLoading = airBlueController.isLoading.value;
 
-        // Show empty state if both APIs returned no results
-        if (flightController.filteredFlights.isEmpty && airBlueController.flights.isEmpty) {
+        // Combine all available flights, with AirBlue flights first
+        final List<dynamic> combinedFlights = [
+          ...airBlueController.flights,
+          ...flightController.filteredFlights
+        ];
+
+        // If both APIs returned no results and neither is still loading
+        if (combinedFlights.isEmpty && !sabreLoading && !airBlueLoading) {
           return const Center(
             child: Text(
               'No flights match your criteria.',
@@ -293,24 +289,41 @@ class FlightBookingPage extends StatelessWidget {
           );
         }
 
-        // Show combined results
         return ListView.builder(
           // Add a key for better performance when list changes
-          key: ValueKey('${flightController.filteredFlights.length}-${airBlueController.flights.length}'),
-          itemCount: flightController.filteredFlights.length + airBlueController.flights.length,
+          key: ValueKey('${airBlueController.flights.length}-${flightController.filteredFlights.length}'),
+          itemCount: combinedFlights.length + (sabreLoading || airBlueLoading ? 1 : 0),
           itemBuilder: (context, index) {
-            if (index < flightController.filteredFlights.length) {
-              final flight = flightController.filteredFlights[index];
+            // Show loading indicator at the bottom if needed
+            if ( (sabreLoading || airBlueLoading)) {
+              return const Padding(
+                padding: EdgeInsets.symmetric(vertical: 16.0),
+                child: Center(
+                  child: Column(
+                    children: [
+                      CircularProgressIndicator(strokeWidth: 2),
+                      SizedBox(height: 8),
+                      Text('Loading more flights...', style: TextStyle(color: TColors.grey))
+                    ],
+                  ),
+                ),
+              );
+            }
+
+            final flight = combinedFlights[index];
+
+            // Check flight type and render appropriate card
+            if (flight.runtimeType.toString().contains('AirBlue')) {
+              // AirBlue flight
+              return GestureDetector(
+                onTap: () => airBlueController.handleAirBlueFlightSelection(flight),
+                child: AirBlueFlightCard(flight: flight),
+              );
+            } else {
+              // Sabre flight
               return GestureDetector(
                 onTap: () => flightController.handleFlightSelection(flight),
                 child: FlightCard(flight: flight),
-              );
-            } else {
-              final airBlueIndex = index - flightController.filteredFlights.length;
-              final airBlueFlight = airBlueController.flights[airBlueIndex];
-              return GestureDetector(
-                onTap: () => airBlueController.handleAirBlueFlightSelection(airBlueFlight),
-                child: AirBlueFlightCard(flight: airBlueFlight),
               );
             }
           },

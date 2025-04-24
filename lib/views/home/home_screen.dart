@@ -66,7 +66,7 @@ class HomeScreenState extends State<HomeScreen>
           IconButton(
             icon: Icon(Icons.login, color: TColors.primary),
             onPressed: () {
-              Get.to(() => AgentDashboard());
+              Get.to(() =>  Login());
             },
           ),
         ],

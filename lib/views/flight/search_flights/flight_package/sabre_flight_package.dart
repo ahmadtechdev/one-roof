@@ -13,7 +13,7 @@ import '../search_flight_utils/helper_functions.dart';
 import '../search_flight_utils/flight_controller.dart';
 import '../search_flight_utils/models/flight_models.dart';
 import '../search_flight_utils/widgets/sabre_flight_card.dart';
-import 'package_modal.dart';
+import 'sabre_package_modal.dart';
 
 class PackageSelectionDialog extends StatelessWidget {
   final Flight flight;

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:oneroof/utility/colors.dart';
+import '../../../b2b/agent_dashboard/agent_dashboard.dart';
+import '../login/login_api_service/login_api.dart';
 
 class RegistrationModel {
   String agencyName;
@@ -21,7 +23,6 @@ class RegistrationModel {
     required this.cityName,
   });
 
-  // Convert model to JSON
   Map<String, dynamic> toJson() {
     return {
       'agencyName': agencyName,
@@ -34,7 +35,6 @@ class RegistrationModel {
     };
   }
 
-  // Create model from JSON
   factory RegistrationModel.fromJson(Map<String, dynamic> json) {
     return RegistrationModel(
       agencyName: json['agencyName'] ?? '',
@@ -49,6 +49,8 @@ class RegistrationModel {
 }
 
 class RegisterController extends GetxController {
+  final LoginApiService _apiService = LoginApiService();
+
   // Text controllers for form fields
   final TextEditingController agencyNameController = TextEditingController();
   final TextEditingController contactNameController = TextEditingController();
@@ -59,20 +61,23 @@ class RegisterController extends GetxController {
 
   // Observable variables
   var selectedCountryCode = ''.obs;
-  var isRecaptchaChecked = false.obs;
   var isLoading = false.obs;
+  var apiErrorMessage = ''.obs; // Added for detailed API error messages
 
   // List of country codes
   final List<String> countryCodes = [
-    '+1',
-    '+44',
-    '+92',
-    '+61',
-    '+49',
-    '+81',
-    '+86',
-    '+971',
-    '+966',
+    '+1',    // USA/Canada
+    '+44',   // UK
+    '+92',   // Pakistan
+    '+61',   // Australia
+    '+49',   // Germany
+    '+81',   // Japan
+    '+86',   // China
+    '+971',  // UAE
+    '+966',  // Saudi Arabia
+    '+91',   // India
+    '+33',   // France
+    '+55',   // Brazil
   ];
 
   // Form validation variables
@@ -109,46 +114,54 @@ class RegisterController extends GetxController {
   }
 
   // Navigation to login screen
-  void navigateToLogin() {
-    // Replace with your navigation logic to login screen
-    Get.back(); // Example: Go back to previous screen
+
+
+  // Reset all form errors
+  void resetErrors() {
+    agencyNameError.value = '';
+    contactNameError.value = '';
+    emailError.value = '';
+    countryCodeError.value = '';
+    cellError.value = '';
+    addressError.value = '';
+    cityNameError.value = '';
+    apiErrorMessage.value = '';
   }
 
   // Validate email format
   bool isEmailValid(String email) {
-    final emailRegExp = RegExp(r'^[a-zA-Z0-9.]+@[a-zA-Z0-9]+\.[a-zA-Z]+');
+    final emailRegExp = RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$');
     return emailRegExp.hasMatch(email);
   }
 
   // Validate phone number format
   bool isPhoneValid(String phone) {
-    final phoneRegExp = RegExp(
-      r'^\d{6,15}$',
-    ); // Basic validation for 6-15 digits
+    final phoneRegExp = RegExp(r'^\d{6,15}$');
     return phoneRegExp.hasMatch(phone);
   }
 
   // Validate all fields
   bool validateFields() {
+    resetErrors();
     bool isValid = true;
 
     // Validate Agency Name
-    if (agencyNameController.text.isEmpty) {
+    if (agencyNameController.text.trim().isEmpty) {
       agencyNameError.value = 'Agency name is required';
       isValid = false;
     }
 
     // Validate Contact Name
-    if (contactNameController.text.isEmpty) {
+    if (contactNameController.text.trim().isEmpty) {
       contactNameError.value = 'Contact name is required';
       isValid = false;
     }
 
     // Validate Email
-    if (emailController.text.isEmpty) {
+    if (emailController.text.trim().isEmpty) {
       emailError.value = 'Email is required';
       isValid = false;
-    } else if (!isEmailValid(emailController.text)) {
+    } else if (!isEmailValid(emailController.text.trim())) {
       emailError.value = 'Please enter a valid email';
       isValid = false;
     }
@@ -160,36 +173,23 @@ class RegisterController extends GetxController {
     }
 
     // Validate Cell Number
-    if (cellController.text.isEmpty) {
+    if (cellController.text.trim().isEmpty) {
       cellError.value = 'Cell number is required';
       isValid = false;
-    } else if (!isPhoneValid(cellController.text)) {
-      cellError.value = 'Please enter a valid phone number';
+    } else if (!isPhoneValid(cellController.text.trim())) {
+      cellError.value = 'Please enter a valid phone number (6-15 digits)';
       isValid = false;
     }
 
     // Validate Address
-    if (addressController.text.isEmpty) {
+    if (addressController.text.trim().isEmpty) {
       addressError.value = 'Address is required';
       isValid = false;
     }
 
     // Validate City Name
-    if (cityNameController.text.isEmpty) {
+    if (cityNameController.text.trim().isEmpty) {
       cityNameError.value = 'City name is required';
-      isValid = false;
-    }
-
-    // Validate reCAPTCHA
-    if (!isRecaptchaChecked.value) {
-      Get.snackbar(
-        'Verification Required',
-        'Please complete the reCAPTCHA verification',
-        backgroundColor: TColors.third.withOpacity(0.8),
-        colorText: TColors.white,
-        snackPosition: SnackPosition.BOTTOM,
-        margin: EdgeInsets.all(10),
-      );
       isValid = false;
     }
 
@@ -201,8 +201,19 @@ class RegisterController extends GetxController {
     // Clear focus to hide keyboard
     FocusManager.instance.primaryFocus?.unfocus();
 
+    // Reset API error message
+    apiErrorMessage.value = '';
+
     // Validate fields
     if (!validateFields()) {
+      Get.snackbar(
+        'Validation Error',
+        'Please correct the errors in the form',
+        backgroundColor: TColors.third,
+        colorText: TColors.white,
+        snackPosition: SnackPosition.BOTTOM,
+        margin: EdgeInsets.all(10),
+      );
       return;
     }
 
@@ -210,45 +221,63 @@ class RegisterController extends GetxController {
       // Show loading indicator
       isLoading.value = true;
 
-      // Prepare registration data
-      final registrationData = {
-        'agency_name': agencyNameController.text,
-        'contact_name': contactNameController.text,
-        'email': emailController.text,
-        'phone': '${selectedCountryCode.value}${cellController.text}',
-        'address': addressController.text,
-        'city': cityNameController.text,
-      };
-
-      // Simulate API call with delay (replace with actual API call)
-      await Future.delayed(Duration(seconds: 2));
-
-      // Process registration (replace with actual API integration)
-      print('Registration data: $registrationData');
-
-      // Show success message
-      Get.snackbar(
-        'Success',
-        'Registration completed successfully',
-        backgroundColor: Colors.green,
-        colorText: TColors.white,
-        snackPosition: SnackPosition.BOTTOM,
-        margin: EdgeInsets.all(10),
+      // Call the API service for registration
+      final response = await _apiService.register(
+        agencyName: agencyNameController.text.trim(),
+        contactName: contactNameController.text.trim(),
+        email: emailController.text.trim(),
+        countryCode: selectedCountryCode.value,
+        cellNumber: cellController.text.trim(),
+        address: addressController.text.trim(),
+        city: cityNameController.text.trim(),
       );
 
-      // Navigate to next screen or login screen
-      // Example: Get.offAll(() => DashboardScreen());
+      if (response['success']) {
+        // Show success message
+        Get.snackbar(
+          'Success',
+          'Registration completed successfully',
+          backgroundColor: Colors.green,
+          colorText: TColors.white,
+          snackPosition: SnackPosition.BOTTOM,
+          margin: EdgeInsets.all(10),
+        );
+
+        // Navigate to the agent dashboard screen
+        Get.off(() => AgentDashboard());
+
+      } else {
+        // Store API error message
+        apiErrorMessage.value = response['message'] ?? 'Registration failed';
+
+        // Show error message
+        Get.snackbar(
+          'Registration Failed',
+          apiErrorMessage.value,
+          backgroundColor: TColors.third,
+          colorText: TColors.white,
+          snackPosition: SnackPosition.BOTTOM,
+          margin: EdgeInsets.all(10),
+          duration: Duration(seconds: 5),
+        );
+
+        // Log error details
+        print('Registration API error: ${response['message']}');
+      }
     } catch (e) {
-      // Handle error
+      // Handle exception
+      apiErrorMessage.value = 'Registration failed: ${e.toString()}';
+
       Get.snackbar(
         'Error',
-        'Registration failed. Please try again.',
+        'Registration failed. Please try again later.',
         backgroundColor: TColors.third,
         colorText: TColors.white,
         snackPosition: SnackPosition.BOTTOM,
         margin: EdgeInsets.all(10),
       );
-      print('Registration error: $e');
+
+      print('Registration exception: $e');
     } finally {
       // Hide loading indicator
       isLoading.value = false;
@@ -268,66 +297,3 @@ class RegisterController extends GetxController {
     }
   }
 }
-
-final agencyNameController = TextEditingController();
-final contactNameController = TextEditingController();
-final emailController = TextEditingController();
-final cellController = TextEditingController();
-final addressController = TextEditingController();
-final cityNameController = TextEditingController();
-
-var selectedCountryCode = ''.obs;
-var isRecaptchaChecked = false.obs;
-
-// List of country codes - add more as needed
-final List<String> countryCodes = ['+1', '+44', '+92', '+61', '+81'];
-
-@override
-void onClose() {
-  agencyNameController.dispose();
-  contactNameController.dispose();
-  emailController.dispose();
-  cellController.dispose();
-  addressController.dispose();
-  cityNameController.dispose();
-}
-
-void register() {
-  // Validate fields
-  if (agencyNameController.text.isEmpty ||
-      contactNameController.text.isEmpty ||
-      emailController.text.isEmpty ||
-      cellController.text.isEmpty ||
-      addressController.text.isEmpty ||
-      cityNameController.text.isEmpty ||
-      selectedCountryCode.value.isEmpty ||
-      !isRecaptchaChecked.value) {
-    Get.snackbar(
-      'Error',
-      'Please fill in all fields and complete the reCAPTCHA',
-      backgroundColor: Colors.red,
-      colorText: Colors.white,
-      snackPosition: SnackPosition.BOTTOM,
-    );
-    return;
-  }
-
-  // Perform registration logic
-  print('Registration form submitted:');
-  print('Agency Name: ${agencyNameController.text}');
-  print('Contact Name: ${contactNameController.text}');
-  print('Email: ${emailController.text}');
-  print('Phone: ${selectedCountryCode.value} ${cellController.text}');
-  print('Address: ${addressController.text}');
-  print('City: ${cityNameController.text}');
-
-  // Here you would typically call an API to register the user
-  Get.snackbar(
-    'Success',
-    'Registration submitted successfully',
-    backgroundColor: Colors.green,
-    colorText: Colors.white,
-    snackPosition: SnackPosition.BOTTOM,
-  );
-}
-

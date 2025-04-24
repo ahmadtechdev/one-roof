@@ -5,6 +5,8 @@ import 'package:oneroof/b2b/all_flight_booking/all_flight_booking.dart';
 import 'package:oneroof/b2b/all_group_booking/all_group_booking.dart';
 import 'package:oneroof/utility/colors.dart';
 
+import '../all_hotel_booking/all_hotel_booking.dart';
+
 class AgentDashboard extends StatefulWidget {
   const AgentDashboard({Key? key}) : super(key: key);
 
@@ -334,7 +336,7 @@ class _AgentDashboardState extends State<AgentDashboard> {
               Get.to(() => AllFlightBookingScreen());
             }),
             _buildDrawerItem(Icons.hotel, 'Hotel Bookings', false, () {
-              ;
+              Get.to(()=>AllHotelBooking());
             }),
             _buildDrawerItem(Icons.group, 'All Group Bookings', false, () {
               Get.to(() => AllGroupBooking());

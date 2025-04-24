@@ -3,8 +3,8 @@ import 'package:get/get.dart';
 import 'dart:math';
 
 import '../../../../services/api_service_flight.dart';
-import '../flight_package/flight_package.dart';
-import '../flight_package/package_modal.dart';
+import '../flight_package/sabre_flight_package.dart';
+import '../flight_package/sabre_package_modal.dart';
 import '../search_flights.dart';
 import 'helper_functions.dart';
 import 'models/airblue_flight_model.dart';

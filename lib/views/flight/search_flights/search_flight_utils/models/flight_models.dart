@@ -1,4 +1,4 @@
-import '../../flight_package/package_modal.dart';
+import '../../flight_package/sabre_package_modal.dart';
 import '../flight_controller.dart';
 
 class Flight {
