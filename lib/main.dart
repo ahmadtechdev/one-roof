@@ -7,6 +7,7 @@ import 'package:oneroof/views/hotel/hotel/guests/guests_controller.dart';
 import 'package:oneroof/views/hotel/hotel/hotel_date_controller.dart';
 import 'package:oneroof/views/hotel/search_hotels/search_hotel_controller.dart';
 import 'package:oneroof/views/introduce.dart';
+import 'package:oneroof/views/users/login/login_api_service/login_api.dart';
 import 'package:oneroof/widgets/travelers_selection_bottom_sheet.dart';
 
 void main() {
@@ -24,6 +25,7 @@ class MyApp extends StatelessWidget {
     Get.lazyPut(() => SearchHotelController(), fenix: true);
     Get.lazyPut(() => FlightDateController(), fenix: true);
     Get.lazyPut(() => TravelersController(), fenix: true);
+     Get.put(AuthController());
 
     return GetMaterialApp(
       title: 'Flutter Demo',

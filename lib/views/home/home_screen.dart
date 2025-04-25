@@ -5,8 +5,8 @@ import 'package:oneroof/utility/colors.dart';
 import 'package:oneroof/views/group_ticket/group_ticket.dart';
 import 'package:oneroof/views/hotel/hotel/hotel_form.dart';
 import 'package:oneroof/views/users/login/login.dart';
+import 'package:oneroof/views/users/login/login_api_service/login_api.dart';
 
-import '../../b2b/agent_dashboard/agent_dashboard.dart';
 import '../flight/form/flight_form.dart';
 import '../group_ticket/airline/data_controller.dart';
 
@@ -66,7 +66,9 @@ class HomeScreenState extends State<HomeScreen>
           IconButton(
             icon: Icon(Icons.login, color: TColors.primary),
             onPressed: () {
-              Get.to(() =>  Login());
+              AuthController().getHotelBookings();
+
+              Get.to(() => Login());
             },
           ),
         ],

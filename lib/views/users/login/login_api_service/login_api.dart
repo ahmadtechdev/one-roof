@@ -1,74 +1,141 @@
 import 'dart:convert';
+
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
+import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-class LoginApiService {
-  late final Dio dio;
+class AuthController extends GetxController {
+  var dio = Dio();
   static const String _baseUrl = 'https://onerooftravel.net/api';
-  static const String _tokenKey = 'user_auth_token';
 
-  LoginApiService() {
+  // Keys for SharedPreferences
+  static const String _tokenKey = 'user_auth_token';
+  static const String _tokenExpiryKey = 'user_token_expiry';
+
+  // Observable values
+  final RxBool isLoading = false.obs;
+  final RxBool isLoggedInValue = false.obs;
+
+  @override
+  void onInit() {
+    super.onInit();
+    // Initialize Dio
     dio = Dio(
       BaseOptions(
         baseUrl: _baseUrl,
-        connectTimeout: Duration(seconds: 30),
-        receiveTimeout: Duration(seconds: 30),
-        validateStatus: (status) => true, // Accept any status code for proper error handling
-        contentType: 'application/json',
+        connectTimeout: const Duration(seconds: 10),
+        receiveTimeout: const Duration(seconds: 10),
       ),
     );
 
     // Add logging interceptor in debug mode
     if (kDebugMode) {
-      dio.interceptors.add(LogInterceptor(
-        requestBody: true,
-        responseBody: true,
-        error: true,
-      ));
+      dio.interceptors.add(
+        LogInterceptor(requestBody: true, responseBody: true),
+      );
     }
+
+    // Check login status at startup
+    checkLoginStatus();
+  }
+
+  // Check login status
+  Future<void> checkLoginStatus() async {
+    isLoggedInValue.value = await isLoggedIn();
+  }
+
+  // Check if token is valid or get a new one if needed
+  Future<String?> getValidToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString(_tokenKey);
+    final expiryTimestamp = prefs.getInt(_tokenExpiryKey);
+
+    if (token == null || expiryTimestamp == null) {
+      return null; // No token stored
+    }
+
+    // Check if token is expired
+    final now =
+        DateTime.now().millisecondsSinceEpoch ~/
+        1000; // Current time in seconds
+    if (now >= expiryTimestamp) {
+      if (kDebugMode) {
+        print('Token expired, needs refresh');
+      }
+      return null; // Token expired
+    }
+
+    return token; // Valid token
+  }
+
+  // Store token with expiry
+  Future<void> _storeTokenWithExpiry(String token, int expiryTimestamp) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_tokenKey, token);
+    await prefs.setInt(_tokenExpiryKey, expiryTimestamp);
+
+    if (kDebugMode) {
+      final expiryDate = DateTime.fromMillisecondsSinceEpoch(
+        expiryTimestamp * 1000,
+      );
+      print('Token stored, expires on: $expiryDate');
+    }
+
+    // Update login status
+    isLoggedInValue.value = true;
   }
 
   Future<Map<String, dynamic>> login({
     required String email,
     required String password,
   }) async {
+    isLoading.value = true;
+
     try {
       final response = await dio.post(
-        '/token',
-        data: {
-          'email': email,
-          'password': password,
-        },
+        '$_baseUrl/token',
+        data: {'email': email, 'password': password},
       );
 
-      if (response.statusCode == 200) {
-        // Store the token
-        await _storeToken(response.data['token']);
-        return {
-          'success': true,
-          'token': response.data['token'],
-          'message': 'Login successful',
-        };
-      } else {
-        // Extract error message from response
-        String errorMessage = 'Login failed';
+      if (response.statusCode == 200 && response.data != null) {
+        // Parse token and expiry
+        final token = response.data['token'];
+        final expiryTimestamp = response.data['expire'];
 
-        if (response.data != null && response.data is Map) {
-          errorMessage = response.data['message'] ??
-              response.data['error'] ??
-              'Login failed with status code: ${response.statusCode}';
+        if (token != null && expiryTimestamp != null) {
+          // Store token with expiry
+          await _storeTokenWithExpiry(token, expiryTimestamp);
+
+          isLoading.value = false;
+          return {
+            'success': true,
+            'token': token,
+            'message': 'Login successful',
+          };
         }
-
-        return {
-          'success': false,
-          'message': errorMessage,
-          'statusCode': response.statusCode,
-        };
       }
+
+      // Extract error message from response
+      String errorMessage = 'Login failed';
+      if (response.data != null && response.data is Map) {
+        errorMessage =
+            response.data['message'] ??
+            response.data['error'] ??
+            'Login failed with status code: ${response.statusCode}';
+      }
+
+      isLoading.value = false;
+      return {
+        'success': false,
+        'message': errorMessage,
+        'statusCode': response.statusCode,
+      };
     } on DioException catch (e) {
+      isLoading.value = false;
       return _handleDioError(e, 'Login');
     } catch (e) {
+      isLoading.value = false;
       return {
         'success': false,
         'message': 'An unexpected error occurred: ${e.toString()}',
@@ -76,7 +143,6 @@ class LoginApiService {
     }
   }
 
-  // Updated registration function with improved error handling
   Future<Map<String, dynamic>> register({
     required String agencyName,
     required String contactName,
@@ -86,20 +152,12 @@ class LoginApiService {
     required String address,
     required String city,
   }) async {
-    try {
-      // Log registration attempt
-      print('Attempting registration for $email');
+    isLoading.value = true;
 
-      // Using the full URL and proper formatting for the API
-      final response = await dio.request(
-        'https://onerooftravel.net/api/register',
-        options: Options(
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        ),
-        data: json.encode({
+    try {
+      final response = await dio.post(
+        '$_baseUrl/register',
+        data: {
           "agency_name": agencyName,
           "contact_name": contactName,
           "email": email,
@@ -107,72 +165,74 @@ class LoginApiService {
           "csphno": cellNumber,
           "full_addrss": address,
           "city": city,
-        }),
+        },
       );
 
-      // Log the full response in debug mode1
+      // Debug log the raw response
       if (kDebugMode) {
-        print('Registration response status: ${response.statusCode}');
-        print('Registration response data: ${json.encode(response.data)}');
+        print('Registration response: ${response.data}');
       }
 
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        // Check if response data indicates success
-        bool isSuccess = false;
-        String message = 'Registration successful';
-
-        if (response.data is Map) {
-          // Different APIs might use different success indicators
-          isSuccess = response.data['success'] == true ||
-              response.data['status'] == 'success' ||
-              response.statusCode == 201;
-
-          // Extract message if available
-          if (response.data.containsKey('message')) {
-            message = response.data['message'];
-          }
-        } else {
-          isSuccess = true; // Assume success based on status code
+      // Parse the response data
+      var responseData = response.data;
+      if (responseData is String) {
+        try {
+          responseData = jsonDecode(responseData);
+        } catch (e) {
+          // If JSON parsing fails, keep it as string
         }
+      }
 
+      // Check the status field in the response
+      if (responseData is Map && responseData.containsKey('status')) {
+        // Check if status is "error" or non-200 numeric
+        if (responseData['status'] == 'error' ||
+            (responseData['status'] is num && responseData['status'] != 200)) {
+          isLoading.value = false;
+          return {
+            'success': false,
+            'message': responseData['message'] ?? 'Registration failed',
+            'errors': responseData['errors'] ?? {},
+            'data': responseData,
+          };
+        }
+      }
+
+      // If we reach here and HTTP status is 200/201, consider it success
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        isLoading.value = false;
         return {
-          'success': isSuccess,
-          'data': response.data,
-          'message': message,
+          'success': true,
+          'data': responseData,
+          'message':
+              responseData is Map
+                  ? (responseData['message'] ?? 'Registration successful')
+                  : 'Registration successful',
         };
       } else {
-        // Extract detailed error message
-        String errorMessage = 'Registration failed';
-        Map<String, dynamic> errorDetails = {};
-
-        if (response.data != null) {
-          if (response.data is Map) {
-            // Handle structured error responses
-            errorMessage = response.data['message'] ??
-                response.data['error'] ??
-                'Server returned error code: ${response.statusCode}';
-
-            // Collect field-specific errors if available
-            if (response.data.containsKey('errors') && response.data['errors'] is Map) {
-              errorDetails = Map<String, dynamic>.from(response.data['errors']);
-            }
-          } else if (response.data is String) {
-            // Handle string error responses
-            errorMessage = response.data;
-          }
+        // Handle other HTTP error codes
+        String errorMessage =
+            'Registration failed with status code: ${response.statusCode}';
+        if (responseData is Map && responseData.containsKey('message')) {
+          errorMessage = responseData['message'];
         }
 
+        isLoading.value = false;
         return {
           'success': false,
           'message': errorMessage,
-          'errors': errorDetails,
           'statusCode': response.statusCode,
         };
       }
     } on DioException catch (e) {
+      isLoading.value = false;
       return _handleDioError(e, 'Registration');
     } catch (e) {
-      print('Registration exception: ${e.toString()}');
+      if (kDebugMode) {
+        print('Registration exception: ${e.toString()}');
+        print('Stack trace: ${StackTrace.current}');
+      }
+      isLoading.value = false;
       return {
         'success': false,
         'message': 'Registration failed: ${e.toString()}',
@@ -186,23 +246,28 @@ class LoginApiService {
 
     switch (e.type) {
       case DioExceptionType.connectionTimeout:
-        errorMessage = 'Connection timeout. Please check your internet connection.';
+        errorMessage =
+            'Connection timeout. Please check your internet connection.';
         break;
       case DioExceptionType.receiveTimeout:
-        errorMessage = 'Server took too long to respond. Please try again later.';
+        errorMessage =
+            'Server took too long to respond. Please try again later.';
         break;
       case DioExceptionType.sendTimeout:
-        errorMessage = 'Request timeout. Please check your internet connection.';
+        errorMessage =
+            'Request timeout. Please check your internet connection.';
         break;
       case DioExceptionType.badResponse:
         if (e.response != null) {
           // Try to extract error message from response
           if (e.response!.data is Map) {
-            errorMessage = e.response!.data['message'] ??
+            errorMessage =
+                e.response!.data['message'] ??
                 e.response!.data['error'] ??
                 '$operation failed with status: ${e.response!.statusCode}';
           } else {
-            errorMessage = '$operation failed with status: ${e.response!.statusCode}';
+            errorMessage =
+                '$operation failed with status: ${e.response!.statusCode}';
           }
         } else {
           errorMessage = 'Bad server response';
@@ -226,34 +291,99 @@ class LoginApiService {
     // Log the error in debug mode
     if (kDebugMode) {
       print('$operation API Error: $errorMessage');
-      print('Error details: ${e.toString()}');
-
       if (e.response != null) {
+        print('Response status: ${e.response!.statusCode}');
         print('Response data: ${e.response!.data}');
-        print('Response headers: ${e.response!.headers}');
-        print('Response status code: ${e.response!.statusCode}');
       }
     }
 
-    return {
-      'success': false,
-      'message': errorMessage,
-      'error': e.toString(),
-    };
+    return {'success': false, 'message': errorMessage};
   }
 
-  Future<void> _storeToken(String token) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_tokenKey, token);
-  }
-
-  Future<String?> getStoredToken() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString(_tokenKey);
+  // Method to check if user is logged in with valid token
+  Future<bool> isLoggedIn() async {
+    final token = await getValidToken();
+    return token != null;
   }
 
   Future<void> logout() async {
+    isLoading.value = true;
+
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_tokenKey);
+    await prefs.remove(_tokenExpiryKey);
+
+    // Update login status
+    isLoggedInValue.value = false;
+    isLoading.value = false;
+  }
+
+  // Add this method to your AuthController class
+
+  Future<Map<String, dynamic>> getHotelBookings() async {
+    isLoading.value = true;
+
+    try {
+      // Get the token from SharedPreferences
+      final token = await getValidToken();
+
+      if (token == null) {
+        isLoading.value = false;
+        return {
+          'success': false,
+          'message': 'Authentication token not found. Please login again.',
+        };
+      }
+
+      // Set up headers with the token
+      final headers = {'Authorization': 'Bearer $token'};
+
+      // Make the API request
+      final response = await dio.get(
+        '$_baseUrl/hotel-booking',
+        options: Options(headers: headers),
+      );
+
+      // Debug log the response
+      if (kDebugMode) {
+        print('Hotel bookings response: ${response.data}');
+      }
+
+      if (response.statusCode == 200) {
+        isLoading.value = false;
+        return {
+          'success': true,
+          'data': response.data,
+          'message': 'Hotel bookings retrieved successfully',
+        };
+      } else {
+        String errorMessage = 'Failed to fetch hotel bookings';
+        if (response.data != null &&
+            response.data is Map &&
+            response.data.containsKey('message')) {
+          errorMessage = response.data['message'];
+        }
+
+        isLoading.value = false;
+        return {
+          'success': false,
+          'message': errorMessage,
+          'statusCode': response.statusCode,
+        };
+      }
+    } on DioException catch (e) {
+      isLoading.value = false;
+      return _handleDioError(e, 'Hotel Bookings');
+    } catch (e) {
+      if (kDebugMode) {
+        print('Hotel bookings exception: ${e.toString()}');
+        print('Stack trace: ${StackTrace.current}');
+      }
+      isLoading.value = false;
+      return {
+        'success': false,
+        'message': 'Failed to fetch hotel bookings: ${e.toString()}',
+      };
+    }
   }
 }

@@ -49,7 +49,8 @@ class RegistrationModel {
 }
 
 class RegisterController extends GetxController {
-  final LoginApiService _apiService = LoginApiService();
+ final authController = Get.find<AuthController>();
+
 
   // Text controllers for form fields
   final TextEditingController agencyNameController = TextEditingController();
@@ -66,18 +67,18 @@ class RegisterController extends GetxController {
 
   // List of country codes
   final List<String> countryCodes = [
-    '+1',    // USA/Canada
-    '+44',   // UK
-    '+92',   // Pakistan
-    '+61',   // Australia
-    '+49',   // Germany
-    '+81',   // Japan
-    '+86',   // China
-    '+971',  // UAE
-    '+966',  // Saudi Arabia
-    '+91',   // India
-    '+33',   // France
-    '+55',   // Brazil
+    '+1', // USA/Canada
+    '+44', // UK
+    '+92', // Pakistan
+    '+61', // Australia
+    '+49', // Germany
+    '+81', // Japan
+    '+86', // China
+    '+971', // UAE
+    '+966', // Saudi Arabia
+    '+91', // India
+    '+33', // France
+    '+55', // Brazil
   ];
 
   // Form validation variables
@@ -115,7 +116,6 @@ class RegisterController extends GetxController {
 
   // Navigation to login screen
 
-
   // Reset all form errors
   void resetErrors() {
     agencyNameError.value = '';
@@ -130,7 +130,9 @@ class RegisterController extends GetxController {
 
   // Validate email format
   bool isEmailValid(String email) {
-    final emailRegExp = RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$');
+    final emailRegExp = RegExp(
+      r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
+    );
     return emailRegExp.hasMatch(email);
   }
 
@@ -222,7 +224,7 @@ class RegisterController extends GetxController {
       isLoading.value = true;
 
       // Call the API service for registration
-      final response = await _apiService.register(
+      final response = await authController.register(
         agencyName: agencyNameController.text.trim(),
         contactName: contactNameController.text.trim(),
         email: emailController.text.trim(),
@@ -244,8 +246,7 @@ class RegisterController extends GetxController {
         );
 
         // Navigate to the agent dashboard screen
-        Get.off(() => AgentDashboard());
-
+        Get.to(() => AgentDashboard());
       } else {
         // Store API error message
         apiErrorMessage.value = response['message'] ?? 'Registration failed';

@@ -5,7 +5,7 @@ import '../../../common/bottom_navbar.dart';
 import 'login_api_service/login_api.dart';
 
 class LoginController extends GetxController {
-  final LoginApiService loginApiService = LoginApiService();
+  final authController = Get.find<AuthController>();
 
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
@@ -26,7 +26,7 @@ class LoginController extends GetxController {
     isLoading.value = true;
 
     try {
-      final result = await loginApiService.login(
+      final result = await authController.login(
         email: emailController.text.trim(),
         password: passwordController.text,
       );
@@ -35,7 +35,7 @@ class LoginController extends GetxController {
 
       if (result['success']) {
         // Navigate to home screen on successful login
-        Get.off(() => AgentDashboard());
+        Get.to(() => AgentDashboard());
       } else {
         errorMessage.value = result['message'];
       }
