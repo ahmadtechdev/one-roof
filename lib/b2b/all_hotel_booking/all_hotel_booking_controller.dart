@@ -201,4 +201,74 @@ class AllHotelBookingController extends GetxController {
     // For now, we'll return all bookings
     return bookings;
   }
+  // Add to all_hotel_booking_controller.dart
+  // Update this method in all_hotel_booking_controller.dart
+  Future<Map<String, dynamic>> getBookingDataForPdf(String bookingNumber) async {
+    try {
+      // Find the booking object from our local list
+      final booking = bookings.firstWhere(
+            (b) => b.bookingNumber == bookingNumber,
+        orElse: () => throw Exception('Booking not found'),
+      );
+
+      // Extract booking ID from the booking number (assuming format ONETRVL-0001)
+      final String bookingIdRaw = bookingNumber.split('-').last;
+      // Remove leading zeros to match possible different formats in the API
+      final String bookingId = bookingIdRaw.replaceFirst(RegExp('^0+'), '');
+
+      // Get the raw API response
+      final result = await _authController.getHotelBookings();
+
+      // Handle different response structures
+      List<dynamic> responseData;
+      if (result['data'] is Map && result['data']['data'] != null) {
+        responseData = result['data']['data'] as List<dynamic>;
+      } else if (result['data'] is List) {
+        responseData = result['data'] as List<dynamic>;
+      } else {
+        throw Exception('Unexpected data structure from API');
+      }
+
+      // Add debug logging
+      print('Looking for booking ID: $bookingId');
+      print('Available IDs: ${responseData.map((b) => b['BookingDetail']['om_id']?.toString()).toList()}');
+
+      // Find the matching booking with more flexible matching
+      final bookingData = responseData.firstWhere(
+            (b) {
+          String apiId = b['BookingDetail']['om_id']?.toString() ?? '';
+          // Remove leading zeros for comparison if needed
+          String normalizedApiId = apiId.replaceFirst(RegExp('^0+'), '');
+          return normalizedApiId == bookingId || apiId == bookingId;
+        },
+        orElse: () {
+          // If no exact match found, try to use the first booking data as fallback
+          // or throw exception if no data available
+          if (responseData.isNotEmpty) {
+            print('No exact match found. Using first booking as fallback.');
+            return responseData.first;
+          }
+          throw Exception('Original booking data not found');
+        },
+      );
+
+      return {
+        'bookingNumber': booking.bookingNumber,
+        'hotelName': booking.hotel,
+        'destination': booking.destination,
+        'checkInDate': bookingData['BookingDetail']['om_chindate'] ?? 'N/A',
+        'checkOutDate': bookingData['BookingDetail']['om_choutdate'] ?? 'N/A',
+        'nights': bookingData['BookingDetail']['om_nights'] ?? 'N/A',
+        'rooms': bookingData['BookingDetail']['om_trooms'] ?? 'N/A',
+        'guestDetails': bookingData['GuestsDetail'] ?? [],
+        'bookerName': booking.bookerName,
+        'price': booking.price,
+        'status': booking.status,
+        'specialRequests': bookingData['BookingDetail']['om_spreq'] ?? '',
+      };
+    } catch (e) {
+      print('PDF generation error details: $e');
+      throw Exception('Failed to prepare booking data for PDF: $e');
+    }
+  }
 }
