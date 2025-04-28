@@ -33,12 +33,21 @@ class AllHotelBookingController extends GetxController {
       final result = await _authController.getHotelBookings();
 
       if (result['success'] == true && result['data'] != null) {
-        // Process the API response data
-        final responseData = result['data'] as List<dynamic>;
+        // Check the data structure and handle accordingly
+        var responseData;
+
+        if (result['data'] is Map && result['data']['data'] != null) {
+          // If data is a Map with a 'data' key containing the array
+          responseData = result['data']['data'] as List<dynamic>;
+        } else if (result['data'] is List) {
+          // If data is directly a List
+          responseData = result['data'] as List<dynamic>;
+        } else {
+          throw Exception('Unexpected data structure from API');
+        }
 
         double totalReceiptValue = 0.0;
         double totalPaymentValue = 0.0;
-
         final List<HotelBookingModel> processedBookings = [];
 
         for (int i = 0; i < responseData.length; i++) {

@@ -36,11 +36,11 @@ class AllHotelBooking extends StatelessWidget {
       ),
       body: Column(
         children: [
-          _buildDateFilter(),
+          // _buildDateFilter(),
           Expanded(
             child: _buildBookingsList(),
           ),
-          _buildSummarySection(),
+          // _buildSummarySection(),
         ],
       ),
     );
