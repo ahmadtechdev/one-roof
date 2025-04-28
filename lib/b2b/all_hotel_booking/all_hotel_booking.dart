@@ -1,5 +1,3 @@
-
-
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
@@ -24,6 +22,10 @@ class AllHotelBooking extends StatelessWidget {
           ),
         ),
         actions: [
+          IconButton(
+            icon: Icon(Icons.refresh, color: Colors.white),
+            onPressed: () => bookingController.fetchHotelBookings(),
+          ),
           IconButton(
             icon: Icon(Icons.print, color: Colors.white),
             onPressed: () {
@@ -167,12 +169,67 @@ class AllHotelBooking extends StatelessWidget {
 
   Widget _buildBookingsList() {
     return Obx(() {
-      if (bookingController.bookings.isEmpty) {
+      // Show loading indicator
+      if (bookingController.isLoading.value) {
         return Center(
-          child: Text('No bookings found for the selected date range'),
+          child: CircularProgressIndicator(),
         );
       }
       
+      // Show error message if any
+      if (bookingController.errorMessage.value.isNotEmpty) {
+        return Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.error_outline,
+                color: Colors.red,
+                size: 48,
+              ),
+              SizedBox(height: 16),
+              Text(
+                bookingController.errorMessage.value,
+                textAlign: TextAlign.center,
+                style: TextStyle(color: Colors.red),
+              ),
+              SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: () => bookingController.fetchHotelBookings(),
+                child: Text('Retry'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: TColors.primary,
+                  foregroundColor: Colors.white,
+                ),
+              ),
+            ],
+          ),
+        );
+      }
+      
+      // Show empty state
+      if (bookingController.bookings.isEmpty) {
+        return Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.hotel_outlined,
+                color: TColors.grey,
+                size: 64,
+              ),
+              SizedBox(height: 16),
+              Text(
+                'No bookings found for the selected date range',
+                textAlign: TextAlign.center,
+                style: TextStyle(color: TColors.grey),
+              ),
+            ],
+          ),
+        );
+      }
+      
+      // Show bookings list
       return ListView.builder(
         padding: EdgeInsets.all(16),
         itemCount: bookingController.bookings.length,
@@ -194,14 +251,21 @@ class AllHotelBooking extends StatelessWidget {
       case 'on request':
         statusColor = Colors.orange;
         break;
+      case 'cancelled':
+        statusColor = Colors.red;
+        break;
       default:
         statusColor = Colors.blue;
     }
 
+    // Determine booking source color based on booking number prefix
     String portalCode = booking.bookingNumber.split('-')[0];
     Color portalColor;
     
     switch (portalCode) {
+      case 'ONETRVL':
+        portalColor = Colors.blue;
+        break;
       case 'TOCBK':
         portalColor = Colors.teal;
         break;
