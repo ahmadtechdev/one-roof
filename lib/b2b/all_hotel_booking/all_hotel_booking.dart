@@ -68,132 +68,12 @@ class AllHotelBooking extends StatelessWidget {
           Expanded(
             child: _buildBookingsList(),
           ),
-          // _buildSummarySection(),
         ],
       ),
     );
   }
 
-  Widget _buildDateFilter() {
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        color: TColors.background3,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black12,
-            offset: Offset(0, 2),
-            blurRadius: 4,
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'All International Bookings',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: TColors.text,
-            ),
-          ),
-          SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: Obx(() => _buildDateSelector(
-                  'From Date',
-                  bookingController.fromDate.value,
-                  (newDate) {
-                    if (newDate != null) {
-                      bookingController.updateDateRange(
-                        newDate,
-                        bookingController.toDate.value,
-                      );
-                    }
-                  },
-                )),
-              ),
-              SizedBox(width: 12),
-              Expanded(
-                child: Obx(() => _buildDateSelector(
-                  'To Date',
-                  bookingController.toDate.value,
-                  (newDate) {
-                    if (newDate != null) {
-                      bookingController.updateDateRange(
-                        bookingController.fromDate.value,
-                        newDate,
-                      );
-                    }
-                  },
-                )),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
 
-  Widget _buildDateSelector(String label, DateTime selectedDate, Function(DateTime?) onDateSelected) {
-    return InkWell(
-      onTap: () async {
-        final DateTime? picked = await showDatePicker(
-          context: Get.context!,
-          initialDate: selectedDate,
-          firstDate: DateTime(2020),
-          lastDate: DateTime(2026),
-          builder: (context, child) {
-            return Theme(
-              data: ThemeData.light().copyWith(
-                colorScheme: ColorScheme.light(
-                  primary: TColors.primary,
-                ),
-              ),
-              child: child!,
-            );
-          },
-        );
-        onDateSelected(picked);
-      },
-      child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: TColors.grey.withOpacity(0.3)),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              label,
-              style: TextStyle(
-                color: TColors.grey,
-                fontSize: 12,
-              ),
-            ),
-            SizedBox(height: 4),
-            Row(
-              children: [
-                Icon(Icons.calendar_today, size: 16, color: TColors.primary),
-                SizedBox(width: 8),
-                Text(
-                  DateFormat('dd MMM yyyy').format(selectedDate),
-                  style: TextStyle(
-                    color: TColors.text,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 
   Widget _buildBookingsList() {
     return Obx(() {
@@ -468,74 +348,7 @@ class AllHotelBooking extends StatelessWidget {
     );
   }
 
-  Widget _buildSummarySection() {
-    return Container(
-      padding: EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            offset: Offset(0, -2),
-            blurRadius: 6,
-          ),
-        ],
-      ),
-      child: Obx(() => Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: [
-          _buildSummaryItem(
-            "Total Receipt",
-            "\$${bookingController.totalReceipt.value}",
-            Colors.green,
-          ),
-          Container(
-            height: 40,
-            width: 1,
-            color: Colors.grey.withOpacity(0.3),
-          ),
-          _buildSummaryItem(
-            "Total Payment",
-            "\$${bookingController.totalPayment.value}",
-            Colors.red,
-          ),
-          Container(
-            height: 40,
-            width: 1,
-            color: Colors.grey.withOpacity(0.3),
-          ),
-          _buildSummaryItem(
-            "Closing Balance",
-            "\$${bookingController.closingBalance.value}",
-            TColors.primary,
-          ),
-        ],
-      )),
-    );
-  }
 
-  Widget _buildSummaryItem(String label, String value, Color valueColor) {
-    return Column(
-      children: [
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 12,
-            color: TColors.grey,
-          ),
-        ),
-        SizedBox(height: 4),
-        Text(
-          value,
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-            color: valueColor,
-          ),
-        ),
-      ],
-    );
-  }
 }
 
 
