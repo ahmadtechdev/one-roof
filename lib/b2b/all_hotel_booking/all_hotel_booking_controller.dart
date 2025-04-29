@@ -201,13 +201,17 @@ class AllHotelBookingController extends GetxController {
     // For now, we'll return all bookings
     return bookings;
   }
+
   // Add to all_hotel_booking_controller.dart
   // Update this method in all_hotel_booking_controller.dart
-  Future<Map<String, dynamic>> getBookingDataForPdf(String bookingNumber) async {
+  // Update this method in all_hotel_booking_controller.dart
+  Future<Map<String, dynamic>> getBookingDataForPdf(
+    String bookingNumber,
+  ) async {
     try {
       // Find the booking object from our local list
       final booking = bookings.firstWhere(
-            (b) => b.bookingNumber == bookingNumber,
+        (b) => b.bookingNumber == bookingNumber,
         orElse: () => throw Exception('Booking not found'),
       );
 
@@ -229,13 +233,9 @@ class AllHotelBookingController extends GetxController {
         throw Exception('Unexpected data structure from API');
       }
 
-      // Add debug logging
-      print('Looking for booking ID: $bookingId');
-      print('Available IDs: ${responseData.map((b) => b['BookingDetail']['om_id']?.toString()).toList()}');
-
       // Find the matching booking with more flexible matching
       final bookingData = responseData.firstWhere(
-            (b) {
+        (b) {
           String apiId = b['BookingDetail']['om_id']?.toString() ?? '';
           // Remove leading zeros for comparison if needed
           String normalizedApiId = apiId.replaceFirst(RegExp('^0+'), '');
@@ -243,7 +243,6 @@ class AllHotelBookingController extends GetxController {
         },
         orElse: () {
           // If no exact match found, try to use the first booking data as fallback
-          // or throw exception if no data available
           if (responseData.isNotEmpty) {
             print('No exact match found. Using first booking as fallback.');
             return responseData.first;
@@ -252,19 +251,106 @@ class AllHotelBookingController extends GetxController {
         },
       );
 
+      // Calculate adult and child counts
+      int adultCount = 0;
+      int childCount = 0;
+
+      List<dynamic> guestDetails = bookingData['GuestsDetail'] ?? [];
+      for (var guest in guestDetails) {
+        String guestFor = guest['od_gfor']?.toString() ?? '';
+        if (guestFor.toLowerCase().contains('adult')) {
+          adultCount++;
+        } else if (guestFor.toLowerCase().contains('child')) {
+          childCount++;
+        }
+      }
+
+      // Extract room type and board basis from rateKey if available
+      String roomType = 'Standard Room';
+      String boardBasis = 'Bed & Breakfast';
+
+      String rateKey =
+          bookingData['BookingDetail']['rate_key']?.toString() ?? '';
+      if (rateKey.isNotEmpty) {
+        // Extract room type
+        RegExp roomTypeRegex = RegExp(r'\|(.*?)\|');
+        var matches = roomTypeRegex.allMatches(rateKey);
+        for (var match in matches) {
+          if (match.group(1) != null) {
+            String extracted = match.group(1)!;
+            if (extracted.length < 20 && !extracted.contains(',')) {
+              // Basic validation
+              roomType = extracted;
+              break;
+            }
+          }
+        }
+
+        // Extract board basis (common codes: BB, FB, HB, AI)
+        RegExp boardBasisRegex = RegExp(r'\|(BB|FB|HB|AI|RO)\|');
+        var bbMatches = boardBasisRegex.allMatches(rateKey);
+        for (var match in bbMatches) {
+          if (match.group(1) != null) {
+            String code = match.group(1)!;
+            switch (code) {
+              case 'BB':
+                boardBasis = 'Bed & Breakfast';
+                break;
+              case 'FB':
+                boardBasis = 'Full Board';
+                break;
+              case 'HB':
+                boardBasis = 'Half Board';
+                break;
+              case 'AI':
+                boardBasis = 'All Inclusive';
+                break;
+              case 'RO':
+                boardBasis = 'Room Only';
+                break;
+              default:
+                boardBasis = 'Bed & Breakfast';
+            }
+            break;
+          }
+        }
+      }
+
+      // Parse dates correctly
+      DateTime? checkInDate;
+      DateTime? checkOutDate;
+      try {
+        checkInDate = DateTime.parse(
+          bookingData['BookingDetail']['om_chindate'],
+        );
+        checkOutDate = DateTime.parse(
+          bookingData['BookingDetail']['om_choutdate'],
+        );
+      } catch (e) {
+        print('Date parsing error: $e');
+        // Use fallback dates if necessary
+      }
+
       return {
         'bookingNumber': booking.bookingNumber,
         'hotelName': booking.hotel,
         'destination': booking.destination,
-        'checkInDate': bookingData['BookingDetail']['om_chindate'] ?? 'N/A',
-        'checkOutDate': bookingData['BookingDetail']['om_choutdate'] ?? 'N/A',
-        'nights': bookingData['BookingDetail']['om_nights'] ?? 'N/A',
-        'rooms': bookingData['BookingDetail']['om_trooms'] ?? 'N/A',
+        'checkInDate':
+            checkInDate != null ? checkInDate.toIso8601String() : 'N/A',
+        'checkOutDate':
+            checkOutDate != null ? checkOutDate.toIso8601String() : 'N/A',
+        'nights': bookingData['BookingDetail']['om_nights'] ?? '1',
+        'rooms': bookingData['BookingDetail']['om_trooms'] ?? '1',
         'guestDetails': bookingData['GuestsDetail'] ?? [],
         'bookerName': booking.bookerName,
         'price': booking.price,
         'status': booking.status,
-        'specialRequests': bookingData['BookingDetail']['om_spreq'] ?? '',
+        'specialRequests': bookingData['BookingDetail']['om_spreq'] ?? 'None',
+        'adultCount': adultCount,
+        'childCount': childCount,
+        'roomType': roomType,
+        'boardBasis': boardBasis,
+        'rawBookingData': bookingData, // For debugging if needed
       };
     } catch (e) {
       print('PDF generation error details: $e');

@@ -351,8 +351,536 @@ class AllHotelBooking extends StatelessWidget {
 
 }
 
-
 class HotelBookingPdfGenerator {
+  Future<Uint8List> generatePdf(Map<String, dynamic> bookingData) async {
+    final pdf = pw.Document();
+
+    pdf.addPage(
+      pw.MultiPage(
+        pageFormat: PdfPageFormat.a4,
+        margin: const pw.EdgeInsets.all(32),
+        build: (pw.Context context) {
+          return [
+            _buildHeader(bookingData),
+            pw.SizedBox(height: 20),
+            _buildHotelInformation(bookingData),
+            pw.SizedBox(height: 20),
+            _buildGuestInformation(bookingData),
+            pw.SizedBox(height: 20),
+            _buildRoomDetailsTable(bookingData),
+            pw.SizedBox(height: 20),
+            _buildBookingPolicy(),
+            pw.SizedBox(height: 20),
+            _buildRefundPolicy(),
+            pw.SizedBox(height: 20),
+            _buildImportantNote(),
+          ];
+        },
+      ),
+    );
+
+    return pdf.save();
+  }
+
+  pw.Widget _buildHeader(Map<String, dynamic> bookingData) {
+    return pw.Container(
+      padding: pw.EdgeInsets.all(10),
+      decoration: pw.BoxDecoration(
+        border: pw.Border.all(width: 1, color: PdfColors.grey300),
+        borderRadius: pw.BorderRadius.circular(5),
+      ),
+      child: pw.Column(
+        crossAxisAlignment: pw.CrossAxisAlignment.start,
+        children: [
+          pw.Row(
+            mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+            children: [
+              pw.Text(
+                'Stayinhotels.ae',
+                style: pw.TextStyle(
+                  fontSize: 20,
+                  fontWeight: pw.FontWeight.bold,
+                ),
+              ),
+              pw.Container(
+                padding: pw.EdgeInsets.all(8),
+                decoration: pw.BoxDecoration(
+                  color: PdfColors.green50,
+                  borderRadius: pw.BorderRadius.circular(5),
+                ),
+                child: pw.Text(
+                  bookingData['status'] ?? 'CONFIRMED',
+                  style: pw.TextStyle(
+                    color: PdfColors.green800,
+                    fontWeight: pw.FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          pw.SizedBox(height: 10),
+          pw.Row(
+            mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+            children: [
+              pw.Text(
+                'Booking No#: ${bookingData['bookingNumber']}',
+                style: pw.TextStyle(fontSize: 12),
+              ),
+              pw.Text(
+                'Support Contact No:\n+923219667909',
+                style: pw.TextStyle(fontSize: 12),
+                textAlign: pw.TextAlign.right,
+              ),
+            ],
+          ),
+          pw.Divider(),
+          pw.Text(
+            'HOTEL VOUCHER',
+            style: pw.TextStyle(
+              fontSize: 16,
+              fontWeight: pw.FontWeight.bold,
+            ),
+            textAlign: pw.TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+
+  pw.Widget _buildHotelInformation(Map<String, dynamic> bookingData) {
+    return pw.Container(
+      padding: pw.EdgeInsets.all(10),
+      decoration: pw.BoxDecoration(
+        border: pw.Border.all(width: 1, color: PdfColors.grey300),
+        borderRadius: pw.BorderRadius.circular(5),
+      ),
+      child: pw.Column(
+        crossAxisAlignment: pw.CrossAxisAlignment.start,
+        children: [
+          pw.Text(
+            'HOTEL INFORMATION',
+            style: pw.TextStyle(
+              fontSize: 14,
+              fontWeight: pw.FontWeight.bold,
+            ),
+          ),
+          pw.SizedBox(height: 10),
+          pw.Row(
+            children: [
+              pw.Expanded(
+                flex: 2,
+                child: pw.Column(
+                  crossAxisAlignment: pw.CrossAxisAlignment.start,
+                  children: [
+                    pw.Text(
+                      'HOTEL NAME',
+                      style: pw.TextStyle(
+                        fontSize: 10,
+                        color: PdfColors.grey700,
+                      ),
+                    ),
+                    pw.Text(
+                      bookingData['hotelName'] ?? 'Unknown Hotel',
+                      style: pw.TextStyle(
+                        fontSize: 12,
+                        fontWeight: pw.FontWeight.bold,
+                      ),
+                    ),
+                    pw.SizedBox(height: 5),
+                    pw.Text(
+                      'LOCATION',
+                      style: pw.TextStyle(
+                        fontSize: 10,
+                        color: PdfColors.grey700,
+                      ),
+                    ),
+                    pw.Text(
+                      bookingData['destination'] ?? 'Unknown Location',
+                      style: pw.TextStyle(fontSize: 12),
+                    ),
+                  ],
+                ),
+              ),
+              pw.Expanded(
+                flex: 1,
+                child: pw.Column(
+                  crossAxisAlignment: pw.CrossAxisAlignment.start,
+                  children: [
+                    pw.Text(
+                      'SPECIAL REQUESTS',
+                      style: pw.TextStyle(
+                        fontSize: 10,
+                        color: PdfColors.grey700,
+                      ),
+                    ),
+                    pw.Text(
+                      bookingData['specialRequests'] ?? 'None',
+                      style: pw.TextStyle(fontSize: 12),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  pw.Widget _buildGuestInformation(Map<String, dynamic> bookingData) {
+    // Parse dates for better formatting
+    DateTime checkInDate;
+    DateTime checkOutDate;
+    try {
+      checkInDate = DateTime.parse(bookingData['checkInDate']);
+      checkOutDate = DateTime.parse(bookingData['checkOutDate']);
+    } catch (e) {
+      checkInDate = DateTime.now();
+      checkOutDate = DateTime.now().add(Duration(days: 1));
+    }
+
+    final formattedCheckIn = DateFormat('dd MMM yyyy').format(checkInDate);
+    final formattedCheckOut = DateFormat('dd MMM yyyy').format(checkOutDate);
+
+    return pw.Container(
+      padding: pw.EdgeInsets.all(10),
+      decoration: pw.BoxDecoration(
+        border: pw.Border.all(width: 1, color: PdfColors.grey300),
+        borderRadius: pw.BorderRadius.circular(5),
+      ),
+      child: pw.Column(
+        crossAxisAlignment: pw.CrossAxisAlignment.start,
+        children: [
+          pw.Text(
+            'RESERVATION INFORMATION',
+            style: pw.TextStyle(
+              fontSize: 14,
+              fontWeight: pw.FontWeight.bold,
+            ),
+          ),
+          pw.SizedBox(height: 10),
+          pw.Row(
+            mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+            children: [
+              pw.Expanded(
+                child: pw.Column(
+                  crossAxisAlignment: pw.CrossAxisAlignment.start,
+                  children: [
+                    pw.Text(
+                      'LEAD GUEST',
+                      style: pw.TextStyle(
+                        fontSize: 10,
+                        color: PdfColors.grey700,
+                      ),
+                    ),
+                    pw.Text(
+                      bookingData['bookerName'] ?? 'Unknown',
+                      style: pw.TextStyle(fontSize: 12),
+                    ),
+                  ],
+                ),
+              ),
+              pw.Expanded(
+                child: pw.Column(
+                  crossAxisAlignment: pw.CrossAxisAlignment.start,
+                  children: [
+                    pw.Text(
+                      'CHECK-IN',
+                      style: pw.TextStyle(
+                        fontSize: 10,
+                        color: PdfColors.grey700,
+                      ),
+                    ),
+                    pw.Text(
+                      formattedCheckIn,
+                      style: pw.TextStyle(
+                        fontSize: 12,
+                        fontWeight: pw.FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              pw.Expanded(
+                child: pw.Column(
+                  crossAxisAlignment: pw.CrossAxisAlignment.start,
+                  children: [
+                    pw.Text(
+                      'CHECK-OUT',
+                      style: pw.TextStyle(
+                        fontSize: 10,
+                        color: PdfColors.grey700,
+                      ),
+                    ),
+                    pw.Text(
+                      formattedCheckOut,
+                      style: pw.TextStyle(
+                        fontSize: 12,
+                        fontWeight: pw.FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          pw.SizedBox(height: 10),
+          pw.Row(
+            children: [
+              pw.Expanded(
+                child: pw.Column(
+                  crossAxisAlignment: pw.CrossAxisAlignment.start,
+                  children: [
+                    pw.Text(
+                      'ROOMS',
+                      style: pw.TextStyle(
+                        fontSize: 10,
+                        color: PdfColors.grey700,
+                      ),
+                    ),
+                    pw.Text(
+                      bookingData['rooms'] ?? '1',
+                      style: pw.TextStyle(fontSize: 12),
+                    ),
+                  ],
+                ),
+              ),
+              pw.Expanded(
+                child: pw.Column(
+                  crossAxisAlignment: pw.CrossAxisAlignment.start,
+                  children: [
+                    pw.Text(
+                      'NIGHTS',
+                      style: pw.TextStyle(
+                        fontSize: 10,
+                        color: PdfColors.grey700,
+                      ),
+                    ),
+                    pw.Text(
+                      bookingData['nights'] ?? '1',
+                      style: pw.TextStyle(fontSize: 12),
+                    ),
+                  ],
+                ),
+              ),
+              pw.Expanded(
+                child: pw.Column(
+                  crossAxisAlignment: pw.CrossAxisAlignment.start,
+                  children: [
+                    pw.Text(
+                      'PRICE',
+                      style: pw.TextStyle(
+                        fontSize: 10,
+                        color: PdfColors.grey700,
+                      ),
+                    ),
+                    pw.Text(
+                      bookingData['price'] ?? 'N/A',
+                      style: pw.TextStyle(fontSize: 12),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  pw.Widget _buildRoomDetailsTable(Map<String, dynamic> bookingData) {
+    final List<dynamic> guestDetails = bookingData['guestDetails'] ?? [];
+    
+    // Group guests by room number
+    Map<String, List<Map<String, dynamic>>> guestsByRoom = {};
+    for (var guest in guestDetails) {
+      String roomNo = guest['od_rno']?.toString() ?? '1';
+      if (!guestsByRoom.containsKey(roomNo)) {
+        guestsByRoom[roomNo] = [];
+      }
+      guestsByRoom[roomNo]!.add(guest);
+    }
+    
+    return pw.Container(
+      padding: pw.EdgeInsets.all(10),
+      decoration: pw.BoxDecoration(
+        border: pw.Border.all(width: 1, color: PdfColors.grey300),
+        borderRadius: pw.BorderRadius.circular(5),
+      ),
+      child: pw.Column(
+        crossAxisAlignment: pw.CrossAxisAlignment.start,
+        children: [
+          pw.Text(
+            'ROOM DETAILS',
+            style: pw.TextStyle(
+              fontSize: 14,
+              fontWeight: pw.FontWeight.bold,
+            ),
+          ),
+          pw.SizedBox(height: 10),
+          pw.Table(
+            border: pw.TableBorder.all(color: PdfColors.grey300),
+            columnWidths: {
+              0: pw.FlexColumnWidth(1),
+              1: pw.FlexColumnWidth(3),
+              2: pw.FlexColumnWidth(3),
+              3: pw.FlexColumnWidth(1),
+              4: pw.FlexColumnWidth(1),
+            },
+            children: [
+              // Header
+              pw.TableRow(
+                decoration: pw.BoxDecoration(color: PdfColors.grey200),
+                children: [
+                  _buildTableCell('Room No.', isHeader: true),
+                  _buildTableCell('Room Type / Board Basis', isHeader: true),
+                  _buildTableCell('Guest Name', isHeader: true),
+                  _buildTableCell('Adults', isHeader: true),
+                  _buildTableCell('Children', isHeader: true),
+                ],
+              ),
+              // Data rows
+              ...guestsByRoom.entries.map((entry) {
+                String roomNo = entry.key;
+                List<Map<String, dynamic>> roomGuests = entry.value;
+                
+                // Count adults and children in this room
+                int adultCount = 0;
+                int childCount = 0;
+                
+                List<String> guestNames = [];
+                
+                for (var guest in roomGuests) {
+                  String guestFor = guest['od_gfor']?.toString() ?? '';
+                  String guestTitle = guest['od_gtitle']?.toString() ?? '';
+                  String firstName = guest['od_gfname']?.toString() ?? '';
+                  String lastName = guest['od_glname']?.toString() ?? '';
+                  
+                  guestNames.add('$guestTitle $firstName $lastName');
+                  
+                  if (guestFor.toLowerCase().contains('adult')) {
+                    adultCount++;
+                  } else if (guestFor.toLowerCase().contains('child')) {
+                    childCount++;
+                  }
+                }
+                
+                return pw.TableRow(
+                  children: [
+                    _buildTableCell(roomNo),
+                    _buildTableCell('Premium Room / Bed & Breakfast'),
+                    _buildTableCell(guestNames.join(', ')),
+                    _buildTableCell(adultCount.toString()),
+                    _buildTableCell(childCount.toString()),
+                  ],
+                );
+              }).toList(),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  pw.Widget _buildBookingPolicy() {
+    return pw.Container(
+      padding: pw.EdgeInsets.all(10),
+      decoration: pw.BoxDecoration(
+        border: pw.Border.all(width: 1, color: PdfColors.grey300),
+        borderRadius: pw.BorderRadius.circular(5),
+      ),
+      child: pw.Column(
+        crossAxisAlignment: pw.CrossAxisAlignment.start,
+        children: [
+          pw.Text(
+            'Booking Policy',
+            style: pw.TextStyle(
+              fontSize: 14,
+              fontWeight: pw.FontWeight.bold,
+            ),
+          ),
+          pw.SizedBox(height: 5),
+          pw.Text('• The usual check-in time is 12:00-14:00 PM (this may vary).', style: pw.TextStyle(fontSize: 10)),
+          pw.Text('• Rooms may not be available for early check-in unless requested.', style: pw.TextStyle(fontSize: 10)),
+          pw.Text('• Hotel reservation may be cancelled automatically after 18:00 hours if hotel is not informed about the appointment time of the arrival.', style: pw.TextStyle(fontSize: 10)),
+          pw.Text('• The total cost is between 10-12.00 hours between the high-way (non-toll) & the toll road with different destinations.', style: pw.TextStyle(fontSize: 10)),
+        ],
+      ),
+    );
+  }
+
+  pw.Widget _buildRefundPolicy() {
+    return pw.Container(
+      padding: pw.EdgeInsets.all(10),
+      decoration: pw.BoxDecoration(
+        border: pw.Border.all(width: 1, color: PdfColors.grey300),
+        borderRadius: pw.BorderRadius.circular(5),
+      ),
+      child: pw.Column(
+        crossAxisAlignment: pw.CrossAxisAlignment.start,
+        children: [
+          pw.Text(
+            'Booking Refund Policy',
+            style: pw.TextStyle(
+              fontSize: 14,
+              fontWeight: pw.FontWeight.bold,
+            ),
+          ),
+          pw.SizedBox(height: 5),
+          pw.Text(
+            'Booking payable as per reservation details. Please collect all extras directly from (sleep in) departure. All matters issued are on the condition that all persons acknowledge that in person to taking part must be made, as people for which we shall not be held preliminary. Some may apply, delay or misconnection caused to passenger as a result of any such arrangements. We will not accept any responsibility for additional expenses due to tax changes or delay in air, road, rail, sea or indeed any form of transport.',
+            style: pw.TextStyle(fontSize: 10),
+          ),
+        ],
+      ),
+    );
+  }
+
+  pw.Widget _buildImportantNote() {
+    return pw.Container(
+      padding: pw.EdgeInsets.all(10),
+      decoration: pw.BoxDecoration(
+        color: PdfColors.pink50,
+        border: pw.Border.all(width: 1, color: PdfColors.pink100),
+        borderRadius: pw.BorderRadius.circular(5),
+      ),
+      child: pw.Column(
+        crossAxisAlignment: pw.CrossAxisAlignment.start,
+        children: [
+          pw.Text(
+            'IMPORTANT NOTE',
+            style: pw.TextStyle(
+              fontSize: 12,
+              fontWeight: pw.FontWeight.bold,
+              color: PdfColors.red900,
+            ),
+          ),
+          pw.SizedBox(height: 5),
+          pw.Text(
+            'Check your Reservation details carefully and inform us immediately if you need any further clarification, please do not hesitate to contact us.',
+            style: pw.TextStyle(
+              fontSize: 10,
+              color: PdfColors.red900,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  pw.Widget _buildTableCell(String text, {bool isHeader = false}) {
+    return pw.Padding(
+      padding: pw.EdgeInsets.all(5),
+      child: pw.Text(
+        text,
+        style: pw.TextStyle(
+          fontSize: 10,
+          fontWeight: isHeader ? pw.FontWeight.bold : null,
+        ),
+      ),
+    );
+  }
+}
   Future<Uint8List> generatePdf(Map<String, dynamic> bookingData) async {
     final pdf = pw.Document();
 
@@ -611,4 +1139,3 @@ class HotelBookingPdfGenerator {
       ),
     );
   }
-}
