@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
+import 'package:oneroof/b2b/all_flight_booking/all_flight_booking.dart';
 import 'package:oneroof/b2b/all_flight_booking/model.dart';
 import 'package:oneroof/views/users/login/login_api_service/login_api.dart';
 
@@ -182,15 +183,20 @@ class AllFlightBookingController extends GetxController {
     // TODO: Implement navigation to booking details screen
   }
 
-  // Print ticket
+  // Print ticket - Updated to use the PDF generator
   void printTicket(BookingModel booking) {
-    // Print ticket logic
-    Get.snackbar(
-      'Print Ticket',
-      'Printing ticket for booking ${booking.bookingId}',
-      snackPosition: SnackPosition.BOTTOM,
-    );
-    // TODO: Implement print ticket functionality
+    try {
+      // Generate and print PDF for the booking
+      FlightPdfGenerator.generateAndPrintPdf(booking);
+    } catch (e) {
+      Get.snackbar(
+        'Error',
+        'Failed to generate ticket: $e',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+    }
   }
 
   // Retry loading data after error

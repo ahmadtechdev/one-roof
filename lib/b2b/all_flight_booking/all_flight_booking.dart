@@ -5,6 +5,11 @@ import 'package:intl/intl.dart';
 import 'package:oneroof/b2b/all_flight_booking/all_flight_booking_controler.dart';
 import 'package:oneroof/b2b/all_flight_booking/model.dart';
 import 'package:oneroof/utility/colors.dart';
+import 'dart:typed_data';
+import 'package:flutter/services.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:printing/printing.dart';
 
 class AllFlightBookingScreen extends StatelessWidget {
   final AllFlightBookingController controller = Get.put(
@@ -25,23 +30,26 @@ class AllFlightBookingScreen extends StatelessWidget {
         ),
         elevation: 0,
         actions: [
-          Obx(() => controller.isLoading.value
-              ? const Padding(
-                  padding: EdgeInsets.all(16.0),
-                  child: SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(
-                      color: Colors.white,
-                      strokeWidth: 2,
+          Obx(
+            () =>
+                controller.isLoading.value
+                    ? const Padding(
+                      padding: EdgeInsets.all(16.0),
+                      child: SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2,
+                        ),
+                      ),
+                    )
+                    : IconButton(
+                      icon: const Icon(Icons.refresh),
+                      onPressed: controller.loadBookings,
+                      tooltip: 'Refresh data',
                     ),
-                  ),
-                )
-              : IconButton(
-                  icon: const Icon(Icons.refresh),
-                  onPressed: controller.loadBookings,
-                  tooltip: 'Refresh data',
-                )),
+          ),
         ],
       ),
       body: Column(
@@ -52,9 +60,7 @@ class AllFlightBookingScreen extends StatelessWidget {
           Expanded(
             child: Obx(() {
               if (controller.isLoading.value) {
-                return const Center(
-                  child: CircularProgressIndicator(),
-                );
+                return const Center(child: CircularProgressIndicator());
               } else if (controller.hasError.value) {
                 return _buildErrorWidget();
               } else if (controller.filteredBookings.isEmpty) {
@@ -177,7 +183,7 @@ class AllFlightBookingScreen extends StatelessWidget {
       ),
     );
   }
-  
+
   Widget _buildSearchBar() {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -295,11 +301,7 @@ class AllFlightBookingScreen extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(
-            Icons.error_outline,
-            color: Colors.red,
-            size: 60,
-          ),
+          const Icon(Icons.error_outline, color: Colors.red, size: 60),
           const SizedBox(height: 16),
           Text(
             'Error loading bookings',
@@ -337,11 +339,7 @@ class AllFlightBookingScreen extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.flight_takeoff,
-            color: TColors.grey,
-            size: 60,
-          ),
+          Icon(Icons.flight_takeoff, color: TColors.grey, size: 60),
           const SizedBox(height: 16),
           Text(
             'No flight bookings found',
@@ -456,7 +454,9 @@ class AllFlightBookingScreen extends StatelessWidget {
               children: [
                 _buildInfoRow(
                   'Booking Date',
-                  DateFormat('E, dd MMM yyyy\nHH:mm:ss').format(booking.creationDate),
+                  DateFormat(
+                    'E, dd MMM yyyy\nHH:mm:ss',
+                  ).format(booking.creationDate),
                 ),
                 const Divider(),
                 _buildInfoRow('PNR', booking.pnr),
@@ -481,7 +481,9 @@ class AllFlightBookingScreen extends StatelessWidget {
                   const Divider(),
                   _buildInfoRow(
                     'Deadline',
-                    DateFormat('E, dd MMM yyyy HH:mm').format(booking.deadlineTime!),
+                    DateFormat(
+                      'E, dd MMM yyyy HH:mm',
+                    ).format(booking.deadlineTime!),
                     isHighlighted: true,
                   ),
                 ],
@@ -570,6 +572,296 @@ class AllFlightBookingScreen extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+// flight_pdf_generator.dart
+
+class FlightPdfGenerator {
+  // Generate and print a PDF for the given booking
+  static Future<void> generateAndPrintPdf(BookingModel booking) async {
+    final pdf = await generatePdf(booking);
+    await Printing.layoutPdf(onLayout: (PdfPageFormat format) async => pdf);
+  }
+
+  // Generate PDF document for the booking
+  static Future<Uint8List> generatePdf(BookingModel booking) async {
+    // Create a PDF document
+    final pdf = pw.Document();
+
+    // Use default fonts
+    final font = pw.Font.helvetica();
+    final fontBold = pw.Font.helveticaBold();
+
+    pdf.addPage(
+      pw.MultiPage(
+        pageFormat: PdfPageFormat.a4,
+        margin: const pw.EdgeInsets.all(40),
+        theme: pw.ThemeData.withFont(base: font, bold: fontBold),
+        build: (pw.Context context) {
+          return [
+            _buildHeader(booking, font, fontBold),
+            _buildDetailsTable(booking, font, fontBold),
+            _buildPassengerDetails(booking, font, fontBold),
+            _buildNoticeSection(font, fontBold),
+            _buildRulesSection(font, fontBold),
+          ];
+        },
+      ),
+    );
+
+    return pdf.save();
+  }
+
+  // Build the header section of the PDF
+  static pw.Widget _buildHeader(
+    BookingModel booking,
+    pw.Font font,
+    pw.Font fontBold,
+  ) {
+    return pw.Column(
+      crossAxisAlignment: pw.CrossAxisAlignment.start,
+      children: [
+        pw.Row(
+          mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+          children: [
+            pw.Text(
+              'Journey Online',
+              style: pw.TextStyle(font: fontBold, fontSize: 18),
+            ),
+            pw.Column(
+              crossAxisAlignment: pw.CrossAxisAlignment.end,
+              children: [
+                pw.Text(
+                  'Pakistan',
+                  style: pw.TextStyle(font: font, fontSize: 12),
+                ),
+                pw.Text(
+                  '+92 333733 5222',
+                  style: pw.TextStyle(font: font, fontSize: 12),
+                ),
+              ],
+            ),
+          ],
+        ),
+        pw.SizedBox(height: 20),
+        pw.Text(
+          'Itinerary Receipt',
+          style: pw.TextStyle(font: fontBold, fontSize: 16),
+        ),
+        pw.SizedBox(height: 5),
+        pw.Text(
+          'Below are the details of your electronic ticket. Note: All timings are local',
+          style: pw.TextStyle(font: font, fontSize: 10),
+        ),
+        pw.SizedBox(height: 10),
+        pw.Row(
+          mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+          children: [
+            pw.SizedBox(),
+            pw.Column(
+              crossAxisAlignment: pw.CrossAxisAlignment.end,
+              children: [
+                pw.Text(
+                  'Booking Reference:',
+                  style: pw.TextStyle(font: font, fontSize: 12),
+                ),
+                pw.SizedBox(height: 5),
+                pw.Text(
+                  'Agency PNR:',
+                  style: pw.TextStyle(font: font, fontSize: 12),
+                ),
+              ],
+            ),
+          ],
+        ),
+        pw.SizedBox(height: 10),
+        pw.Divider(color: PdfColors.grey700),
+      ],
+    );
+  }
+
+  // Build the flight details table section
+  static pw.Widget _buildDetailsTable(
+    BookingModel booking,
+    pw.Font font,
+    pw.Font fontBold,
+  ) {
+    return pw.Column(
+      crossAxisAlignment: pw.CrossAxisAlignment.start,
+      children: [
+        pw.SizedBox(height: 10),
+        pw.Text(
+          'FLIGHT INFORMATION',
+          style: pw.TextStyle(font: fontBold, fontSize: 12),
+        ),
+        pw.SizedBox(height: 10),
+        pw.Table(
+          border: pw.TableBorder.all(color: PdfColors.grey300, width: 0.5),
+          columnWidths: {
+            0: const pw.FlexColumnWidth(1),
+            1: const pw.FlexColumnWidth(2),
+            2: const pw.FlexColumnWidth(2),
+            3: const pw.FlexColumnWidth(1.5),
+          },
+          children: [
+            // Table header
+            pw.TableRow(
+              decoration: const pw.BoxDecoration(color: PdfColors.grey200),
+              children: [
+                _headerCell('TO - LTO', font),
+                _headerCell('FROM', font),
+                _headerCell('TO', font),
+                _headerCell('STATUS', font),
+              ],
+            ),
+            // Flight details
+            pw.TableRow(
+              children: [
+                _contentCell('', font),
+                _contentCell(
+                  '${booking.tripSector.split("-to-")[0]}\n(${_getAirportCode(booking.tripSector.split("-to-")[0])})',
+                  font,
+                ),
+                _contentCell(
+                  '${booking.tripSector.split("-to-")[1]}\n(${_getAirportCode(booking.tripSector.split("-to-")[1])})',
+                  font,
+                ),
+                _contentCell(
+                  'Status: ${booking.status}\nClass: Y (E)\nPNR: ${booking.pnr}',
+                  font,
+                ),
+              ],
+            ),
+          ],
+        ),
+        pw.SizedBox(height: 30),
+      ],
+    );
+  }
+
+  // Helper function to get airport code (mocked for demo)
+  static String _getAirportCode(String cityName) {
+    final codes = {
+      'Dubai': 'DXB',
+      'Quaid e Azam International': 'KHI',
+      'Lahore': 'LHE',
+      'Islamabad': 'ISB',
+      'Karachi': 'KHI',
+    };
+    return codes[cityName] ?? 'XXX';
+  }
+
+  // Build the passenger details section
+  static pw.Widget _buildPassengerDetails(
+    BookingModel booking,
+    pw.Font font,
+    pw.Font fontBold,
+  ) {
+    return pw.Column(
+      crossAxisAlignment: pw.CrossAxisAlignment.start,
+      children: [
+        pw.Text(
+          'PASSENGER & TICKET DETAILS',
+          style: pw.TextStyle(font: fontBold, fontSize: 12),
+        ),
+        pw.SizedBox(height: 10),
+        pw.Table(
+          border: pw.TableBorder.all(color: PdfColors.grey300, width: 0.5),
+          columnWidths: {
+            0: const pw.FlexColumnWidth(2),
+            1: const pw.FlexColumnWidth(1.5),
+            2: const pw.FlexColumnWidth(1.5),
+          },
+          children: [
+            // Table header
+            pw.TableRow(
+              decoration: const pw.BoxDecoration(color: PdfColors.grey200),
+              children: [
+                _headerCell('TRAVELLER NAME', font),
+                _headerCell('FREQUENT FLYER', font),
+                _headerCell('TICKET NO.', font),
+              ],
+            ),
+            // Passenger details
+            pw.TableRow(
+              children: [
+                _contentCell(booking.passengerNames, font),
+                _contentCell('-', font),
+                _contentCell('-', font),
+              ],
+            ),
+          ],
+        ),
+        pw.SizedBox(height: 30),
+      ],
+    );
+  }
+
+  // Build the notice section
+  static pw.Widget _buildNoticeSection(pw.Font font, pw.Font fontBold) {
+    return pw.Column(
+      crossAxisAlignment: pw.CrossAxisAlignment.start,
+      children: [
+        pw.Text('Notice', style: pw.TextStyle(font: fontBold, fontSize: 12)),
+        pw.SizedBox(height: 5),
+        pw.Text(
+          '1. Refund Policy All Refunds are governed by the rule published by the airline which is self explanatory and shown in the search results page.',
+          style: pw.TextStyle(font: font, fontSize: 10),
+        ),
+        pw.SizedBox(height: 20),
+      ],
+    );
+  }
+
+  // Build the rules section
+  static pw.Widget _buildRulesSection(pw.Font font, pw.Font fontBold) {
+    return pw.Column(
+      crossAxisAlignment: pw.CrossAxisAlignment.start,
+      children: [
+        pw.Text('Rules', style: pw.TextStyle(font: fontBold, fontSize: 12)),
+        pw.SizedBox(height: 5),
+        pw.Text(
+          '1. Please Report Airline Check In Counter 4 Hour Before Flight Departure.',
+          style: pw.TextStyle(font: font, fontSize: 10),
+        ),
+        pw.SizedBox(height: 3),
+        pw.Text(
+          '2. Please Reconfirm the Ticket Before 48 Hour of Flight Departure.',
+          style: pw.TextStyle(font: font, fontSize: 10),
+        ),
+        pw.SizedBox(height: 3),
+        pw.Text(
+          '3. All Visa and Travel Documents are Traveler Own Responsibility.',
+          style: pw.TextStyle(font: font, fontSize: 10),
+        ),
+        pw.SizedBox(height: 3),
+        pw.Text(
+          '4. Please Check in with all your Essential Travel Documents.',
+          style: pw.TextStyle(font: font, fontSize: 10),
+        ),
+        pw.SizedBox(height: 3),
+        pw.Text(
+          '5. All NON-PK (market / LCC tickets are NON-Refundable / NON-Changeable.',
+          style: pw.TextStyle(font: font, fontSize: 10),
+        ),
+      ],
+    );
+  }
+
+  // Helper method to create header cells
+  static pw.Widget _headerCell(String text, pw.Font font) {
+    return pw.Padding(
+      padding: const pw.EdgeInsets.all(5),
+      child: pw.Text(text, style: pw.TextStyle(font: font, fontSize: 10)),
+    );
+  }
+
+  // Helper method to create content cells
+  static pw.Widget _contentCell(String text, pw.Font font) {
+    return pw.Padding(
+      padding: const pw.EdgeInsets.all(5),
+      child: pw.Text(text, style: pw.TextStyle(font: font, fontSize: 10)),
     );
   }
 }
