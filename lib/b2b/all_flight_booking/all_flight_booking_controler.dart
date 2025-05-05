@@ -101,16 +101,16 @@ class AllFlightBookingController extends GetxController {
 
     for (var booking in allBookings) {
       switch (booking.flightStatus) {
-        case '1':
+        case '2':
           confirmed++;
           break;
-        case '0':
+        case '1':
           onHold++;
           break;
-        case '2':
+        case '3':
           cancelled++;
           break;
-        case '3':
+        case '0':
           error++;
           break;
       }

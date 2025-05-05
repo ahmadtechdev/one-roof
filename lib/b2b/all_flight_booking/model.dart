@@ -26,22 +26,32 @@ class BookingModel {
   final String airlineName;
   final String tripSector;
   final String passengerNames;
-  
+
   // Computed fields for UI display
   String get bookingId => "BK-$id";
   String get supplier => airlineName;
   String get trip => tripSector.replaceAll("-to-", " to ");
-  String get pnr => airlinePnr.isEmpty ? sabrePnr.isEmpty ? "Not Created" : sabrePnr : airlinePnr;
+  String get pnr =>
+      airlinePnr.isEmpty
+          ? sabrePnr.isEmpty
+              ? "Not Created"
+              : sabrePnr
+          : airlinePnr;
   String get status {
     switch (flightStatus) {
-      case "0": return "On Hold";
-      case "1": return "Confirmed";
-      case "2": return "Cancelled";
-      case "3": return "Error";
-      default: return "Unknown";
+      case "1":
+        return "On Hold";
+      case "2":
+        return "Confirmed";
+      case "3":
+        return "Cancelled";
+      case "0":
+        return "Error";
+      default:
+        return "Unknown";
     }
   }
-  
+
   BookingModel({
     required this.id,
     required this.gds,
@@ -70,7 +80,7 @@ class BookingModel {
     required this.tripSector,
     required this.passengerNames,
   });
-  
+
   factory BookingModel.fromJson(Map<String, dynamic> json) {
     // Parse dates safely
     DateTime? parseDateTime(String value) {
@@ -83,11 +93,13 @@ class BookingModel {
         return null;
       }
     }
-    
+
     DateTime? deadlineTime = parseDateTime(json['deadline_time'] ?? '');
-    DateTime creationDate = parseDateTime(json['pnr_creation_date'] ?? '') ?? DateTime.now();
-    DateTime departureDate = parseDateTime(json['departure_date'] ?? '') ?? DateTime.now();
-    
+    DateTime creationDate =
+        parseDateTime(json['pnr_creation_date'] ?? '') ?? DateTime.now();
+    DateTime departureDate =
+        parseDateTime(json['departure_date'] ?? '') ?? DateTime.now();
+
     // Parse numeric values safely
     double parseDouble(dynamic value) {
       if (value == null) return 0;
@@ -101,7 +113,7 @@ class BookingModel {
       }
       return 0;
     }
-    
+
     int parseInt(dynamic value) {
       if (value == null) return 0;
       if (value is int) return value;
@@ -114,7 +126,7 @@ class BookingModel {
       }
       return 0;
     }
-    
+
     return BookingModel(
       id: json['m_id'] ?? '',
       gds: json['gds'] ?? '',
