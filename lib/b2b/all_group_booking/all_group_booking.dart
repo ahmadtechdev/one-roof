@@ -5,8 +5,6 @@ import 'package:oneroof/b2b/all_group_booking/all_group_booking_controller.dart'
 import 'package:oneroof/b2b/all_group_booking/model.dart';
 import 'package:oneroof/utility/colors.dart';
 
-// Model for the booking data with proper passenger status structure
-
 class AllGroupBooking extends StatelessWidget {
   AllGroupBooking({Key? key}) : super(key: key);
 
@@ -138,7 +136,9 @@ class AllGroupBooking extends StatelessWidget {
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
-              onPressed: controller.filterBookings,
+              onPressed: () {
+                controller.fetchBookings();
+              },
               style: ElevatedButton.styleFrom(
                 backgroundColor: TColors.primary,
                 padding: const EdgeInsets.symmetric(vertical: 12),
@@ -232,26 +232,68 @@ class AllGroupBooking extends StatelessWidget {
   }
 
   Widget _buildBookingsList() {
-    return Obx(
-      () =>
-          controller.bookings.isEmpty
-              ? const Center(child: Text('No bookings found'))
-              : ListView.builder(
-                padding: const EdgeInsets.all(16),
-                itemCount: controller.bookings.length,
-                itemBuilder: (context, index) {
-                  final booking = controller.bookings[index];
-                  return _buildBookingCard(booking);
-                },
+    return Obx(() {
+      if (controller.isLoading.value) {
+        return const Center(child: CircularProgressIndicator());
+      }
+      
+      if (controller.hasError.value) {
+        return Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.error_outline, color: Colors.red, size: 48),
+              const SizedBox(height: 16),
+              Text(
+                controller.errorMessage.value,
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: Colors.red),
               ),
-    );
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: controller.fetchBookings,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: TColors.primary,
+                ),
+                child: const Text('Retry'),
+              ),
+            ],
+          ),
+        );
+      }
+      
+      if (controller.bookings.isEmpty) {
+        return Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.flight, color: Colors.grey[400], size: 64),
+              const SizedBox(height: 16),
+              Text(
+                'No bookings found for the selected criteria',
+                style: TextStyle(color: Colors.grey[600]),
+              ),
+            ],
+          ),
+        );
+      }
+      
+      return ListView.builder(
+        padding: const EdgeInsets.all(16),
+        itemCount: controller.bookings.length,
+        itemBuilder: (context, index) {
+          final booking = controller.bookings[index];
+          return _buildBookingCard(booking);
+        },
+      );
+    });
   }
 
   Widget _buildBookingCard(BookingModel booking) {
     Color statusColor;
-    if (booking.status == 'CONFIRMED') {
+    if (booking.status.toUpperCase() == 'CONFIRMED') {
       statusColor = Colors.green;
-    } else if (booking.status == 'CANCELLED') {
+    } else if (booking.status.toUpperCase() == 'CANCELLED') {
       statusColor = Colors.red;
     } else {
       statusColor = Colors.orange;

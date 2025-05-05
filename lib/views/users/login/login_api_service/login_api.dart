@@ -386,4 +386,165 @@ class AuthController extends GetxController {
       };
     }
   }
+
+  // Updated getGroupBookings function with proper null safety handling
+  Future<Map<String, dynamic>> getGroupBookings({
+    required String fromDate,
+    required String toDate,
+  }) async {
+    isLoading.value = true;
+
+    try {
+      // Get the token from SharedPreferences
+      final token = await getValidToken();
+
+      if (token == null) {
+        isLoading.value = false;
+        return {
+          'success': false,
+          'message': 'Authentication token not found. Please login again.',
+        };
+      }
+
+      // Set up headers with the token
+      final headers = {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      };
+
+      // Create request data with date parameters
+      final Map<String, dynamic> requestData = {
+        'from_date': fromDate,
+        'to_date': toDate,
+      };
+
+      // Make the API request with POST method and date parameters
+      final response = await dio.post(
+        '$_baseUrl/group-bookings',
+        options: Options(headers: headers),
+        data: requestData,
+      );
+
+      // Debug log the response
+      if (kDebugMode) {
+        print('Group bookings response: ${response.data}');
+      }
+
+      if (response.statusCode == 200) {
+        isLoading.value = false;
+        return {
+          'success': true,
+          'data': response.data,
+          'message': 'Group bookings retrieved successfully',
+        };
+      } else {
+        String errorMessage = 'Failed to fetch Group bookings';
+        if (response.data != null &&
+            response.data is Map &&
+            response.data.containsKey('message')) {
+          errorMessage = response.data['message'];
+        }
+
+        isLoading.value = false;
+        return {
+          'success': false,
+          'message': errorMessage,
+          'statusCode': response.statusCode,
+        };
+      }
+    } on DioException catch (e) {
+      isLoading.value = false;
+      return _handleDioError(e, 'Group Bookings');
+    } catch (e) {
+      if (kDebugMode) {
+        print('Group bookings exception: ${e.toString()}');
+        print('Stack trace: ${StackTrace.current}');
+      }
+      isLoading.value = false;
+      return {
+        'success': false,
+        'message': 'Failed to fetch Group bookings: ${e.toString()}',
+      };
+    }
+  }
+
+  Future<Map<String, dynamic>> getFlightsBookings({
+    required String fromDate,
+    required String toDate,
+  }) async {
+    isLoading.value = true;
+
+    try {
+      // Get the token from SharedPreferences
+      final token = await getValidToken();
+
+      if (token == null) {
+        isLoading.value = false;
+        return {
+          'success': false,
+          'message': 'Authentication token not found. Please login again.',
+        };
+      }
+
+      // Set up headers with the token
+      final headers = {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      };
+
+      // Create request data with date parameters
+      final Map<String, dynamic> requestData = {
+        'from_date': fromDate,
+        'to_date': toDate,
+      };
+
+      // Make the API request with POST method and date parameters
+      final response = await dio.post(
+        '$_baseUrl/all-flights',
+        options: Options(headers: headers),
+        data: requestData,
+      );
+
+      // Debug log the response
+      if (kDebugMode) {
+        print('Group bookings response: ${response.data}');
+      }
+
+      if (response.statusCode == 200) {
+        isLoading.value = false;
+        return {
+          'success': true,
+          'data': response.data,
+          'message': 'Group bookings retrieved successfully',
+        };
+      } else {
+        String errorMessage = 'Failed to fetch Group bookings';
+        if (response.data != null &&
+            response.data is Map &&
+            response.data.containsKey('message')) {
+          errorMessage = response.data['message'];
+        }
+
+        isLoading.value = false;
+        return {
+          'success': false,
+          'message': errorMessage,
+          'statusCode': response.statusCode,
+        };
+      }
+    } on DioException catch (e) {
+      isLoading.value = false;
+      return _handleDioError(e, 'Group Bookings');
+    } catch (e) {
+      if (kDebugMode) {
+        print('Group bookings exception: ${e.toString()}');
+        print('Stack trace: ${StackTrace.current}');
+      }
+      isLoading.value = false;
+      return {
+        'success': false,
+        'message': 'Failed to fetch Group bookings: ${e.toString()}',
+      };
+    }
+  }
 }

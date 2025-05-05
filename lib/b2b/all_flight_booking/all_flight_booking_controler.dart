@@ -1,86 +1,94 @@
 // all_flight_booking_controller.dart
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:intl/intl.dart';
 import 'package:oneroof/b2b/all_flight_booking/model.dart';
+import 'package:oneroof/views/users/login/login_api_service/login_api.dart';
 
 class AllFlightBookingController extends GetxController {
-  // Date filter variables
-  final Rx<DateTime> fromDate = DateTime(2025, 4, 1).obs;
-  final Rx<DateTime> toDate = DateTime(2025, 4, 11).obs;
+  // Get the auth controller instance
+  final AuthController _authController = Get.find<AuthController>();
 
-  // Search and pagination
-  final TextEditingController searchController = TextEditingController();
-  final RxInt entriesPerPage = 50.obs;
+  // Date filter variables
+  final Rx<DateTime> fromDate =
+      DateTime.now().subtract(const Duration(days: 30)).obs;
+  final Rx<DateTime> toDate = DateTime.now().obs;
+
+  // Loading state
+  final RxBool isLoading = true.obs;
+  final RxBool hasError = false.obs;
+  final RxString errorMessage = ''.obs;
 
   // Statistics
-  final RxInt totalBookings = 1.obs;
+  final RxInt totalBookings = 0.obs;
   final RxInt confirmedBookings = 0.obs;
-  final RxInt onHoldBookings = 1.obs;
+  final RxInt onHoldBookings = 0.obs;
   final RxInt cancelledBookings = 0.obs;
   final RxInt errorBookings = 0.obs;
-
-  // Financial summary
-  final RxInt totalReceipt = 1800.obs;
-  final RxInt totalPayment = 800.obs;
-  final RxInt closingBalance = 1000.obs;
 
   // Booking data
   final RxList<BookingModel> allBookings = <BookingModel>[].obs;
   final RxList<BookingModel> filteredBookings = <BookingModel>[].obs;
 
+  // Search controller
+  final TextEditingController searchController = TextEditingController();
+  final RxString searchTerm = ''.obs;
+
   @override
   void onInit() {
     super.onInit();
-    // Initialize with dummy data
-    _loadDummyData();
-    filterBookings();
+    // Set initial date range (last 30 days)
+    fromDate.value = DateTime.now().subtract(const Duration(days: 30));
+    toDate.value = DateTime.now();
+
+    // Load bookings
+    loadBookings();
+
+    // Add listener to search controller
+    searchController.addListener(() {
+      searchTerm.value = searchController.text;
+      filterBookings();
+    });
   }
 
-  void _loadDummyData() {
-    allBookings.value = [
-      BookingModel(
-        bookingOn: DateTime(2025, 3, 28, 5, 54, 32),
-        bookingId: 'BK-49',
-        pnr: 'GDS',
-        airline: 'Airline',
-        supplier: 'OMAN AIR',
-        trip: 'KHI to MCT, MCT to DOH, DOH to DUB',
-        passengerName: 'Mr ef fsd',
-        travelDate: DateTime(2025, 3, 28),
-        totalPrice: 0,
-        status: 'On Request',
-        deadline: DateTime(2025, 3, 28, 13, 54),
-      ),
-      BookingModel(
-        bookingOn: DateTime(2025, 4, 3, 8, 20, 15),
-        bookingId: 'BK-50',
-        pnr: 'AMS',
-        airline: 'Airline',
-        supplier: 'EMIRATES',
-        trip: 'LHR to DXB, DXB to SYD',
-        passengerName: 'Ms Jane Smith',
-        travelDate: DateTime(2025, 4, 10),
-        totalPrice: 1250,
-        status: 'Confirmed',
-        deadline: DateTime(2025, 4, 5, 18, 30),
-      ),
-      BookingModel(
-        bookingOn: DateTime(2025, 4, 5, 12, 45, 22),
-        bookingId: 'BK-51',
-        pnr: 'XTZ',
-        airline: 'Airline',
-        supplier: 'QATAR AIRWAYS',
-        trip: 'JFK to DOH, DOH to BKK',
-        passengerName: 'Mr John Doe',
-        travelDate: DateTime(2025, 4, 15),
-        totalPrice: 1800,
-        status: 'On Hold',
-        deadline: DateTime(2025, 4, 7, 23, 59),
-      ),
-    ];
+  // Format date to API format (YYYY-MM-DD)
+  String formatDateForApi(DateTime date) {
+    return DateFormat('yyyy-MM-dd').format(date);
+  }
 
-    // Update statistics
-    updateStats();
+  // Load bookings from API
+  Future<void> loadBookings() async {
+    isLoading.value = true;
+    hasError.value = false;
+    errorMessage.value = '';
+
+    try {
+      final result = await _authController.getFlightsBookings(
+        fromDate: formatDateForApi(fromDate.value),
+        toDate: formatDateForApi(toDate.value),
+      );
+
+      if (result['success'] == true) {
+        // Parse bookings from API response
+        final data = result['data']['data'] as List<dynamic>;
+        allBookings.value =
+            data.map((item) => BookingModel.fromJson(item)).toList();
+
+        // Update statistics
+        updateStats();
+
+        // Apply filters
+        filterBookings();
+      } else {
+        hasError.value = true;
+        errorMessage.value = result['message'] ?? 'Failed to load bookings';
+      }
+    } catch (e) {
+      hasError.value = true;
+      errorMessage.value = 'Error: $e';
+    } finally {
+      isLoading.value = false;
+    }
   }
 
   // Update statistics based on the current bookings
@@ -91,15 +99,19 @@ class AllFlightBookingController extends GetxController {
     int error = 0;
 
     for (var booking in allBookings) {
-      if (booking.status == 'Confirmed') {
-        confirmed++;
-      } else if (booking.status == 'On Hold' ||
-          booking.status == 'On Request') {
-        onHold++;
-      } else if (booking.status == 'Cancelled') {
-        cancelled++;
-      } else if (booking.status == 'Error') {
-        error++;
+      switch (booking.flightStatus) {
+        case '1':
+          confirmed++;
+          break;
+        case '0':
+          onHold++;
+          break;
+        case '2':
+          cancelled++;
+          break;
+        case '3':
+          error++;
+          break;
       }
     }
 
@@ -112,29 +124,20 @@ class AllFlightBookingController extends GetxController {
 
   // Filter bookings based on date range and search term
   void filterBookings() {
-    String searchTerm = searchController.text.toLowerCase();
+    String term = searchTerm.value.toLowerCase();
 
     filteredBookings.value =
         allBookings.where((booking) {
-          // Check if booking is within date range
-          bool isInDateRange =
-              booking.bookingOn.isAfter(
-                fromDate.value.subtract(const Duration(days: 1)),
-              ) &&
-              booking.bookingOn.isBefore(
-                toDate.value.add(const Duration(days: 1)),
-              );
-
-          // Check if booking matches search term
+          // Check if booking matches search term (if any)
           bool matchesSearch =
-              searchTerm.isEmpty ||
-              booking.bookingId.toLowerCase().contains(searchTerm) ||
-              booking.pnr.toLowerCase().contains(searchTerm) ||
-              booking.supplier.toLowerCase().contains(searchTerm) ||
-              booking.passengerName.toLowerCase().contains(searchTerm) ||
-              booking.status.toLowerCase().contains(searchTerm);
+              term.isEmpty ||
+              booking.bookingId.toLowerCase().contains(term) ||
+              booking.pnr.toLowerCase().contains(term) ||
+              booking.supplier.toLowerCase().contains(term) ||
+              booking.passengerNames.toLowerCase().contains(term) ||
+              booking.status.toLowerCase().contains(term);
 
-          return isInDateRange && matchesSearch;
+          return matchesSearch;
         }).toList();
   }
 
@@ -144,12 +147,12 @@ class AllFlightBookingController extends GetxController {
       context: context,
       initialDate: fromDate.value,
       firstDate: DateTime(2020),
-      lastDate: DateTime(2030),
+      lastDate: DateTime.now(),
     );
 
     if (picked != null && picked != fromDate.value) {
       fromDate.value = picked;
-      filterBookings();
+      loadBookings(); // Reload data with new date range
     }
   }
 
@@ -159,12 +162,12 @@ class AllFlightBookingController extends GetxController {
       context: context,
       initialDate: toDate.value,
       firstDate: DateTime(2020),
-      lastDate: DateTime(2030),
+      lastDate: DateTime.now(),
     );
 
     if (picked != null && picked != toDate.value) {
       toDate.value = picked;
-      filterBookings();
+      loadBookings(); // Reload data with new date range
     }
   }
 
@@ -176,6 +179,7 @@ class AllFlightBookingController extends GetxController {
       'Viewing details for booking ${booking.bookingId}',
       snackPosition: SnackPosition.BOTTOM,
     );
+    // TODO: Implement navigation to booking details screen
   }
 
   // Print ticket
@@ -186,6 +190,12 @@ class AllFlightBookingController extends GetxController {
       'Printing ticket for booking ${booking.bookingId}',
       snackPosition: SnackPosition.BOTTOM,
     );
+    // TODO: Implement print ticket functionality
+  }
+
+  // Retry loading data after error
+  void retryLoading() {
+    loadBookings();
   }
 
   @override

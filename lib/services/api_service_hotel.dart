@@ -141,7 +141,7 @@ class ApiServiceHotel extends GetxService {
 
       // Convert hotel IDs to proper format
       List<String> hotelIds =
-      controller.hotel_ids.cast<String>().map((id) => id.trim()).toList();
+          controller.hotel_ids.cast<String>().map((id) => id.trim()).toList();
 
       var headers = {
         'Api-key': apiKey,
@@ -155,17 +155,18 @@ class ApiServiceHotel extends GetxService {
       var requestBody = {
         "stay": {"checkIn": checkInDate, "checkOut": checkOutDate},
         "occupancies":
-        rooms
-            .map(
-              (room) => {
-            "rooms": 1,
-            "adults": room['Adult'],
-            "children": room['Children'],
-            if (room['Children'] > 0)
-              "childAges": room['ChildrenAges'] ?? [],
-          },
-        )
-            .toList(),
+            rooms
+                .map(
+                  (room) => {
+                    "rooms": 1,
+                    "adults": room['Adult'],
+                    "children": room['Children'],
+                    
+                    if (room['Children'] > 0)
+                      "childAges": room['ChildrenAges'] ?? [],
+                  },
+                )
+                .toList(),
         "hotels": {"hotel": hotelIds},
       };
 
@@ -205,7 +206,7 @@ class ApiServiceHotel extends GetxService {
                 'name': hotel['name'] ?? 'Unknown Hotel',
                 'rating': int.tryParse(hotel['categoryCode']?[0] ?? '3') ?? 3,
                 'address':
-                '${hotel['zoneName'] ?? ''}, ${hotel['destinationName'] ?? ''}',
+                    '${hotel['zoneName'] ?? ''}, ${hotel['destinationName'] ?? ''}',
                 'price': minRate.toStringAsFixed(2),
                 'latitude': hotel['latitude']?.toString() ?? '0',
                 'longitude': hotel['longitude']?.toString() ?? '0',
@@ -266,9 +267,9 @@ class ApiServiceHotel extends GetxService {
 
         for (var i = 0; i < prettyJson.length; i += chunkSize) {
           var end =
-          (i + chunkSize < prettyJson.length)
-              ? i + chunkSize
-              : prettyJson.length;
+              (i + chunkSize < prettyJson.length)
+                  ? i + chunkSize
+                  : prettyJson.length;
           chunks.add(prettyJson.substring(i, end));
         }
 
@@ -545,26 +546,26 @@ class ApiServiceHotel extends GetxService {
 
             // Format image URLs properly with fixed logic
             List<String> formattedImageUrls =
-            rawImagesList.map((rawPath) {
-              // Find the second occurrence of "con" in the string
-              int firstConPosition = rawPath.indexOf('con');
-              if (firstConPosition != -1) {
-                int secondConPosition = rawPath.indexOf(
-                  'con',
-                  firstConPosition + 1,
-                );
-                if (secondConPosition != -1) {
-                  // Extract the path starting after the second "con"
-                  String cleanPath = rawPath.substring(
-                    secondConPosition + 3,
-                  );
-                  return 'https://photos.hotelbeds.com/giata/$cleanPath';
-                }
-              }
+                rawImagesList.map((rawPath) {
+                  // Find the second occurrence of "con" in the string
+                  int firstConPosition = rawPath.indexOf('con');
+                  if (firstConPosition != -1) {
+                    int secondConPosition = rawPath.indexOf(
+                      'con',
+                      firstConPosition + 1,
+                    );
+                    if (secondConPosition != -1) {
+                      // Extract the path starting after the second "con"
+                      String cleanPath = rawPath.substring(
+                        secondConPosition + 3,
+                      );
+                      return 'https://photos.hotelbeds.com/giata/$cleanPath';
+                    }
+                  }
 
-              // Fallback: If we can't find the pattern, use the raw path
-              return 'https://photos.hotelbeds.com/giata/$rawPath';
-            }).toList();
+                  // Fallback: If we can't find the pattern, use the raw path
+                  return 'https://photos.hotelbeds.com/giata/$rawPath';
+                }).toList();
 
             print("the hotel code is ${hotelDetails['hotel_code']}");
 

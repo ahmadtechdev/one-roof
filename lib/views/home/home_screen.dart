@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:get/route_manager.dart';
 
 import 'package:oneroof/utility/colors.dart';
@@ -65,9 +66,49 @@ class HomeScreenState extends State<HomeScreen>
         actions: [
           IconButton(
             icon: Icon(Icons.login, color: TColors.primary),
-            onPressed: () {
-              AuthController().getHotelBookings();
+            onPressed: () async {
+              final authController =
+                  Get.find<
+                    AuthController
+                  >(); // Use dependency injection if possible
 
+              try {
+                final result = await authController.getGroupBookings(
+                  fromDate: "2024-12-20",
+                  toDate: "2025-4-20",
+                );
+
+                if (result['success']) {
+                  // Success handling
+                  Get.snackbar(
+                    'Success',
+                    'Group bookings retrieved successfully',
+                    backgroundColor: Colors.green,
+                    colorText: Colors.white,
+                  );
+
+                  // Process the data as needed
+                  final bookingsData = result['data'];
+                  // Navigate to results page or update UI
+                  // Get.to(() => GroupBookingsResultPage(bookings: bookingsData));
+                } else {
+                  // Error handling
+                  Get.snackbar(
+                    'Error',
+                    result['message'] ?? 'Failed to fetch group bookings',
+                    backgroundColor: Colors.red,
+                    colorText: Colors.white,
+                  );
+                }
+              } catch (e) {
+                // Exception handling
+                Get.snackbar(
+                  'Error',
+                  'An unexpected error occurred: ${e.toString()}',
+                  backgroundColor: Colors.red,
+                  colorText: Colors.white,
+                );
+              }
               Get.to(() => Login());
             },
           ),

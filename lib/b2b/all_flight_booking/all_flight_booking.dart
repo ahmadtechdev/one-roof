@@ -24,12 +24,46 @@ class AllFlightBookingScreen extends StatelessWidget {
           style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
         elevation: 0,
+        actions: [
+          Obx(() => controller.isLoading.value
+              ? const Padding(
+                  padding: EdgeInsets.all(16.0),
+                  child: SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      color: Colors.white,
+                      strokeWidth: 2,
+                    ),
+                  ),
+                )
+              : IconButton(
+                  icon: const Icon(Icons.refresh),
+                  onPressed: controller.loadBookings,
+                  tooltip: 'Refresh data',
+                )),
+        ],
       ),
       body: Column(
         children: [
           _buildDateFilter(),
+          _buildSearchBar(),
           _buildStatCards(),
-          Expanded(child: Obx(() => _buildBookingCards())),
+          Expanded(
+            child: Obx(() {
+              if (controller.isLoading.value) {
+                return const Center(
+                  child: CircularProgressIndicator(),
+                );
+              } else if (controller.hasError.value) {
+                return _buildErrorWidget();
+              } else if (controller.filteredBookings.isEmpty) {
+                return _buildEmptyStateWidget();
+              } else {
+                return _buildBookingCards();
+              }
+            }),
+          ),
         ],
       ),
     );
@@ -143,6 +177,29 @@ class AllFlightBookingScreen extends StatelessWidget {
       ),
     );
   }
+  
+  Widget _buildSearchBar() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      color: Colors.blue.shade700,
+      child: TextField(
+        controller: controller.searchController,
+        style: const TextStyle(color: Colors.white),
+        decoration: InputDecoration(
+          hintText: 'Search bookings...',
+          hintStyle: TextStyle(color: Colors.white.withOpacity(0.7)),
+          prefixIcon: const Icon(Icons.search, color: Colors.white),
+          filled: true,
+          fillColor: Colors.blue.shade900,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+            borderSide: BorderSide.none,
+          ),
+          contentPadding: const EdgeInsets.symmetric(vertical: 0),
+        ),
+      ),
+    );
+  }
 
   Widget _buildStatCards() {
     return Container(
@@ -233,17 +290,90 @@ class AllFlightBookingScreen extends StatelessWidget {
     );
   }
 
+  Widget _buildErrorWidget() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(
+            Icons.error_outline,
+            color: Colors.red,
+            size: 60,
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'Error loading bookings',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: TColors.text,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 40),
+            child: Text(
+              controller.errorMessage.value,
+              textAlign: TextAlign.center,
+              style: TextStyle(color: TColors.grey),
+            ),
+          ),
+          const SizedBox(height: 24),
+          ElevatedButton(
+            onPressed: controller.retryLoading,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: TColors.primary,
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+            ),
+            child: const Text('Try Again'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmptyStateWidget() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.flight_takeoff,
+            color: TColors.grey,
+            size: 60,
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'No flight bookings found',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: TColors.text,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 40),
+            child: Text(
+              'Try changing the date range or search criteria',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: TColors.grey),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildBookingCards() {
-    return controller.filteredBookings.isEmpty
-        ? const Center(child: Text('No bookings found'))
-        : ListView.builder(
-          padding: const EdgeInsets.all(16),
-          itemCount: controller.filteredBookings.length,
-          itemBuilder: (context, index) {
-            final booking = controller.filteredBookings[index];
-            return _buildBookingCard(booking);
-          },
-        );
+    return ListView.builder(
+      padding: const EdgeInsets.all(16),
+      itemCount: controller.filteredBookings.length,
+      itemBuilder: (context, index) {
+        final booking = controller.filteredBookings[index];
+        return _buildBookingCard(booking);
+      },
+    );
   }
 
   Widget _buildBookingCard(BookingModel booking) {
@@ -326,9 +456,7 @@ class AllFlightBookingScreen extends StatelessWidget {
               children: [
                 _buildInfoRow(
                   'Booking Date',
-                  DateFormat(
-                    'E, dd MMM yyyy\nHH:mm:ss',
-                  ).format(booking.bookingOn),
+                  DateFormat('E, dd MMM yyyy\nHH:mm:ss').format(booking.creationDate),
                 ),
                 const Divider(),
                 _buildInfoRow('PNR', booking.pnr),
@@ -337,22 +465,23 @@ class AllFlightBookingScreen extends StatelessWidget {
                 const Divider(),
                 _buildInfoRow('Trip', booking.trip),
                 const Divider(),
-                _buildInfoRow('Passenger', booking.passengerName),
+                _buildInfoRow('Passenger', booking.passengerNames),
                 const Divider(),
                 _buildInfoRow(
                   'Travel Date',
-                  DateFormat('E, dd MMM yyyy').format(booking.travelDate),
+                  DateFormat('E, dd MMM yyyy').format(booking.departureDate),
                 ),
                 const Divider(),
-                _buildInfoRow('Total Price', '\$${booking.totalPrice}'),
+                _buildInfoRow(
+                  'Total Price',
+                  '${booking.currency.isNotEmpty ? booking.currency : "PKR"} ${booking.totalSell.toStringAsFixed(0)}',
+                ),
 
-                if (booking.deadline != null) ...[
+                if (booking.deadlineTime != null) ...[
                   const Divider(),
                   _buildInfoRow(
                     'Deadline',
-                    DateFormat(
-                      'E, dd MMM yyyy HH:mm',
-                    ).format(booking.deadline!),
+                    DateFormat('E, dd MMM yyyy HH:mm').format(booking.deadlineTime!),
                     isHighlighted: true,
                   ),
                 ],

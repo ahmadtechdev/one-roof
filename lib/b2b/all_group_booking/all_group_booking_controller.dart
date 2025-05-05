@@ -1,110 +1,25 @@
-
 import 'package:get/get.dart';
+import 'package:intl/intl.dart';
 import 'package:oneroof/b2b/all_group_booking/model.dart';
+import 'package:oneroof/views/users/login/login_api_service/login_api.dart';
 
 class AllGroupBookingController extends GetxController {
-  final fromDate = DateTime.now().obs;
-  final toDate = DateTime.now().add(const Duration(days: 30)).obs;
+  final AuthController _authController = Get.find<AuthController>();
+
+  final fromDate = DateTime.now().subtract(const Duration(days: 30)).obs;
+  final toDate = DateTime.now().obs;
   final selectedGroupCategory = 'All'.obs;
   final selectedStatus = 'All'.obs;
 
-  final totalReceipt = 177500.0.obs;
-  final totalPayment = 85000.0.obs;
-
-  double get closingBalance => totalReceipt.value - totalPayment.value;
-
+  final isLoading = false.obs;
   final bookings = <BookingModel>[].obs;
+  final hasError = false.obs;
+  final errorMessage = ''.obs;
 
   @override
   void onInit() {
     super.onInit();
-    loadDummyData();
-  }
-
-  void loadDummyData() {
-    bookings.value = [
-      BookingModel(
-        id: 1,
-        pnr: 'PNR# G2025031813180611526',
-        bkf: 'BKF 2631',
-        agt: 'AGT# 1155',
-        createdDate: DateTime(2025, 4, 9, 19, 36),
-        airline: 'SERENE AIR',
-        route: 'ISB-DXB',
-        country: 'UAE',
-        flightDate: DateTime(2025, 4, 24),
-        passengerStatus: PassengerStatus(
-          holdAdults: 1,
-          holdChild: 0,
-          holdInfant: 0,
-          holdTotal: 1,
-          confirmAdults: 1,
-          confirmChild: 0,
-          confirmInfant: 0,
-          confirmTotal: 1,
-          cancelledAdults: 0,
-          cancelledChild: 0,
-          cancelledInfant: 0,
-          cancelledTotal: 0,
-        ),
-        price: 84000.0,
-        status: 'CONFIRMED',
-      ),
-      BookingModel(
-        id: 2,
-        pnr: 'PNR# G2025040421120012128',
-        bkf: 'BK# 2630',
-        agt: 'AGT# 6157',
-        createdDate: DateTime(2025, 4, 9, 17, 41),
-        airline: '06. SERENE AIR LHE-DXB',
-        route: 'LAHORE TO DUBAI',
-        country: 'UAE',
-        flightDate: DateTime(2025, 4, 15),
-        passengerStatus: PassengerStatus(
-          holdAdults: 1,
-          holdChild: 0,
-          holdInfant: 0,
-          holdTotal: 1,
-          confirmAdults: 0,
-          confirmChild: 0,
-          confirmInfant: 0,
-          confirmTotal: 0,
-          cancelledAdults: 0,
-          cancelledChild: 0,
-          cancelledInfant: 0,
-          cancelledTotal: 0,
-        ),
-        price: 96000.0,
-        status: 'CANCELLED',
-      ),
-      BookingModel(
-        id: 3,
-        pnr: 'PNR# G2025022614133710464',
-        bkf: 'BK# 2617',
-        agt: 'AGT# 6030',
-        createdDate: DateTime(2025, 4, 8, 9, 38),
-        airline: '20. SERENE AIR LHE-JED',
-        route: 'LAHORE TO JEDDAH',
-        country: 'KSA',
-        flightDate: DateTime(2025, 4, 11),
-        passengerStatus: PassengerStatus(
-          holdAdults: 1,
-          holdChild: 0,
-          holdInfant: 0,
-          holdTotal: 1,
-          confirmAdults: 0,
-          confirmChild: 0,
-          confirmInfant: 0,
-          confirmTotal: 0,
-          cancelledAdults: 1,
-          cancelledChild: 0,
-          cancelledInfant: 0,
-          cancelledTotal: 1,
-        ),
-        price: 70000.0,
-        status: 'CANCELLED',
-      ),
-    ];
+    fetchBookings();
   }
 
   void updateFromDate(DateTime date) {
@@ -123,7 +38,165 @@ class AllGroupBookingController extends GetxController {
     selectedStatus.value = status;
   }
 
+  Future<void> fetchBookings() async {
+    isLoading.value = true;
+    hasError.value = false;
+    errorMessage.value = '';
+
+    try {
+      // Format dates for API request (YYYY-MM-DD)
+      final fromDateStr = DateFormat('yyyy-MM-dd').format(fromDate.value);
+      final toDateStr = DateFormat('yyyy-MM-dd').format(toDate.value);
+
+      // Call the API through AuthController
+      final result = await _authController.getGroupBookings(
+        fromDate: fromDateStr,
+        toDate: toDateStr,
+      );
+
+      if (result['success'] == true && result['data'] != null) {
+        final apiData = result['data'];
+        parseBookingsFromApi(apiData);
+      } else {
+        hasError.value = true;
+        errorMessage.value = result['message'] ?? 'Failed to fetch bookings';
+        bookings.clear();
+      }
+    } catch (e) {
+      hasError.value = true;
+      errorMessage.value = 'An error occurred: $e';
+      bookings.clear();
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  void parseBookingsFromApi(Map<String, dynamic> apiData) {
+    bookings.clear();
+
+    if (apiData['data'] != null && apiData['data'] is List) {
+      final List bookingsList = apiData['data'] as List;
+
+      for (var bookingData in bookingsList) {
+        try {
+          // Parse dates
+          DateTime departureDate;
+          DateTime createdAt;
+
+          try {
+            // Parse departure date (format: "Fri 04 Apr 2025")
+            departureDate = DateFormat(
+              'EEE dd MMM yyyy',
+            ).parse(bookingData['departure_date']);
+          } catch (e) {
+            // Fallback to current date if parsing fails
+            departureDate = DateTime.now();
+          }
+
+          try {
+            // Parse created_at date (format: "Fri 28 Mar 2025 11:03")
+            createdAt = DateFormat(
+              'EEE dd MMM yyyy HH:mm',
+            ).parse(bookingData['created_at']);
+          } catch (e) {
+            // Fallback to current date if parsing fails
+            createdAt = DateTime.now();
+          }
+
+          // Parse passenger status
+          final passengers = bookingData['passengers'] ?? {};
+          final hold = passengers['hold'] ?? {};
+          final confirmed = passengers['confirmed'] ?? {};
+          final cancelled = passengers['cancelled'] ?? {};
+
+          final passengerStatus = PassengerStatus(
+            holdAdults: int.tryParse(hold['adults'] ?? '0') ?? 0,
+            holdChild: int.tryParse(hold['childs'] ?? '0') ?? 0,
+            holdInfant: int.tryParse(hold['infants'] ?? '0') ?? 0,
+            holdTotal:
+                int.tryParse(hold['adults'] ?? '0') ??
+                0 + (int.tryParse(hold['childs'] ?? '0') ?? 0),
+
+            confirmAdults: int.tryParse(confirmed['adults'] ?? '0') ?? 0,
+            confirmChild: int.tryParse(confirmed['childs'] ?? '0') ?? 0,
+            confirmInfant: int.tryParse(confirmed['infants'] ?? '0') ?? 0,
+            confirmTotal:
+                int.tryParse(confirmed['adults'] ?? '0') ??
+                0 + (int.tryParse(confirmed['childs'] ?? '0') ?? 0),
+
+            cancelledAdults: int.tryParse(cancelled['adults'] ?? '0') ?? 0,
+            cancelledChild: int.tryParse(cancelled['childs'] ?? '0') ?? 0,
+            cancelledInfant: int.tryParse(cancelled['infants'] ?? '0') ?? 0,
+            cancelledTotal:
+                (int.tryParse(cancelled['adults'] ?? '0') ??
+                        0 + (int.tryParse(cancelled['childs'] ?? '0') ?? 0))
+                    .toInt(),
+          );
+
+          // Determine country from group_name
+          String country = 'Other';
+          final groupName = (bookingData['group_name'] ?? '').toUpperCase();
+          if (groupName.contains('DXB') ||
+              groupName.contains('SHJ') ||
+              groupName.contains('DUBAI')) {
+            country = 'UAE';
+          } else if (groupName.contains('JED') ||
+              groupName.contains('JEDDAH') ||
+              groupName.contains('DMM') ||
+              groupName.contains('DAMMAM')) {
+            country = 'KSA';
+          }
+
+          // Create booking model
+          final booking = BookingModel(
+            id: int.tryParse(bookingData['booking_no'] ?? '0') ?? 0,
+            pnr: 'PNR# ${bookingData['booking_no'] ?? ''}',
+            bkf: 'BK# ${bookingData['booking_no'] ?? ''}',
+            agt: 'AGT# ${apiData['agent_id'] ?? ''}',
+            createdDate: createdAt,
+            airline: bookingData['airline'] ?? '',
+            route: bookingData['group_name'] ?? '',
+            country: country,
+            flightDate: departureDate,
+            passengerStatus: passengerStatus,
+            price: (bookingData['total_price'] ?? 0).toDouble(),
+            status: bookingData['status'] ?? 'UNKNOWN',
+          );
+
+          bookings.add(booking);
+        } catch (e) {
+          print('Error parsing booking: $e');
+        }
+      }
+    }
+
+    // Apply filters
+    filterBookings();
+  }
+
   void filterBookings() {
-    // Filter logic would go here
+    if (selectedGroupCategory.value == 'All' && selectedStatus.value == 'All') {
+      return; // No filtering needed
+    }
+
+    final filteredBookings = <BookingModel>[];
+
+    for (var booking in bookings) {
+      bool matchesCountry =
+          selectedGroupCategory.value == 'All' ||
+          booking.country == selectedGroupCategory.value;
+
+      bool matchesStatus =
+          selectedStatus.value == 'All' ||
+          booking.status.toUpperCase() == selectedStatus.value;
+
+      if (matchesCountry && matchesStatus) {
+        filteredBookings.add(booking);
+      }
+    }
+
+    if (selectedGroupCategory.value != 'All' || selectedStatus.value != 'All') {
+      bookings.value = filteredBookings;
+    }
   }
 }
