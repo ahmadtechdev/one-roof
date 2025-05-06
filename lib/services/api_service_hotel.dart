@@ -7,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../views/hotel/search_hotels/booking_hotel/booking_controller.dart';
 import '../views/hotel/search_hotels/search_hotel_controller.dart';
+// integarted the hotleBeds api compeleted
 
 class ApiServiceHotel extends GetxService {
   final SearchHotelController controller = Get.put(SearchHotelController());

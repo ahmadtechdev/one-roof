@@ -1,4 +1,3 @@
-
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -18,12 +17,14 @@ class Login extends StatefulWidget {
 
 class _LoginState extends State<Login> {
   final LoginController controller = Get.put(LoginController());
+  
 
   @override
   Widget build(BuildContext context) {
     // Get screen size for responsive calculations
     final size = MediaQuery.of(context).size;
-    final textScaleFactor = size.width / 375; // Base scale on standard device width
+    final textScaleFactor =
+        size.width / 375; // Base scale on standard device width
 
     return Material(
       child: Container(
@@ -73,23 +74,29 @@ class _LoginState extends State<Login> {
               ),
 
               // Error message
-              Obx(() => controller.errorMessage.value.isNotEmpty
-                  ? Container(
-                margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: Colors.red.shade100,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  controller.errorMessage.value,
-                  style: TextStyle(
-                    color: Colors.red.shade800,
-                    fontSize: 14 * textScaleFactor,
-                  ),
-                ),
-              )
-                  : SizedBox.shrink()),
+              Obx(
+                () =>
+                    controller.errorMessage.value.isNotEmpty
+                        ? Container(
+                          margin: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 8,
+                          ),
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: Colors.red.shade100,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            controller.errorMessage.value,
+                            style: TextStyle(
+                              color: Colors.red.shade800,
+                              fontSize: 14 * textScaleFactor,
+                            ),
+                          ),
+                        )
+                        : SizedBox.shrink(),
+              ),
 
               // Email input field
               Container(
@@ -114,7 +121,10 @@ class _LoginState extends State<Login> {
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(15),
-                        borderSide: BorderSide(color: TColors.white, width: 0.0),
+                        borderSide: BorderSide(
+                          color: TColors.white,
+                          width: 0.0,
+                        ),
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(15),
@@ -152,7 +162,10 @@ class _LoginState extends State<Login> {
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(15),
-                        borderSide: BorderSide(color: TColors.white, width: 0.0),
+                        borderSide: BorderSide(
+                          color: TColors.white,
+                          width: 0.0,
+                        ),
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(15),
@@ -170,37 +183,41 @@ class _LoginState extends State<Login> {
               // Login button
               Container(
                 margin: const EdgeInsets.only(top: 24, left: 16, right: 16),
-                child: Obx(() => ElevatedButton(
-                  onPressed: controller.isLoading.value ? null : controller.login,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: TColors.secondary,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10.0),
+                child: Obx(
+                  () => ElevatedButton(
+                    onPressed:
+                        controller.isLoading.value ? null : controller.login,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: TColors.secondary,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10.0),
+                      ),
+                      minimumSize: Size(
+                        double.infinity,
+                        50, // Fixed height for button
+                      ),
                     ),
-                    minimumSize: Size(
-                      double.infinity,
-                      50, // Fixed height for button
-                    ),
+                    child:
+                        controller.isLoading.value
+                            ? SizedBox(
+                              height: 24,
+                              width: 24,
+                              child: CircularProgressIndicator(
+                                color: TColors.white,
+                                strokeWidth: 3,
+                              ),
+                            )
+                            : Text(
+                              "Login",
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 18 * textScaleFactor,
+                                fontWeight: FontWeight.bold,
+                                color: TColors.white,
+                              ),
+                            ),
                   ),
-                  child: controller.isLoading.value
-                      ? SizedBox(
-                    height: 24,
-                    width: 24,
-                    child: CircularProgressIndicator(
-                      color: TColors.white,
-                      strokeWidth: 3,
-                    ),
-                  )
-                      : Text(
-                    "Login",
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 18 * textScaleFactor,
-                      fontWeight: FontWeight.bold,
-                      color: TColors.white,
-                    ),
-                  ),
-                )),
+                ),
               ),
 
               // Social login options
