@@ -3,8 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:get/get.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:oneroof/services/api_service_hotel.dart';
-import '../../../utility/colors.dart';
+import 'package:oneroof/widgets/colors.dart';
+
+import '../../../services/api_service_hotel.dart';
 import 'search_hotel_controller.dart';
 import 'select_room/selectroom.dart';
 
@@ -36,7 +37,7 @@ class _HotelScreenState extends State<HotelScreen> {
         isScrollControlled: true,
         builder: (BuildContext context) {
           return Obx(
-                () => Padding(
+            () => Padding(
               padding: MediaQuery.of(context).viewInsets,
               child: Container(
                 padding: const EdgeInsets.all(16),
@@ -59,7 +60,7 @@ class _HotelScreenState extends State<HotelScreen> {
                             children: [
                               Checkbox(
                                 value:
-                                !controller.selectedRatings.contains(true),
+                                    !controller.selectedRatings.contains(true),
                                 onChanged: (value) {
                                   if (value == true) {
                                     controller.resetFilters();
@@ -219,11 +220,11 @@ class _HotelScreenState extends State<HotelScreen> {
   }
 
   Widget _buildButton(
-      BuildContext context,
-      IconData icon,
-      String label,
-      VoidCallback onPressed,
-      ) {
+    BuildContext context,
+    IconData icon,
+    String label,
+    VoidCallback onPressed,
+  ) {
     return ElevatedButton.icon(
       onPressed: onPressed,
       icon: Icon(icon, color: TColors.text),
@@ -237,9 +238,9 @@ class _HotelScreenState extends State<HotelScreen> {
   }
 
   void _showSortOptionsBottomSheet(
-      BuildContext context,
-      SearchHotelController controller,
-      ) {
+    BuildContext context,
+    SearchHotelController controller,
+  ) {
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
@@ -336,23 +337,23 @@ class _HotelScreenState extends State<HotelScreen> {
   }
 
   void _showPriceRangeBottomSheet(
-      BuildContext context,
-      SearchHotelController controller,
-      ) {
+    BuildContext context,
+    SearchHotelController controller,
+  ) {
     // Calculate min and max prices dynamically from the hotels list
     final prices =
-    controller.hotels
-        .map(
-          (hotel) => double.parse(
-        hotel['price'].toString().replaceAll(',', '').trim(),
-      ),
-    )
-        .toList();
+        controller.hotels
+            .map(
+              (hotel) => double.parse(
+                hotel['price'].toString().replaceAll(',', '').trim(),
+              ),
+            )
+            .toList();
 
     double minPrice =
-    prices.isNotEmpty ? prices.reduce((a, b) => a < b ? a : b) : 0.0;
+        prices.isNotEmpty ? prices.reduce((a, b) => a < b ? a : b) : 0.0;
     double maxPrice =
-    prices.isNotEmpty ? prices.reduce((a, b) => a > b ? a : b) : 0.0;
+        prices.isNotEmpty ? prices.reduce((a, b) => a > b ? a : b) : 0.0;
 
     double lowerValue = minPrice;
     double upperValue = maxPrice;
@@ -448,54 +449,12 @@ class _HotelScreenState extends State<HotelScreen> {
   }
 }
 
-class HotelCard extends StatefulWidget {
+class HotelCard extends StatelessWidget {
   final Map hotel;
 
-  const HotelCard({super.key, required this.hotel});
+  HotelCard({super.key, required this.hotel});
 
-  @override
-  State<HotelCard> createState() => _HotelCardState();
-}
-
-class _HotelCardState extends State<HotelCard> {
   final SearchHotelController controller = Get.find<SearchHotelController>();
-  final ApiServiceHotel apiService = Get.find<ApiServiceHotel>();
-  String? imageUrl;
-  bool isLoading = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _fetchHotelImage();
-  }
-
-  Future<void> _fetchHotelImage() async {
-    try {
-      final hotelCode = widget.hotel['hotelCode']?.toString();
-      if (hotelCode != null && hotelCode.isNotEmpty) {
-        final images = await apiService.getHotelImage(hotelCode);
-        if (images != null && images.isNotEmpty) {
-          setState(() {
-            imageUrl = images.first;
-            isLoading = false;
-          });
-        } else {
-          setState(() {
-            isLoading = false;
-          });
-        }
-      } else {
-        setState(() {
-          isLoading = false;
-        });
-      }
-    } catch (e) {
-      print("Error fetching hotel image: $e");
-      setState(() {
-        isLoading = false;
-      });
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -521,7 +480,7 @@ class _HotelCardState extends State<HotelCard> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            widget.hotel['name'] ?? 'Unknown Hotel',
+                            hotel['name'] ?? 'Unknown Hotel',
                             style: const TextStyle(
                               fontSize: 20,
                               fontWeight: FontWeight.bold,
@@ -532,7 +491,7 @@ class _HotelCardState extends State<HotelCard> {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            widget.hotel['address'] ?? 'Address not available',
+                            hotel['address'] ?? 'Address not available',
                             style: TextStyle(
                               fontSize: 12,
                               color: Colors.grey[700],
@@ -546,18 +505,18 @@ class _HotelCardState extends State<HotelCard> {
                     GestureDetector(
                       onTap: () {
                         Get.to(
-                              () => MapScreen(
+                          () => MapScreen(
                             latitude:
-                            double.tryParse(
-                              widget.hotel['latitude']?.toString() ?? '',
-                            ) ??
+                                double.tryParse(
+                                  hotel['latitude']?.toString() ?? '',
+                                ) ??
                                 0.0,
                             longitude:
-                            double.tryParse(
-                              widget.hotel['longitude']?.toString() ?? '',
-                            ) ??
+                                double.tryParse(
+                                  hotel['longitude']?.toString() ?? '',
+                                ) ??
                                 0.0,
-                            hotelName: widget.hotel['name'] ?? 'Unknown Hotel',
+                            hotelName: hotel['name'] ?? 'Unknown Hotel',
                           ),
                         );
                       },
@@ -573,7 +532,7 @@ class _HotelCardState extends State<HotelCard> {
                 Row(
                   children: [
                     RatingBar.builder(
-                      initialRating: (widget.hotel['rating'] ?? 3.0).toDouble(),
+                      initialRating: (hotel['rating'] ?? 3.0).toDouble(),
                       minRating: 1,
                       direction: Axis.horizontal,
                       allowHalfRating: true,
@@ -582,12 +541,12 @@ class _HotelCardState extends State<HotelCard> {
                       itemPadding: const EdgeInsets.symmetric(horizontal: 1.0),
                       itemBuilder:
                           (context, _) =>
-                      const Icon(Icons.star, color: Colors.amber),
+                              const Icon(Icons.star, color: Colors.amber),
                       onRatingUpdate: (rating) {},
                     ),
                     const Spacer(),
                     Text(
-                      'PKR ${(double.parse(widget.hotel['price'] ?? '0') * 278.5).toStringAsFixed(2)}',
+                      'USD ${(hotel['price'] ?? 0.0)}',
                       style: const TextStyle(
                         fontSize: 18,
                         color: TColors.text,
@@ -607,74 +566,15 @@ class _HotelCardState extends State<HotelCard> {
             ),
             child: ElevatedButton(
               onPressed: () {
-                // Update hotel information
-                controller.hotelCode.value =
-                    widget.hotel['hotelCode'].toString();
-                controller.hotelCity.value = widget.hotel['hotelCity'] ?? '';
-                controller.hotelName.value =
-                    widget.hotel['name'] ?? 'Unknown Hotel';
-                controller.destinationName.value =
-                    widget.hotel['address'] ?? '';
-                controller.zoneName.value = widget.hotel['zoneName'] ?? '';
-                controller.categoryName.value =
-                    widget.hotel['rating'].toString();
-                controller.lat.value = widget.hotel['latitude'];
-                controller.lon.value = widget.hotel['longitude'];
+                controller.hotelCode.value = hotel['hotelCode'];
+                controller.hotelCity.value = hotel['hotelCity'];
 
-                // Clear previous room data
                 controller.roomsdata.clear();
 
-                // Transform rooms data from the original response
-                final hotelData = controller
-                    .originalResponse
-                    .value['hotels']?['hotels']
-                    ?.firstWhere(
-                      (h) =>
-                  h['code'].toString() ==
-                      widget.hotel['hotelCode'].toString(),
-                  orElse: () => null,
+                ApiServiceHotel().fetchRoomDetails(
+                  hotel['hotelCode'],
+                  controller.sessionId.value,
                 );
-
-                if (hotelData != null && hotelData['rooms'] != null) {
-                  final roomsData =
-                  (hotelData['rooms'] as List).map((room) {
-                    final rates =
-                        (room['rates'] as List?)?.map((rate) {
-                          return {
-                            'rateKey': rate['rateKey'],
-                            'rateClass': rate['rateClass'],
-                            'rateType': rate['rateType'],
-                            'boardCode': rate['boardCode'],
-                            'boardName': rate['boardName'],
-                            'meal': rate['boardName'],
-                            'price': {
-                              'net':
-                              double.tryParse(
-                                rate['net']?.toString() ?? '0',
-                              ) ??
-                                  0,
-                              'total':
-                              double.tryParse(
-                                rate['net']?.toString() ?? '0',
-                              ) ??
-                                  0,
-                            },
-                            'cancellationPolicies':
-                            rate['cancellationPolicies'] ?? [],
-                          };
-                        }).toList() ??
-                            [];
-
-                    return {
-                      'roomCode': room['code'],
-                      'roomName': room['name'],
-                      'rates': rates,
-                    };
-                  }).toList();
-
-                  controller.roomsdata.value = roomsData;
-                }
-
                 controller.filterhotler();
                 Get.to(() => const SelectRoomScreen());
               },
@@ -688,7 +588,7 @@ class _HotelCardState extends State<HotelCard> {
               ),
               child: const Text(
                 'Select Room',
-                style: TextStyle(color: TColors.background),
+                style: TextStyle(color: TColors.secondary),
               ),
             ),
           ),
@@ -698,44 +598,39 @@ class _HotelCardState extends State<HotelCard> {
   }
 
   Widget _buildHotelImage() {
-    if (isLoading) {
-      return Container(
-        height: 200,
-        width: double.infinity,
-        color: Colors.grey[300],
-        child: const Center(
-          child: CircularProgressIndicator(color: TColors.primary),
-        ),
-      );
-    }
+    String imageUrl = hotel['image'] ?? '';
 
-    if (imageUrl != null && imageUrl!.startsWith('http')) {
+    // Check if the image is a URL
+    if (imageUrl.startsWith('http')) {
       return CachedNetworkImage(
-        imageUrl: imageUrl!,
+        imageUrl: imageUrl,
         height: 200,
         width: double.infinity,
         fit: BoxFit.cover,
         placeholder:
             (context, url) => Container(
-          color: Colors.grey[300],
-          child: const Center(
-            child: CircularProgressIndicator(color: TColors.primary),
-          ),
-        ),
-        errorWidget: (context, url, error) => _buildDefaultImage(),
+              color: Colors.grey[300],
+              child: const Center(
+                child: CircularProgressIndicator(color: TColors.primary),
+              ),
+            ),
+        errorWidget:
+            (context, url, error) => Image.asset(
+              'assets/img/cardbg/broken-image.png',
+              height: 200,
+              width: double.infinity,
+              fit: BoxFit.cover,
+            ),
       );
     } else {
-      return _buildDefaultImage();
+      // If not a URL, assume it's a local asset path
+      return Image.asset(
+        imageUrl.isEmpty ? 'assets/images/hotel.jpg' : imageUrl,
+        height: 200,
+        width: double.infinity,
+        fit: BoxFit.cover,
+      );
     }
-  }
-
-  Widget _buildDefaultImage() {
-    return Image.asset(
-      'assets/images/hotel.jpg',
-      height: 200,
-      width: double.infinity,
-      fit: BoxFit.cover,
-    );
   }
 }
 

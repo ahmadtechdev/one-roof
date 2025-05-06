@@ -12,5 +12,7 @@ class TColors {
   static const Color placeholder = Color(0xffB6B7B7);
   static const Color background2 = Color(0xFFFFF6E9);
   static const Color background3 = Color(0xFFFFF6E9); // Add this for the header background
-  static const Color background4 = Color(0xFF0A1C32); // Add this for the header background
+  static const Color background4 = Color(0xFF0A1C32);
+
+  static var white; // Add this for the header background
 }

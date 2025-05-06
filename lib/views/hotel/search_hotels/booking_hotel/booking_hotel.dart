@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:oneroof/views/hotel/search_hotels/booking_hotel/booking_voucher/booking_voucher.dart';
 
-import '../../../../utility/colors.dart';
+import '../../../../widgets/colors.dart';
 import '../../../../widgets/snackbar.dart';
 import '../../../../widgets/thank_you_screen.dart';
 import '../../hotel/guests/guests_controller.dart';
@@ -13,14 +12,16 @@ class BookingHotelScreen extends StatelessWidget {
   final BookingController bookingController = Get.put(BookingController());
   final GuestsController guestsController = Get.find<GuestsController>();
 
+
   BookingHotelScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+
     return Scaffold(
       appBar: AppBar(
         elevation: 0,
-        backgroundColor: TColors.primary,
+        backgroundColor: const Color(0xFFFFAB00),
         title: const Text(
           "Complete Your Booking",
           style: TextStyle(
@@ -35,48 +36,46 @@ class BookingHotelScreen extends StatelessWidget {
         ),
       ),
       body: Obx(() => Stack(
-            children: [
-              SingleChildScrollView(
-                child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                  color: Colors.grey[50],
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const ImportantBookingDetailsCard(),
-                      _buildRoomCards(),
-                      const SizedBox(height: 20),
-                      _buildBookerInfoCard(),
-                      const SizedBox(height: 20),
-                      _buildSpecialRequestsCard(),
-                      const SizedBox(height: 20),
-                      _buildTermsAndConditions(),
-                      const SizedBox(height: 30),
-                      _buildSubmitButton(),
-                      const SizedBox(height: 20),
-                    ],
-                  ),
-                ),
+        children: [
+          SingleChildScrollView(
+            child: Container(
+              padding:
+              const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              color: Colors.grey[50],
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const ImportantBookingDetailsCard(),
+                  _buildRoomCards(),
+                  const SizedBox(height: 20),
+                  _buildBookerInfoCard(),
+                  const SizedBox(height: 20),
+                  _buildSpecialRequestsCard(),
+                  const SizedBox(height: 20),
+                  _buildTermsAndConditions(),
+                  const SizedBox(height: 30),
+                  _buildSubmitButton(),
+                  const SizedBox(height: 20),
+                ],
               ),
-              if (bookingController.isLoading.value)
-                const Center(
-                  child: CircularProgressIndicator(
-                    color: TColors.primary,
-                  ),
-                ),
-            ],
-          )),
+            ),
+          ),
+          if (bookingController.isLoading.value)
+            const Center(
+              child: CircularProgressIndicator(
+                color: Color(0xFFFFAB00),
+              ),
+            ),
+        ],
+      )),
     );
   }
 
   Widget _buildRoomCards() {
-    return Obx(
-      () => Column(
-        children: List.generate(
-          bookingController.roomGuests.length,
-          (roomIndex) => _buildRoomCard(roomIndex),
-        ),
+    return Column(
+      children: List.generate(
+        bookingController.roomGuests.length,
+            (roomIndex) => _buildRoomCard(roomIndex),
       ),
     );
   }
@@ -102,7 +101,7 @@ class BookingHotelScreen extends StatelessWidget {
                   style: const TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.bold,
-                    color: TColors.primary,
+                    color: Color(0xFFFFAB00),
                   ),
                 ),
                 const Spacer(),
@@ -112,7 +111,7 @@ class BookingHotelScreen extends StatelessWidget {
             const SizedBox(height: 16),
             ...List.generate(
               roomGuests.adults.length,
-              (adultIndex) => _buildGuestField(
+                  (adultIndex) => _buildGuestField(
                 guestInfo: roomGuests.adults[adultIndex],
                 index: adultIndex,
                 isAdult: true,
@@ -120,7 +119,7 @@ class BookingHotelScreen extends StatelessWidget {
             ),
             ...List.generate(
               roomGuests.children.length,
-              (childIndex) => _buildGuestField(
+                  (childIndex) => _buildGuestField(
                 guestInfo: roomGuests.children[childIndex],
                 index: childIndex,
                 isAdult: false,
@@ -188,7 +187,7 @@ class BookingHotelScreen extends StatelessWidget {
                   controller: guestInfo.firstNameController,
                   hint: 'First Name',
                   prefixIcon: Icons.person_outline,
-                  iconColor:  TColors.primary,
+                  iconColor: const Color(0xFFFFAB00),
                 ),
               ),
               const SizedBox(width: 12),
@@ -197,7 +196,7 @@ class BookingHotelScreen extends StatelessWidget {
                   controller: guestInfo.lastNameController,
                   hint: 'Last Name',
                   prefixIcon: Icons.person_outline,
-                  iconColor:  TColors.primary,
+                  iconColor: const Color(0xFFFFAB00),
                 ),
               ),
             ],
@@ -208,6 +207,7 @@ class BookingHotelScreen extends StatelessWidget {
   }
 
   Widget _buildBookerInfoCard() {
+
     return Card(
       elevation: 4,
       color: TColors.background,
@@ -224,7 +224,7 @@ class BookingHotelScreen extends StatelessWidget {
               style: TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.bold,
-                color: TColors.primary,
+                color: Color(0xFFFFAB00),
               ),
             ),
             const SizedBox(height: 20),
@@ -245,11 +245,10 @@ class BookingHotelScreen extends StatelessWidget {
               children: [
                 Expanded(
                   child: _buildTextField(
-                    
                     controller: bookingController.firstNameController,
                     hint: 'First Name',
                     prefixIcon: Icons.person_outline,
-                    iconColor: TColors.primary,
+                    iconColor: const Color(0xFFFFAB00),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -258,7 +257,7 @@ class BookingHotelScreen extends StatelessWidget {
                     controller: bookingController.lastNameController,
                     hint: 'Last Name',
                     prefixIcon: Icons.person_outline,
-                    iconColor: TColors.primary,
+                    iconColor: const Color(0xFFFFAB00),
                   ),
                 ),
               ],
@@ -268,7 +267,7 @@ class BookingHotelScreen extends StatelessWidget {
               controller: bookingController.emailController,
               hint: 'Email',
               prefixIcon: Icons.email_outlined,
-              iconColor: TColors.primary,
+              iconColor: const Color(0xFFFFAB00),
               keyboardType: TextInputType.emailAddress,
             ),
             const SizedBox(height: 16),
@@ -276,7 +275,7 @@ class BookingHotelScreen extends StatelessWidget {
               controller: bookingController.phoneController,
               hint: 'Phone Number',
               prefixIcon: Icons.phone_outlined,
-              iconColor: TColors.primary,
+              iconColor: const Color(0xFFFFAB00),
               keyboardType: TextInputType.phone,
             ),
             const SizedBox(height: 16),
@@ -287,7 +286,7 @@ class BookingHotelScreen extends StatelessWidget {
                     controller: bookingController.addressController,
                     hint: 'Address Line',
                     prefixIcon: Icons.location_on_outlined,
-                    iconColor: TColors.primary,
+                    iconColor: const Color(0xFFFFAB00),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -296,7 +295,7 @@ class BookingHotelScreen extends StatelessWidget {
                     controller: bookingController.cityController,
                     hint: 'City',
                     prefixIcon: Icons.location_city_outlined,
-                    iconColor: TColors.primary,
+                    iconColor: const Color(0xFFFFAB00),
                   ),
                 ),
               ],
@@ -330,46 +329,46 @@ class BookingHotelScreen extends StatelessWidget {
               controller: bookingController.specialRequestsController,
               hint: 'Enter any special requests',
               prefixIcon: Icons.note_add_outlined,
-              iconColor: TColors.primary,
+              iconColor: const Color(0xFFFFAB00),
               maxLines: 3,
             ),
             const SizedBox(height: 16),
             Obx(() => Column(
-                  children: [
-                    _buildCheckboxTile(
-                      'Ground Floor',
-                      bookingController.isGroundFloor.value,
+              children: [
+                _buildCheckboxTile(
+                  'Ground Floor',
+                  bookingController.isGroundFloor.value,
                       (value) => bookingController.isGroundFloor.value = value!,
-                    ),
-                    _buildCheckboxTile(
-                      'High Floor',
-                      bookingController.isHighFloor.value,
+                ),
+                _buildCheckboxTile(
+                  'High Floor',
+                  bookingController.isHighFloor.value,
                       (value) => bookingController.isHighFloor.value = value!,
-                    ),
-                    _buildCheckboxTile(
-                      'Late Checkout',
-                      bookingController.isLateCheckout.value,
+                ),
+                _buildCheckboxTile(
+                  'Late Checkout',
+                  bookingController.isLateCheckout.value,
                       (value) =>
-                          bookingController.isLateCheckout.value = value!,
-                    ),
-                    _buildCheckboxTile(
-                      'Early Checkin',
-                      bookingController.isEarlyCheckin.value,
+                  bookingController.isLateCheckout.value = value!,
+                ),
+                _buildCheckboxTile(
+                  'Early Checkin',
+                  bookingController.isEarlyCheckin.value,
                       (value) =>
-                          bookingController.isEarlyCheckin.value = value!,
-                    ),
-                    _buildCheckboxTile(
-                      'Twin Bed',
-                      bookingController.isTwinBed.value,
+                  bookingController.isEarlyCheckin.value = value!,
+                ),
+                _buildCheckboxTile(
+                  'Twin Bed',
+                  bookingController.isTwinBed.value,
                       (value) => bookingController.isTwinBed.value = value!,
-                    ),
-                    _buildCheckboxTile(
-                      'Smoking Room',
-                      bookingController.isSmoking.value,
+                ),
+                _buildCheckboxTile(
+                  'Smoking Room',
+                  bookingController.isSmoking.value,
                       (value) => bookingController.isSmoking.value = value!,
-                    ),
-                  ],
-                )),
+                ),
+              ],
+            )),
           ],
         ),
       ),
@@ -378,18 +377,18 @@ class BookingHotelScreen extends StatelessWidget {
 
   Widget _buildTermsAndConditions() {
     return Obx(() => CheckboxListTile(
-          title: const Text(
-            'I accept the terms and conditions',
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.black87,
-            ),
-          ),
-          value: bookingController.acceptedTerms.value,
-          onChanged: (value) => bookingController.acceptedTerms.value = value!,
-          activeColor: TColors.primary,
-          controlAffinity: ListTileControlAffinity.leading,
-        ));
+      title: const Text(
+        'I accept the terms and conditions',
+        style: TextStyle(
+          fontSize: 14,
+          color: Colors.black87,
+        ),
+      ),
+      value: bookingController.acceptedTerms.value,
+      onChanged: (value) => bookingController.acceptedTerms.value = value!,
+      activeColor: const Color(0xFFFFAB00),
+      controlAffinity: ListTileControlAffinity.leading,
+    ));
   }
 
   Widget _buildTextField({
@@ -445,7 +444,7 @@ class BookingHotelScreen extends StatelessWidget {
           ),
         ),
         hint:
-            Text(hint, style: TextStyle(color: Colors.grey[600], fontSize: 14)),
+        Text(hint, style: TextStyle(color: Colors.grey[600], fontSize: 14)),
         items: items.map((String value) {
           return DropdownMenuItem<String>(
             value: value,
@@ -462,10 +461,10 @@ class BookingHotelScreen extends StatelessWidget {
   }
 
   Widget _buildCheckboxTile(
-    String title,
-    bool value,
-    Function(bool?) onChanged,
-  ) {
+      String title,
+      bool value,
+      Function(bool?) onChanged,
+      ) {
     return CheckboxListTile(
       title: Text(
         title,
@@ -473,13 +472,14 @@ class BookingHotelScreen extends StatelessWidget {
       ),
       value: value,
       onChanged: onChanged,
-      activeColor: TColors.primary,
+      activeColor: const Color(0xFFFFAB00),
       controlAffinity: ListTileControlAffinity.leading,
       contentPadding: EdgeInsets.zero,
     );
   }
 
   Widget _buildSubmitButton() {
+
     return SizedBox(
       width: double.infinity,
       height: 54,
@@ -488,7 +488,7 @@ class BookingHotelScreen extends StatelessWidget {
           _handleSubmit();
         },
         style: ElevatedButton.styleFrom(
-          backgroundColor: TColors.primary,
+          backgroundColor: const Color(0xFFFFAB00),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
@@ -522,12 +522,12 @@ class BookingHotelScreen extends StatelessWidget {
       final bool success = await bookingController.saveHotelBookingToDB();
 
       if (success) {
-        Get.to(() => HotelVoucherScreen());
+        Get.to(() => const ThankYouScreen());
         CustomSnackBar(
           message: "Booking Confirmed Successfully!",
           backgroundColor: Colors.green,
         ).show();
-        // bookingController.resetForm();
+        bookingController.resetForm();
       } else {
         CustomSnackBar(
           message: "Booking failed. Please try again.",
@@ -543,7 +543,6 @@ class BookingHotelScreen extends StatelessWidget {
       bookingController.isLoading.value = false;
     }
   }
-
   Widget _buildBadge(String text) {
     final isRefundable = text.toLowerCase() == 'refundable';
     return Container(
