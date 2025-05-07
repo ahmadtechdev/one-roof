@@ -11,7 +11,6 @@ import 'controller/select_room_controller.dart';
 import 'widgets/room_card.dart';
 
 class SelectRoomScreen extends StatefulWidget {
-
   const SelectRoomScreen({super.key});
 
   @override
@@ -36,9 +35,10 @@ class _SelectRoomScreenState extends State<SelectRoomScreen>
 
     try {
       // Extract rate keys from selected rooms
-      List<String> rateKeys = selectedRooms.values
-          .map((room) => room['rateKey'].toString())
-          .toList();
+      List<String> rateKeys =
+          selectedRooms.values
+              .map((room) => room['rateKey'].toString())
+              .toList();
 
       // Get the group code from the first selected room
       int groupCode = selectedRooms.values.first['groupCode'] as int;
@@ -48,7 +48,7 @@ class _SelectRoomScreenState extends State<SelectRoomScreen>
         sessionId: controller.sessionId.value,
         hotelCode: controller.hotelCode.value,
         groupCode: groupCode,
-        currency: "USD",
+        currency: "AED",
         rateKeys: rateKeys,
       );
 
@@ -62,24 +62,29 @@ class _SelectRoomScreenState extends State<SelectRoomScreen>
 
         if (isSoldOut) {
           _showErrorDialog(
-              'Sorry, one or more selected rooms are no longer available.');
+            'Sorry, one or more selected rooms are no longer available.',
+          );
         } else if (isPriceChanged) {
           _showErrorDialog(
-              'The price for one or more rooms has changed. Please review the updated prices.');
+            'The price for one or more rooms has changed. Please review the updated prices.',
+          );
         } else if (!isBookable) {
           _showErrorDialog(
-              'One or more rooms are not currently bookable. Please try different rooms.');
+            'One or more rooms are not currently bookable. Please try different rooms.',
+          );
         } else {
           // All validations passed, proceed to booking
           Get.to(() => BookingHotelScreen());
         }
       } else {
         _showErrorDialog(
-            'Failed to validate room availability. Please try again.');
+          'Failed to validate room availability. Please try again.',
+        );
       }
     } catch (e) {
       _showErrorDialog(
-          'An error occurred while processing your booking. Please try again.');
+        'An error occurred while processing your booking. Please try again.',
+      );
       print('Booking error: $e');
     } finally {
       setState(() {
@@ -87,6 +92,7 @@ class _SelectRoomScreenState extends State<SelectRoomScreen>
       });
     }
   }
+
   void _showErrorDialog(String message) {
     showDialog(
       context: context,
@@ -151,33 +157,34 @@ class _SelectRoomScreenState extends State<SelectRoomScreen>
           onPressed: () => Get.back(),
         ),
         elevation: 0,
-        bottom: guestsController.roomCount.value > 1
-            ? TabBar(
-          controller: _tabController,
-          tabs: List.generate(
-            guestsController.roomCount.value,
-                (index) => Tab(
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      'Room ${index + 1}',
-                      style: const TextStyle(fontSize: 14),
+        bottom:
+            guestsController.roomCount.value > 1
+                ? TabBar(
+                  controller: _tabController,
+                  tabs: List.generate(
+                    guestsController.roomCount.value,
+                    (index) => Tab(
+                      child: SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              'Room ${index + 1}',
+                              style: const TextStyle(fontSize: 14),
+                            ),
+                            if (selectedRooms.containsKey(index))
+                              const Icon(Icons.check_circle, size: 10),
+                          ],
+                        ),
+                      ),
                     ),
-                    if (selectedRooms.containsKey(index))
-                      const Icon(Icons.check_circle, size: 10),
-                  ],
-                ),
-              ),
-            ),
-          ),
-          labelColor: TColors.primary,
-          unselectedLabelColor: TColors.grey,
-          indicatorColor: TColors.primary,
-        )
-            : null,
+                  ),
+                  labelColor: TColors.primary,
+                  unselectedLabelColor: TColors.grey,
+                  indicatorColor: TColors.primary,
+                )
+                : null,
       ),
       body: Obx(() {
         if (controller.roomsdata.isEmpty) {
@@ -204,21 +211,22 @@ class _SelectRoomScreenState extends State<SelectRoomScreen>
                   controller: _tabController,
                   children: List.generate(
                     guestsController.roomCount.value,
-                        (roomIndex) => SingleChildScrollView(
+                    (roomIndex) => SingleChildScrollView(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           _buildHotelInfo(),
-                          ...groupedRooms.entries
-                              .map((entry) => RoomTypeSection(
-                            roomTypeName: entry.key,
-                            rooms: entry.value,
-                            nights: dateController.nights.value,
-                            onRoomSelected: (room) =>
-                                selectRoom(roomIndex, room),
-                            isSelected: (room) =>
-                            selectedRooms[roomIndex] == room,
-                          )),
+                          ...groupedRooms.entries.map(
+                            (entry) => RoomTypeSection(
+                              roomTypeName: entry.key,
+                              rooms: entry.value,
+                              nights: dateController.nights.value,
+                              onRoomSelected:
+                                  (room) => selectRoom(roomIndex, room),
+                              isSelected:
+                                  (room) => selectedRooms[roomIndex] == room,
+                            ),
+                          ),
                         ],
                       ),
                     ),
@@ -234,70 +242,72 @@ class _SelectRoomScreenState extends State<SelectRoomScreen>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _buildHotelInfo(),
-                ...groupedRooms.entries.map((entry) => RoomTypeSection(
-                  roomTypeName: entry.key,
-                  rooms: entry.value,
-                  nights: dateController.nights.value,
-                  onRoomSelected: (room) => selectRoom(0, room),
-                  isSelected: (room) => selectedRooms[0] == room,
-                )),
+                ...groupedRooms.entries.map(
+                  (entry) => RoomTypeSection(
+                    roomTypeName: entry.key,
+                    rooms: entry.value,
+                    nights: dateController.nights.value,
+                    onRoomSelected: (room) => selectRoom(0, room),
+                    isSelected: (room) => selectedRooms[0] == room,
+                  ),
+                ),
               ],
             ),
           );
         }
       }),
       bottomNavigationBar:
-      guestsController.roomCount.value >= 1 && allRoomsSelected
-          ? Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.grey.withOpacity(0.2),
-              spreadRadius: 1,
-              blurRadius: 5,
-              offset: const Offset(0, -3),
-            ),
-          ],
-        ),
-        child: Stack(
-          alignment: Alignment.center,
-          children: [
-            SizedBox(
-              width: Get.width,
-              child: ElevatedButton(
-                onPressed: isLoading ? null : handleBookNow,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: TColors.primary,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
+          guestsController.roomCount.value >= 1 && allRoomsSelected
+              ? Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.grey.withOpacity(0.2),
+                      spreadRadius: 1,
+                      blurRadius: 5,
+                      offset: const Offset(0, -3),
+                    ),
+                  ],
                 ),
-                child: Text(
-                  isLoading ? 'Checking Availability...' : 'Book Now',
-                  style: const TextStyle(
-                    color: TColors.secondary,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                  ),
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    SizedBox(
+                      width: Get.width,
+                      child: ElevatedButton(
+                        onPressed: isLoading ? null : handleBookNow,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: TColors.primary,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                        child: Text(
+                          isLoading ? 'Checking Availability...' : 'Book Now',
+                          style: const TextStyle(
+                            color: TColors.secondary,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                        ),
+                      ),
+                    ),
+                    if (isLoading)
+                      const Positioned.fill(
+                        child: Center(
+                          child: CircularProgressIndicator(
+                            color: TColors.secondary,
+                            strokeWidth: 2,
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
-              ),
-            ),
-            if (isLoading)
-              const Positioned.fill(
-                child: Center(
-                  child: CircularProgressIndicator(
-                    color: TColors.secondary,
-                    strokeWidth: 2,
-                  ),
-                ),
-              ),
-          ],
-        ),
-      )
-          : null,
+              )
+              : null,
     );
   }
 
@@ -310,10 +320,7 @@ class _SelectRoomScreenState extends State<SelectRoomScreen>
         children: [
           Text(
             controller.hotelName.value,
-            style: const TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-            ),
+            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 8),
           const Row(
@@ -322,10 +329,7 @@ class _SelectRoomScreenState extends State<SelectRoomScreen>
               SizedBox(width: 4),
               Text(
                 '4 Star Hotel',
-                style: TextStyle(
-                  color: TColors.grey,
-                  fontSize: 14,
-                ),
+                style: TextStyle(color: TColors.grey, fontSize: 14),
               ),
             ],
           ),
@@ -400,12 +404,14 @@ class _RoomTypeSectionState extends State<RoomTypeSection> {
           ),
         ),
         if (isExpanded)
-          ...widget.rooms.map((room) => RoomCard(
-            room: room,
-            nights: widget.nights,
-            onSelect: widget.onRoomSelected,
-            isSelected: widget.isSelected(room),
-          )),
+          ...widget.rooms.map(
+            (room) => RoomCard(
+              room: room,
+              nights: widget.nights,
+              onSelect: widget.onRoomSelected,
+              isSelected: widget.isSelected(room),
+            ),
+          ),
       ],
     );
   }

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
+import 'package:oneroof/views/hotel/search_hotels/select_room/controller/select_room_controller.dart';
 import 'package:oneroof/widgets/colors.dart';
 
 import '../../../hotel/guests/guests_controller.dart';
@@ -61,6 +62,7 @@ class _ImportantBookingDetailsCardState
     final searchHomeController = Get.find<SearchHotelController>();
     final hotelDateController = Get.find<HotelDateController>();
     final guestsController = Get.find<GuestsController>();
+    final slectroomcontroller = Get.find<SelectRoomController>();
 
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
@@ -122,7 +124,11 @@ class _ImportantBookingDetailsCardState
             ),
             const SizedBox(height: 16),
             _buildInfoRow(
-                Icons.hotel, 'Hotel', searchHomeController.hotelName.value, ''),
+              Icons.hotel,
+              'Hotel',
+              searchHomeController.hotelName.value,
+              '',
+            ),
             const Divider(height: 24),
             _buildInfoRow(
               Icons.calendar_today,
@@ -145,7 +151,7 @@ class _ImportantBookingDetailsCardState
               '${guestsController.roomCount.toString()} Room',
             ),
             const Divider(height: 24),
-            _buildPriceSection('14'),
+            _buildPriceSection(slectroomcontroller.totalPrice.value.toString()),
           ],
         ),
       ),
@@ -167,11 +173,7 @@ class _ImportantBookingDetailsCardState
             color: const Color(0xFFFFAB00).withOpacity(0.1),
             borderRadius: BorderRadius.circular(8),
           ),
-          child: Icon(
-            icon,
-            color: const Color(0xFFFFAB00),
-            size: 20,
-          ),
+          child: Icon(icon, color: const Color(0xFFFFAB00), size: 20),
         ),
         const SizedBox(width: 12),
         Expanded(
@@ -180,10 +182,7 @@ class _ImportantBookingDetailsCardState
             children: [
               Text(
                 title,
-                style: TextStyle(
-                  color: Colors.grey[600],
-                  fontSize: 14,
-                ),
+                style: TextStyle(color: Colors.grey[600], fontSize: 14),
               ),
               const SizedBox(height: 4),
               Text(
@@ -195,10 +194,7 @@ class _ImportantBookingDetailsCardState
               ),
               Text(
                 secondaryInfo,
-                style: TextStyle(
-                  color: Colors.grey[600],
-                  fontSize: 14,
-                ),
+                style: TextStyle(color: Colors.grey[600], fontSize: 14),
               ),
             ],
           ),
@@ -219,14 +215,11 @@ class _ImportantBookingDetailsCardState
           const Text("Your time to proceed booking will expire in 15 minutes."),
           const SizedBox(height: 8),
           Align(
-              alignment: Alignment.centerRight,
-              child: _buildBadge("Refundable")),
-          const Divider(height: 16),
-          _buildPriceRow(
-            'Price',
-            '\$ $price',
-            isTotal: true,
+            alignment: Alignment.centerRight,
+            child: _buildBadge("Refundable"),
           ),
+          const Divider(height: 16),
+          _buildPriceRow('Price', '\$ $price', isTotal: true),
         ],
       ),
     );

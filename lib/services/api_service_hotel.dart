@@ -8,9 +8,8 @@ import '../views/hotel/search_hotels/search_hotel_controller.dart';
 
 class ApiServiceHotel extends GetxService {
   late final Dio dio;
-  static const String _apiKey = 'VSXYTrVlCtVXRAOXGS2==';
+  static const String _apiKey = 'VyBZUyOkbCSNvvDEMOV2==';
   static const String _baseUrl = 'http://uat-apiv2.giinfotech.ae/api/v2';
-
   ApiServiceHotel() {
     dio = Dio(BaseOptions(baseUrl: _baseUrl));
     if (!Get.isRegistered<SearchHotelController>()) {
@@ -77,12 +76,13 @@ class ApiServiceHotel extends GetxService {
     print('Fetching Hotels with Request: ${json.encode(requestBody)}');
     try {
       final response = await dio.post(
-        '/Hotel/Search',
+        '/hotel/Search',
         data: requestBody,
         options: _defaultHeaders(),
       );
 
       if (response.statusCode == 200) {
+        print("hotel reponse :${response.data}");
         final data = response.data;
         final hotels = data['hotels']?['hotel'] ?? [];
         final sessionId = data['generalInfo']?['sessionId'];
@@ -140,7 +140,7 @@ class ApiServiceHotel extends GetxService {
       "SessionId": sessionId,
       "SearchParameter": {
         "HotelCode": hotelCode,
-        "Currency": "USD",
+        "Currency": "AED",
         "Rooms": {"Room": rooms},
       },
     };
@@ -197,7 +197,7 @@ class ApiServiceHotel extends GetxService {
     print('Prebooking with Request: ${json.encode(requestBody)}');
     try {
       final response = await dio.post(
-        '/hotel/Reprice',
+        '/hotel/PreBook',
         data: requestBody,
         options: _defaultHeaders(),
       );
