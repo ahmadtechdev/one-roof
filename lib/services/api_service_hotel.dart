@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
+import 'package:oneroof/views/hotel/search_hotels/booking_hotel/booking_controller.dart';
 
 import '../views/hotel/hotel/guests/guests_controller.dart';
 import '../views/hotel/search_hotels/search_hotel_controller.dart';
@@ -38,7 +39,68 @@ class ApiServiceHotel extends GetxService {
     }
   }
 
-  /// Fetches hotels based on search parameters.
+  Future<List<dynamic>> fetchCities(String cityKeyword) async {
+    var headers = {'Cookie': 'PHPSESSID=n2sduu2sfi2p57nhr9h8fc74p0'};
+
+    var dio = Dio();
+    try {
+      var response = await dio.request(
+        'https://readyflights.pk/api/getDestination.php?keyword=$cityKeyword',
+        options: Options(method: 'GET', headers: headers),
+      );
+
+      if (response.statusCode == 200) {
+        // Print raw response data type for debugging
+        print('Response data type: ${response.data.runtimeType}');
+        print('Raw response: ${response.data}');
+
+        // Handle string response that needs to be parsed as JSON
+        if (response.data is String) {
+          try {
+            var decodedData = json.decode(response.data);
+            if (decodedData is Map &&
+                decodedData['status'] == 200 &&
+                decodedData['data'] != null) {
+              return decodedData['data'] as List;
+            } else if (decodedData is List) {
+              return decodedData;
+            } else {
+              print('Unexpected JSON structure: $decodedData');
+              return [];
+            }
+          } catch (e) {
+            print('JSON parsing error: $e');
+            return [];
+          }
+        }
+        // Handle Map response structure
+        else if (response.data is Map) {
+          if (response.data['status'] == 200 && response.data['data'] != null) {
+            return response.data['data'] as List;
+          } else {
+            print('Unexpected Map structure: ${response.data}');
+            return [];
+          }
+        }
+        // Handle direct List response
+        else if (response.data is List) {
+          return response.data as List;
+        }
+        // Fallback for unexpected response types
+        else {
+          print('Unexpected response type: ${response.data.runtimeType}');
+          return [];
+        }
+      } else {
+        print('Error: ${response.statusMessage}');
+        return [];
+      }
+    } catch (e) {
+      print('Exception occurred in fetchCities: $e');
+      return [];
+    }
+  } // Fetches hotels based on search parameters.
+
   Future<void> fetchHotels({
     required String destinationCode,
     required String countryCode,
@@ -291,6 +353,8 @@ class ApiServiceHotel extends GetxService {
   }
 
   Future<bool> bookHotel(Map<String, dynamic> requestBody) async {
+    final BookingController bookingcontroller = Get.put(BookingController());
+
     const String bookingEndpoint =
         'https://sastayhotels.pk/mobile_thankyou.php';
 
@@ -317,11 +381,20 @@ class ApiServiceHotel extends GetxService {
       print('Response Data: ${response.data}');
 
       if (response.statusCode == 200) {
-        // Check if the response indicates success
-        // You might need to adjust this based on the actual response structure
         if (response.data != null) {
+          // Extract and store booking number
+          if (response.data is Map && response.data['BookingNO'] != null) {
+            String bookingStr = response.data['BookingNO'].toString();
+            bookingStr = bookingStr.replaceAll('SHBK-', '');
+            bookingcontroller.booking_num.value = int.tryParse(bookingStr) ?? 0;
+            print(
+              'Booking number stored: ${bookingcontroller.booking_num.value}',
+            );
+          }
+
           if (response.data is Map) {
             if (response.data['status'] == 'success' ||
+                response.data['Success'] == 1 ||
                 response.data['success'] == true ||
                 response.data['code'] == 200) {
               return true;

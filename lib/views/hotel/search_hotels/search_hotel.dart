@@ -568,6 +568,8 @@ class HotelCard extends StatelessWidget {
               onPressed: () {
                 controller.hotelCode.value = hotel['hotelCode'];
                 controller.hotelCity.value = hotel['hotelCity'];
+                controller.lat.value = hotel['latitude'];
+                controller.lon.value = hotel['longitude'];
 
                 controller.roomsdata.clear();
 

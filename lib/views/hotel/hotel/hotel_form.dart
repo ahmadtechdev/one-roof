@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:oneroof/widgets/date_range_slector.dart';
+import 'package:oneroof/widgets/hotel_custom_textfield.dart';
 import '../../../../services/api_service_hotel.dart';
-import '../../../../widgets/custom_textfield.dart';
 import '../../../../widgets/loading_dailog.dart';
 import '../search_hotels/search_hotel.dart';
 import '../search_hotels/search_hotel_controller.dart';
@@ -109,6 +109,9 @@ class HotelForm extends StatelessWidget {
     Get.find<SearchHotelController>();
   }
 
+  // Add a variable to store the selected city data
+  final Rx<CityData?> selectedCity = Rx<CityData?>(null);
+
   @override
   Widget build(BuildContext context) {
     final cityController = TextEditingController();
@@ -142,12 +145,17 @@ class HotelForm extends StatelessWidget {
 
           // City Input Field
           _buildFormField(
-                child: CustomTextField(
-                  hintText: 'Enter City Name',
-                  icon: Icons.location_on,
-                  controller: cityController,
-                ),
-              )
+            child: CustomTextField(
+              hintText: 'Enter City Name',
+              icon: Icons.location_on,
+              controller: cityController,
+              onCitySelected: (cityData) {
+                // Store the selected city data
+                selectedCity.value = cityData;
+                print('Selected city: ${cityData.value}, ${cityData.countryCode}');
+              },
+            ),
+          )
               .animate()
               .fadeIn(delay: const Duration(milliseconds: 300))
               .slideX(begin: 0.1, end: 0),
@@ -156,9 +164,9 @@ class HotelForm extends StatelessWidget {
 
           // Field Title
           _buildSectionTitle(
-                'When are you planning to travel?',
-                Icons.calendar_today,
-              )
+            'When are you planning to travel?',
+            Icons.calendar_today,
+          )
               .animate()
               .fadeIn(delay: const Duration(milliseconds: 400))
               .slideX(begin: -0.1, end: 0),
@@ -167,15 +175,15 @@ class HotelForm extends StatelessWidget {
 
           // Date Range Selector
           _buildFormField(
-                child: Obx(
-                  () => CustomDateRangeSelector(
-                    dateRange: hotelDateController.dateRange.value,
-                    onDateRangeChanged: hotelDateController.updateDateRange,
-                    nights: hotelDateController.nights.value,
-                    onNightsChanged: hotelDateController.updateNights,
-                  ),
-                ),
-              )
+            child: Obx(
+              () => CustomDateRangeSelector(
+                dateRange: hotelDateController.dateRange.value,
+                onDateRangeChanged: hotelDateController.updateDateRange,
+                nights: hotelDateController.nights.value,
+                onNightsChanged: hotelDateController.updateNights,
+              ),
+            ),
+          )
               .animate()
               .fadeIn(delay: const Duration(milliseconds: 500))
               .slideX(begin: 0.1, end: 0),
@@ -200,12 +208,12 @@ class HotelForm extends StatelessWidget {
 
           // Search Button
           Center(
-                child: SizedBox(
-                  width: double.infinity,
-                  height: 55,
-                  child: _buildSearchButton(),
-                ),
-              )
+            child: SizedBox(
+              width: double.infinity,
+              height: 55,
+              child: _buildSearchButton(context),
+            ),
+          )
               .animate()
               .fadeIn(delay: const Duration(milliseconds: 800))
               .scale(begin: const Offset(0.95, 0.95), end: const Offset(1, 1)),
@@ -322,7 +330,7 @@ class HotelForm extends StatelessWidget {
     );
   }
 
-  Widget _buildSearchButton() {
+  Widget _buildSearchButton(BuildContext context) {
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
       decoration: BoxDecoration(
@@ -342,17 +350,32 @@ class HotelForm extends StatelessWidget {
       ),
       child: ElevatedButton(
         onPressed: () async {
+          // Validate if a city is selected
+          if (selectedCity.value == null) {
+            Get.snackbar(
+              'Missing Information',
+              'Please select a city first',
+              snackPosition: SnackPosition.BOTTOM,
+              backgroundColor: Colors.red.withOpacity(0.8),
+              colorText: Colors.white,
+            );
+            return;
+          }
+
           // Show loading dialog
           Get.dialog(const LoadingDialog(), barrierDismissible: false);
 
           final hotelDateController = Get.find<HotelDateController>();
           final guestsController = Get.find<GuestsController>();
 
-          // Prepare API parameters
-          String destinationCode = "160-0";
-          String countryCode = "AE";
-          String nationality = "AE";
-          String currency = "AED";
+          // Get values from selected city
+          String destinationCode = selectedCity.value!.value;
+          String countryCode = selectedCity.value!.countryCode;
+          
+          // Default values
+          String nationality = "AE"; // You might want to make this dynamic too
+          String currency = "AED";    // You might want to make this dynamic too
+          
           String checkInDate =
               hotelDateController.checkInDate.value.toIso8601String();
           String checkOutDate =
@@ -418,8 +441,9 @@ class HotelForm extends StatelessWidget {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'Please try again later.',
+                        'Error: ${e.toString()}',
                         style: TextStyle(color: Colors.grey[600]),
+                        textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 20),
                       ElevatedButton(
@@ -442,12 +466,19 @@ class HotelForm extends StatelessWidget {
           }
         },
         style: ElevatedButton.styleFrom(
-          backgroundColor: TColors.primary,
-          minimumSize: const Size.fromHeight(48),
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(27),
+          ),
         ),
         child: const Text(
           'Search Hotels',
-          style: TextStyle(color: Colors.white),
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+          ),
         ),
       ),
     );
