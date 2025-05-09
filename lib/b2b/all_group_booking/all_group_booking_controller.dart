@@ -11,6 +11,11 @@ class AllGroupBookingController extends GetxController {
   final selectedGroupCategory = 'All'.obs;
   final selectedStatus = 'All'.obs;
 
+  // Define dynamic group categories and status options
+  final groupCategories =
+      <String>['All', 'UAE', 'KSA', 'Oman', 'UK', 'UMRAH', 'Others'].obs;
+  final statusOptions = <String>['All', 'CONFIRMED', 'CANCELLED', 'HOLD'].obs;
+
   final isLoading = false.obs;
   final bookings = <BookingModel>[].obs;
   final hasError = false.obs;
@@ -76,6 +81,9 @@ class AllGroupBookingController extends GetxController {
 
     if (apiData['data'] != null && apiData['data'] is List) {
       final List bookingsList = apiData['data'] as List;
+      // Set to track unique categories and statuses from API
+      final Set<String> uniqueCategories = {'All'};
+      final Set<String> uniqueStatuses = {'All'};
 
       for (var bookingData in bookingsList) {
         try {
@@ -112,30 +120,35 @@ class AllGroupBookingController extends GetxController {
           final passengerStatus = PassengerStatus(
             holdAdults: int.tryParse(hold['adults'] ?? '0') ?? 0,
             holdChild: int.tryParse(hold['childs'] ?? '0') ?? 0,
+            
             holdInfant: int.tryParse(hold['infants'] ?? '0') ?? 0,
             holdTotal:
-                int.tryParse(hold['adults'] ?? '0') ??
-                0 + (int.tryParse(hold['childs'] ?? '0') ?? 0),
+                (int.tryParse(hold['adults'] ?? '0') ?? 0) +
+                (int.tryParse(hold['childs'] ?? '0') ?? 0) +
+                (int.tryParse(hold['infants'] ?? '0') ?? 0),
+                
 
             confirmAdults: int.tryParse(confirmed['adults'] ?? '0') ?? 0,
             confirmChild: int.tryParse(confirmed['childs'] ?? '0') ?? 0,
             confirmInfant: int.tryParse(confirmed['infants'] ?? '0') ?? 0,
             confirmTotal:
-                int.tryParse(confirmed['adults'] ?? '0') ??
-                0 + (int.tryParse(confirmed['childs'] ?? '0') ?? 0),
+                (int.tryParse(confirmed['adults'] ?? '0') ?? 0) +
+                (int.tryParse(confirmed['childs'] ?? '0') ?? 0) +
+                (int.tryParse(confirmed['infants'] ?? '0') ?? 0),
 
             cancelledAdults: int.tryParse(cancelled['adults'] ?? '0') ?? 0,
             cancelledChild: int.tryParse(cancelled['childs'] ?? '0') ?? 0,
             cancelledInfant: int.tryParse(cancelled['infants'] ?? '0') ?? 0,
             cancelledTotal:
-                (int.tryParse(cancelled['adults'] ?? '0') ??
-                        0 + (int.tryParse(cancelled['childs'] ?? '0') ?? 0))
-                    .toInt(),
+                (int.tryParse(cancelled['adults'] ?? '0') ?? 0) +
+                (int.tryParse(cancelled['childs'] ?? '0') ?? 0) +
+                (int.tryParse(cancelled['infants'] ?? '0') ?? 0),
           );
 
           // Determine country from group_name
-          String country = 'Other';
+          String country = 'Unknown';
           final groupName = (bookingData['group_name'] ?? '').toUpperCase();
+
           if (groupName.contains('DXB') ||
               groupName.contains('SHJ') ||
               groupName.contains('DUBAI')) {
@@ -143,9 +156,23 @@ class AllGroupBookingController extends GetxController {
           } else if (groupName.contains('JED') ||
               groupName.contains('JEDDAH') ||
               groupName.contains('DMM') ||
-              groupName.contains('DAMMAM')) {
+              groupName.contains('DAMMAM') ||
+              groupName.contains('RIYADH')) {
             country = 'KSA';
+          } else if (groupName.contains('OMAN')) {
+            country = 'Oman';
+          } else if (groupName.contains('UK')) {
+            country = 'UK';
+          } else if (groupName.contains('UMRAH')) {
+            country = 'UMRAH';
           }
+
+          // Add category to unique categories set
+          uniqueCategories.add(country);
+
+          // Add status to unique statuses set
+          final status = bookingData['status'] ?? 'UNKNOWN';
+          uniqueStatuses.add(status.toUpperCase());
 
           // Create booking model
           final booking = BookingModel(
@@ -159,8 +186,12 @@ class AllGroupBookingController extends GetxController {
             country: country,
             flightDate: departureDate,
             passengerStatus: passengerStatus,
-            price: (bookingData['total_price'] ?? 0).toDouble(),
-            status: bookingData['status'] ?? 'UNKNOWN',
+            price:
+                double.tryParse(
+                  bookingData['total_price']?.toString() ?? '0',
+                ) ??
+                0,
+            status: status,
           );
 
           bookings.add(booking);
@@ -168,12 +199,64 @@ class AllGroupBookingController extends GetxController {
           print('Error parsing booking: $e');
         }
       }
+
+      // Update group categories based on API data
+      final baseCategories = ['All', 'UAE', 'KSA', 'Oman', 'UK', 'UMRAH'];
+      final apiCategories = uniqueCategories.toList();
+
+      // Make sure we always have our base categories first, then Others if needed
+      final newCategories = baseCategories.toList();
+      if (apiCategories.any((cat) => !baseCategories.contains(cat))) {
+        newCategories.add('Others');
+      }
+
+      // Only update group categories if there's a change to avoid UI flicker
+      if (!listEquals(groupCategories, newCategories)) {
+        groupCategories.value = newCategories;
+      }
+
+      // Update status options based on API data
+      final baseStatuses = ['All', 'CONFIRMED', 'CANCELLED', 'HOLD'];
+      final apiStatuses =
+          uniqueStatuses
+              .toList()
+              .map((status) => status.toUpperCase())
+              .toList();
+
+      final newStatuses = [...baseStatuses];
+      for (var status in apiStatuses) {
+        if (!baseStatuses.contains(status) && status != 'ALL') {
+          newStatuses.add(status);
+        }
+      }
+
+      // Only update status options if there's a change
+      if (!listEquals(statusOptions, newStatuses)) {
+        statusOptions.value = newStatuses;
+      }
     }
 
     // Apply filters
     filterBookings();
   }
 
+  bool listEquals(List<String> list1, List<String> list2) {
+    if (list1.length != list2.length) return false;
+    for (int i = 0; i < list1.length; i++) {
+      if (list1[i] != list2[i]) return false;
+    }
+    return true;
+  }
+
+  // void filterBookings() {
+  //   if (selectedGroupCategory.value == 'All' && selectedStatus.value == 'All') {
+  //     return; // No filtering needed
+  //   }
+
+  //   final filteredBookings = <BookingModel>[];
+
+  //   for (var booking in List<BookingModel>.from(bookings)) {
+  //     bool matchesCountry = selectedGroupCategory.value == 'All' ||
   void filterBookings() {
     if (selectedGroupCategory.value == 'All' && selectedStatus.value == 'All') {
       return; // No filtering needed
@@ -181,22 +264,21 @@ class AllGroupBookingController extends GetxController {
 
     final filteredBookings = <BookingModel>[];
 
-    for (var booking in bookings) {
+    for (var booking in List<BookingModel>.from(bookings)) {
       bool matchesCountry =
           selectedGroupCategory.value == 'All' ||
           booking.country == selectedGroupCategory.value;
 
       bool matchesStatus =
           selectedStatus.value == 'All' ||
-          booking.status.toUpperCase() == selectedStatus.value;
+          booking.status.toUpperCase() == selectedStatus.value.toUpperCase();
 
       if (matchesCountry && matchesStatus) {
         filteredBookings.add(booking);
       }
     }
 
-    if (selectedGroupCategory.value != 'All' || selectedStatus.value != 'All') {
-      bookings.value = filteredBookings;
-    }
+    // Update the bookings list with filtered results
+    bookings.value = filteredBookings;
   }
 }

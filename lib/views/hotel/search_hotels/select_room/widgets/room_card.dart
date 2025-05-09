@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
+import 'package:oneroof/utility/colors.dart';
 
 import '../../../../../services/api_service_hotel.dart';
-import '../../../../../widgets/colors.dart';
 import '../../search_hotel_controller.dart';
 
 class RoomCard extends StatelessWidget {

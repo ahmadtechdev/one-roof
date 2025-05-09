@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:oneroof/utility/colors.dart';
+import 'package:oneroof/views/users/login/login.dart';
 import '../../../b2b/agent_dashboard/agent_dashboard.dart';
 import '../login/login_api_service/login_api.dart';
 
@@ -246,7 +247,7 @@ class RegisterController extends GetxController {
         );
 
         // Navigate to the agent dashboard screen
-        Get.to(() => AgentDashboard());
+        Get.to(() => Login());
       } else {
         // Store API error message
         apiErrorMessage.value = response['message'] ?? 'Registration failed';

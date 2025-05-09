@@ -23,6 +23,7 @@ class AllFlightBookingScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: TColors.background,
       appBar: AppBar(
+        foregroundColor: Colors.white,
         backgroundColor: TColors.background4,
         title: const Text(
           'All Flights Booking',

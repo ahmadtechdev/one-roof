@@ -17,6 +17,7 @@ class AllGroupBooking extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
+        foregroundColor: Colors.white,
         backgroundColor: TColors.background4,
         title: const Text(
           'Booking Reports',
@@ -29,17 +30,6 @@ class AllGroupBooking extends StatelessWidget {
           _buildFilterSection(),
           Expanded(child: _buildBookingsList()),
         ],
-      ),
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: TColors.primary,
-        child: const Icon(Icons.print),
-        onPressed: () {
-          Get.snackbar(
-            'Print',
-            'Printing all bookings...',
-            snackPosition: SnackPosition.BOTTOM,
-          );
-        },
       ),
     );
   }
@@ -104,10 +94,12 @@ class AllGroupBooking extends StatelessWidget {
                       style: TextStyle(color: Colors.white, fontSize: 12),
                     ),
                     const SizedBox(height: 4),
-                    _buildDropdown(
-                      ['All', 'UAE', 'KSA'],
-                      controller.selectedGroupCategory.value,
-                      (value) => controller.updateGroupCategory(value!),
+                    Obx(
+                      () => _buildDropdown(
+                        controller.groupCategories,
+                        controller.selectedGroupCategory.value,
+                        (value) => controller.updateGroupCategory(value!),
+                      ),
                     ),
                   ],
                 ),
@@ -122,10 +114,12 @@ class AllGroupBooking extends StatelessWidget {
                       style: TextStyle(color: Colors.white, fontSize: 12),
                     ),
                     const SizedBox(height: 4),
-                    _buildDropdown(
-                      ['All', 'CONFIRMED', 'CANCELLED'],
-                      controller.selectedStatus.value,
-                      (value) => controller.updateStatus(value!),
+                    Obx(
+                      () => _buildDropdown(
+                        controller.statusOptions,
+                        controller.selectedStatus.value,
+                        (value) => controller.updateStatus(value!),
+                      ),
                     ),
                   ],
                 ),
@@ -236,7 +230,7 @@ class AllGroupBooking extends StatelessWidget {
       if (controller.isLoading.value) {
         return const Center(child: CircularProgressIndicator());
       }
-      
+
       if (controller.hasError.value) {
         return Center(
           child: Column(
@@ -261,7 +255,7 @@ class AllGroupBooking extends StatelessWidget {
           ),
         );
       }
-      
+
       if (controller.bookings.isEmpty) {
         return Center(
           child: Column(
@@ -277,7 +271,7 @@ class AllGroupBooking extends StatelessWidget {
           ),
         );
       }
-      
+
       return ListView.builder(
         padding: const EdgeInsets.all(16),
         itemCount: controller.bookings.length,
@@ -295,8 +289,10 @@ class AllGroupBooking extends StatelessWidget {
       statusColor = Colors.green;
     } else if (booking.status.toUpperCase() == 'CANCELLED') {
       statusColor = Colors.red;
-    } else {
+    } else if (booking.status.toUpperCase() == 'HOLD') {
       statusColor = Colors.orange;
+    } else {
+      statusColor = Colors.grey;
     }
 
     return Card(
@@ -397,7 +393,7 @@ class AllGroupBooking extends StatelessWidget {
                   vertical: 6,
                 ),
                 decoration: BoxDecoration(
-                  color: booking.country == 'UAE' ? Colors.red : Colors.green,
+                  color: _getCountryColor(booking.country),
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: Text(
@@ -477,6 +473,23 @@ class AllGroupBooking extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  Color _getCountryColor(String country) {
+    switch (country) {
+      case 'UAE':
+        return Colors.red;
+      case 'KSA':
+        return Colors.green;
+      case 'Oman':
+        return Colors.blue;
+      case 'UK':
+        return Colors.indigo;
+      case 'UMRAH':
+        return Colors.purple;
+      default:
+        return Colors.grey;
+    }
   }
 
   Widget _buildCardFooter(BookingModel booking) {
@@ -583,7 +596,7 @@ class AllGroupBooking extends StatelessWidget {
             // Hold row
             TableRow(
               children: [
-                _buildTableCell('Hold', cellStyle, textColor: Colors.red),
+                _buildTableCell('Hold', cellStyle, textColor: Colors.orange),
                 _buildTableCell('${passengerStatus.holdAdults}', cellStyle),
                 _buildTableCell('${passengerStatus.holdChild}', cellStyle),
                 _buildTableCell('${passengerStatus.holdInfant}', cellStyle),

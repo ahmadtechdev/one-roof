@@ -2,8 +2,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
+import 'package:oneroof/utility/colors.dart';
 import 'package:oneroof/views/hotel/search_hotels/select_room/controller/select_room_controller.dart';
-import 'package:oneroof/widgets/colors.dart';
 
 import '../../../hotel/guests/guests_controller.dart';
 import '../../../hotel/hotel_date_controller.dart';
@@ -85,7 +85,7 @@ class _ImportantBookingDetailsCardState
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFFFFAB00),
+                    color: TColors.primary,
                   ),
                 ),
                 Container(
@@ -94,25 +94,18 @@ class _ImportantBookingDetailsCardState
                     vertical: 6,
                   ),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFFFAB00).withOpacity(0.1),
+                    color: TColors.primary.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: const Color(0xFFFFAB00),
-                      width: 1,
-                    ),
+                    border: Border.all(color: TColors.primary, width: 1),
                   ),
                   child: Row(
                     children: [
-                      const Icon(
-                        Icons.timer,
-                        size: 18,
-                        color: Color(0xFFFFAB00),
-                      ),
+                      const Icon(Icons.timer, size: 18, color: TColors.primary),
                       const SizedBox(width: 4),
                       Text(
                         formattedTime,
                         style: const TextStyle(
-                          color: Color(0xFFFFAB00),
+                          color: TColors.primary,
                           fontWeight: FontWeight.bold,
                           fontSize: 16,
                         ),
@@ -170,10 +163,10 @@ class _ImportantBookingDetailsCardState
         Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: const Color(0xFFFFAB00).withOpacity(0.1),
+            color: TColors.primary.withOpacity(0.1),
             borderRadius: BorderRadius.circular(8),
           ),
-          child: Icon(icon, color: const Color(0xFFFFAB00), size: 20),
+          child: Icon(icon, color: TColors.primary, size: 20),
         ),
         const SizedBox(width: 12),
         Expanded(
@@ -207,7 +200,7 @@ class _ImportantBookingDetailsCardState
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFAB00).withOpacity(0.1),
+        color: TColors.primary.withOpacity(0.1),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
@@ -234,7 +227,7 @@ class _ImportantBookingDetailsCardState
           style: TextStyle(
             fontSize: isTotal ? 16 : 14,
             fontWeight: isTotal ? FontWeight.bold : FontWeight.normal,
-            color: isTotal ? const Color(0xFFFFAB00) : Colors.grey[800],
+            color: isTotal ? TColors.primary : Colors.grey[800],
           ),
         ),
         Text(
@@ -242,7 +235,7 @@ class _ImportantBookingDetailsCardState
           style: TextStyle(
             fontSize: isTotal ? 16 : 14,
             fontWeight: isTotal ? FontWeight.bold : FontWeight.normal,
-            color: isTotal ? const Color(0xFFFFAB00) : Colors.grey[800],
+            color: isTotal ? TColors.primary : Colors.grey[800],
           ),
         ),
       ],

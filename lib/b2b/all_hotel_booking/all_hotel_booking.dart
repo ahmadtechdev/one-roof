@@ -12,10 +12,14 @@ import 'package:intl/intl.dart';
 import 'package:printing/printing.dart';
 
 class AllHotelBooking extends StatelessWidget {
-  final AllHotelBookingController bookingController = Get.put(AllHotelBookingController());
+  final AllHotelBookingController bookingController = Get.put(
+    AllHotelBookingController(),
+  );
   void _handlePrintAction(HotelBookingModel booking) async {
     try {
-      final bookingData = await bookingController.getBookingDataForPdf(booking.bookingNumber);
+      final bookingData = await bookingController.getBookingDataForPdf(
+        booking.bookingNumber,
+      );
 
       // Create a PDF generator instance (you'll need to create this class)
       final pdfGenerator = HotelBookingPdfGenerator();
@@ -41,13 +45,12 @@ class AllHotelBooking extends StatelessWidget {
     return Scaffold(
       backgroundColor: TColors.background,
       appBar: AppBar(
+        foregroundColor: Colors.white,
+
         backgroundColor: TColors.background4,
         title: Text(
           'International Bookings',
-          style: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-          ),
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
         actions: [
           IconButton(
@@ -65,36 +68,26 @@ class AllHotelBooking extends StatelessWidget {
       body: Column(
         children: [
           // _buildDateFilter(),
-          Expanded(
-            child: _buildBookingsList(),
-          ),
+          Expanded(child: _buildBookingsList()),
         ],
       ),
     );
   }
 
-
-
   Widget _buildBookingsList() {
     return Obx(() {
       // Show loading indicator
       if (bookingController.isLoading.value) {
-        return Center(
-          child: CircularProgressIndicator(),
-        );
+        return Center(child: CircularProgressIndicator());
       }
-      
+
       // Show error message if any
       if (bookingController.errorMessage.value.isNotEmpty) {
         return Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(
-                Icons.error_outline,
-                color: Colors.red,
-                size: 48,
-              ),
+              Icon(Icons.error_outline, color: Colors.red, size: 48),
               SizedBox(height: 16),
               Text(
                 bookingController.errorMessage.value,
@@ -114,18 +107,14 @@ class AllHotelBooking extends StatelessWidget {
           ),
         );
       }
-      
+
       // Show empty state
       if (bookingController.bookings.isEmpty) {
         return Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(
-                Icons.hotel_outlined,
-                color: TColors.grey,
-                size: 64,
-              ),
+              Icon(Icons.hotel_outlined, color: TColors.grey, size: 64),
               SizedBox(height: 16),
               Text(
                 'No bookings found for the selected date range',
@@ -136,7 +125,7 @@ class AllHotelBooking extends StatelessWidget {
           ),
         );
       }
-      
+
       // Show bookings list
       return ListView.builder(
         padding: EdgeInsets.all(16),
@@ -151,7 +140,7 @@ class AllHotelBooking extends StatelessWidget {
 
   Widget _buildBookingCard(HotelBookingModel booking) {
     Color statusColor;
-    
+
     switch (booking.status.toLowerCase()) {
       case 'confirmed':
         statusColor = Colors.green;
@@ -169,7 +158,7 @@ class AllHotelBooking extends StatelessWidget {
     // Determine booking source color based on booking number prefix
     String portalCode = booking.bookingNumber.split('-')[0];
     Color portalColor;
-    
+
     switch (portalCode) {
       case 'ONETRVL':
         portalColor = Colors.blue;
@@ -187,9 +176,7 @@ class AllHotelBooking extends StatelessWidget {
     return Card(
       elevation: 4,
       margin: EdgeInsets.only(bottom: 16),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Column(
         children: [
           // Header with Serial Number and Booking Number
@@ -252,41 +239,56 @@ class AllHotelBooking extends StatelessWidget {
                 // Date
                 _buildInfoRow(Icons.event, "Date", booking.date),
                 SizedBox(height: 12),
-                
+
                 // Booker and Guest
                 _buildInfoRow(Icons.person, "Booker", booking.bookerName),
                 SizedBox(height: 8),
                 _buildInfoRow(Icons.people, "Guest", booking.guestName),
                 SizedBox(height: 12),
-                
+
                 // Hotel and Location
                 _buildInfoRow(Icons.hotel, "Hotel", booking.hotel),
                 SizedBox(height: 8),
-                _buildInfoRow(Icons.location_on, "Destination", booking.destination),
+                _buildInfoRow(
+                  Icons.location_on,
+                  "Destination",
+                  booking.destination,
+                ),
                 SizedBox(height: 12),
-                
+
                 // Check-in/Check-out
-                _buildInfoRow(Icons.calendar_month, "Check-in/Check-out", booking.checkinCheckout),
+                _buildInfoRow(
+                  Icons.calendar_month,
+                  "Check-in/Check-out",
+                  booking.checkinCheckout,
+                ),
                 SizedBox(height: 12),
-                
+
                 Divider(),
                 SizedBox(height: 12),
-                
+
                 // Bottom Row with Price and Cancellation
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Expanded(
-                      child: _buildInfoRow(Icons.attach_money, "Price", booking.price),
+                      child: _buildInfoRow(
+                        Icons.attach_money,
+                        "Price",
+                        booking.price,
+                      ),
                     ),
                     Expanded(
                       child: _buildInfoRow(
                         Icons.event_busy,
                         "Cancellation",
                         booking.cancellationDeadline,
-                        valueColor: booking.cancellationDeadline.contains("Non-Refundable") 
-                            ? Colors.red 
-                            : null,
+                        valueColor:
+                            booking.cancellationDeadline.contains(
+                                  "Non-Refundable",
+                                )
+                                ? Colors.red
+                                : null,
                       ),
                     ),
                   ],
@@ -317,7 +319,12 @@ class AllHotelBooking extends StatelessWidget {
     );
   }
 
-  Widget _buildInfoRow(IconData icon, String label, String value, {Color? valueColor}) {
+  Widget _buildInfoRow(
+    IconData icon,
+    String label,
+    String value, {
+    Color? valueColor,
+  }) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -327,28 +334,15 @@ class AllHotelBooking extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: TColors.grey,
-                ),
-              ),
+              Text(label, style: TextStyle(fontSize: 12, color: TColors.grey)),
               SizedBox(height: 2),
-              Text(
-                value,
-                style: TextStyle(
-                  color: valueColor ?? TColors.text,
-                ),
-              ),
+              Text(value, style: TextStyle(color: valueColor ?? TColors.text)),
             ],
           ),
         ),
       ],
     );
   }
-
-
 }
 
 class HotelBookingPdfGenerator {
@@ -436,10 +430,7 @@ class HotelBookingPdfGenerator {
           pw.Divider(),
           pw.Text(
             'HOTEL VOUCHER',
-            style: pw.TextStyle(
-              fontSize: 16,
-              fontWeight: pw.FontWeight.bold,
-            ),
+            style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold),
             textAlign: pw.TextAlign.center,
           ),
         ],
@@ -459,10 +450,7 @@ class HotelBookingPdfGenerator {
         children: [
           pw.Text(
             'HOTEL INFORMATION',
-            style: pw.TextStyle(
-              fontSize: 14,
-              fontWeight: pw.FontWeight.bold,
-            ),
+            style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold),
           ),
           pw.SizedBox(height: 10),
           pw.Row(
@@ -553,10 +541,7 @@ class HotelBookingPdfGenerator {
         children: [
           pw.Text(
             'RESERVATION INFORMATION',
-            style: pw.TextStyle(
-              fontSize: 14,
-              fontWeight: pw.FontWeight.bold,
-            ),
+            style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold),
           ),
           pw.SizedBox(height: 10),
           pw.Row(
@@ -690,7 +675,7 @@ class HotelBookingPdfGenerator {
 
   pw.Widget _buildRoomDetailsTable(Map<String, dynamic> bookingData) {
     final List<dynamic> guestDetails = bookingData['guestDetails'] ?? [];
-    
+
     // Group guests by room number
     Map<String, List<Map<String, dynamic>>> guestsByRoom = {};
     for (var guest in guestDetails) {
@@ -700,7 +685,7 @@ class HotelBookingPdfGenerator {
       }
       guestsByRoom[roomNo]!.add(guest);
     }
-    
+
     return pw.Container(
       padding: pw.EdgeInsets.all(10),
       decoration: pw.BoxDecoration(
@@ -712,10 +697,7 @@ class HotelBookingPdfGenerator {
         children: [
           pw.Text(
             'ROOM DETAILS',
-            style: pw.TextStyle(
-              fontSize: 14,
-              fontWeight: pw.FontWeight.bold,
-            ),
+            style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold),
           ),
           pw.SizedBox(height: 10),
           pw.Table(
@@ -743,28 +725,28 @@ class HotelBookingPdfGenerator {
               ...guestsByRoom.entries.map((entry) {
                 String roomNo = entry.key;
                 List<Map<String, dynamic>> roomGuests = entry.value;
-                
+
                 // Count adults and children in this room
                 int adultCount = 0;
                 int childCount = 0;
-                
+
                 List<String> guestNames = [];
-                
+
                 for (var guest in roomGuests) {
                   String guestFor = guest['od_gfor']?.toString() ?? '';
                   String guestTitle = guest['od_gtitle']?.toString() ?? '';
                   String firstName = guest['od_gfname']?.toString() ?? '';
                   String lastName = guest['od_glname']?.toString() ?? '';
-                  
+
                   guestNames.add('$guestTitle $firstName $lastName');
-                  
+
                   if (guestFor.toLowerCase().contains('adult')) {
                     adultCount++;
                   } else if (guestFor.toLowerCase().contains('child')) {
                     childCount++;
                   }
                 }
-                
+
                 return pw.TableRow(
                   children: [
                     _buildTableCell(roomNo),
@@ -794,16 +776,25 @@ class HotelBookingPdfGenerator {
         children: [
           pw.Text(
             'Booking Policy',
-            style: pw.TextStyle(
-              fontSize: 14,
-              fontWeight: pw.FontWeight.bold,
-            ),
+            style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold),
           ),
           pw.SizedBox(height: 5),
-          pw.Text('• The usual check-in time is 12:00-14:00 PM (this may vary).', style: pw.TextStyle(fontSize: 10)),
-          pw.Text('• Rooms may not be available for early check-in unless requested.', style: pw.TextStyle(fontSize: 10)),
-          pw.Text('• Hotel reservation may be cancelled automatically after 18:00 hours if hotel is not informed about the appointment time of the arrival.', style: pw.TextStyle(fontSize: 10)),
-          pw.Text('• The total cost is between 10-12.00 hours between the high-way (non-toll) & the toll road with different destinations.', style: pw.TextStyle(fontSize: 10)),
+          pw.Text(
+            '• The usual check-in time is 12:00-14:00 PM (this may vary).',
+            style: pw.TextStyle(fontSize: 10),
+          ),
+          pw.Text(
+            '• Rooms may not be available for early check-in unless requested.',
+            style: pw.TextStyle(fontSize: 10),
+          ),
+          pw.Text(
+            '• Hotel reservation may be cancelled automatically after 18:00 hours if hotel is not informed about the appointment time of the arrival.',
+            style: pw.TextStyle(fontSize: 10),
+          ),
+          pw.Text(
+            '• The total cost is between 10-12.00 hours between the high-way (non-toll) & the toll road with different destinations.',
+            style: pw.TextStyle(fontSize: 10),
+          ),
         ],
       ),
     );
@@ -821,10 +812,7 @@ class HotelBookingPdfGenerator {
         children: [
           pw.Text(
             'Booking Refund Policy',
-            style: pw.TextStyle(
-              fontSize: 14,
-              fontWeight: pw.FontWeight.bold,
-            ),
+            style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold),
           ),
           pw.SizedBox(height: 5),
           pw.Text(
@@ -858,10 +846,7 @@ class HotelBookingPdfGenerator {
           pw.SizedBox(height: 5),
           pw.Text(
             'Check your Reservation details carefully and inform us immediately if you need any further clarification, please do not hesitate to contact us.',
-            style: pw.TextStyle(
-              fontSize: 10,
-              color: PdfColors.red900,
-            ),
+            style: pw.TextStyle(fontSize: 10, color: PdfColors.red900),
           ),
         ],
       ),
@@ -881,261 +866,245 @@ class HotelBookingPdfGenerator {
     );
   }
 }
-  Future<Uint8List> generatePdf(Map<String, dynamic> bookingData) async {
-    final pdf = pw.Document();
 
-    pdf.addPage(
-      pw.MultiPage(
-        pageFormat: PdfPageFormat.a4,
-        margin: const pw.EdgeInsets.all(32),
-        build: (pw.Context context) {
-          return [
-            _buildHeader(bookingData),
-            pw.SizedBox(height: 20),
-            // _buildHotelInformation(bookingData),
-            pw.SizedBox(height: 20),
-            _buildGuestInformation(bookingData),
-            pw.SizedBox(height: 20),
-            _buildBookingPolicy(),
-            pw.SizedBox(height: 20),
-            _buildRefundPolicy(),
-            pw.SizedBox(height: 20),
-            _buildImportantNote(),
-          ];
-        },
-      ),
-    );
+Future<Uint8List> generatePdf(Map<String, dynamic> bookingData) async {
+  final pdf = pw.Document();
 
-    return pdf.save();
-  }
+  pdf.addPage(
+    pw.MultiPage(
+      pageFormat: PdfPageFormat.a4,
+      margin: const pw.EdgeInsets.all(32),
+      build: (pw.Context context) {
+        return [
+          _buildHeader(bookingData),
+          pw.SizedBox(height: 20),
+          // _buildHotelInformation(bookingData),
+          pw.SizedBox(height: 20),
+          _buildGuestInformation(bookingData),
+          pw.SizedBox(height: 20),
+          _buildBookingPolicy(),
+          pw.SizedBox(height: 20),
+          _buildRefundPolicy(),
+          pw.SizedBox(height: 20),
+          _buildImportantNote(),
+        ];
+      },
+    ),
+  );
 
-  pw.Widget _buildHeader(Map<String, dynamic> bookingData) {
-    return pw.Container(
-      child: pw.Column(
-        crossAxisAlignment: pw.CrossAxisAlignment.start,
-        children: [
-          pw.Text(
-            'Stayinhotels.ae',
-            style: pw.TextStyle(
-              fontSize: 20,
-              fontWeight: pw.FontWeight.bold,
-            ),
-          ),
-          pw.Row(
-            mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-            children: [
-              pw.Text(
-                'Booking No#: ${bookingData['bookingNumber']}',
-                style: pw.TextStyle(fontSize: 12),
-              ),
-              pw.Text(
-                'Support Contact No:\n+923219667909',
-                style: pw.TextStyle(fontSize: 12),
-                textAlign: pw.TextAlign.right,
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
+  return pdf.save();
+}
 
-  pw.Widget _buildHotelInformation(Map<String, dynamic> bookingData) {
-    return pw.Column(
+pw.Widget _buildHeader(Map<String, dynamic> bookingData) {
+  return pw.Container(
+    child: pw.Column(
       crossAxisAlignment: pw.CrossAxisAlignment.start,
       children: [
         pw.Text(
-          'HOTEL NAME',
-          style: pw.TextStyle(
-            fontSize: 12,
-            color: PdfColors.grey700,
-          ),
+          'Stayinhotels.ae',
+          style: pw.TextStyle(fontSize: 20, fontWeight: pw.FontWeight.bold),
         ),
-        pw.Text(
-          bookingData['hotelName'],
-          style: pw.TextStyle(fontSize: 14),
-        ),
-        pw.Text(
-          bookingData['destination'],
-          style: pw.TextStyle(fontSize: 12),
-        ),
-        pw.SizedBox(height: 10),
-        pw.Text(
-          'HOTEL LOCATION',
-          style: pw.TextStyle(
-            fontSize: 12,
-            color: PdfColors.grey700,
-          ),
-        ),
-        // Map placeholder since we can't include actual maps
-        pw.Container(
-          height: 100,
-          decoration: pw.BoxDecoration(
-            border: pw.Border.all(color: PdfColors.grey300),
-          ),
-          child: pw.Center(
-            child: pw.Text('Map Location'),
-          ),
-        ),
-      ],
-    );
-  }
-
-  pw.Widget _buildGuestInformation(Map<String, dynamic> bookingData) {
-    return pw.Column(
-      crossAxisAlignment: pw.CrossAxisAlignment.start,
-      children: [
         pw.Row(
           mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
           children: [
-            pw.Column(
-              crossAxisAlignment: pw.CrossAxisAlignment.start,
-              children: [
-                pw.Text('LEAD GUEST'),
-                pw.Text(bookingData['bookerName']),
-              ],
-            ),
-            pw.Column(
-              crossAxisAlignment: pw.CrossAxisAlignment.end,
-              children: [
-                pw.Text('ROOM(S)'),
-                pw.Text(bookingData['rooms']),
-              ],
-            ),
-            pw.Column(
-              crossAxisAlignment: pw.CrossAxisAlignment.end,
-              children: [
-                pw.Text('NIGHT(S)'),
-                pw.Text(bookingData['nights']),
-              ],
-            ),
-          ],
-        ),
-        pw.SizedBox(height: 15),
-        _buildDateInformation(bookingData),
-        pw.SizedBox(height: 15),
-        _buildRoomDetailsTable(bookingData),
-      ],
-    );
-  }
-
-  pw.Widget _buildDateInformation(Map<String, dynamic> bookingData) {
-    return pw.Row(
-      mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-      children: [
-        pw.Column(
-          crossAxisAlignment: pw.CrossAxisAlignment.start,
-          children: [
-            pw.Text('CHECK-IN'),
             pw.Text(
-              DateFormat('dd MMM yyyy').format(DateTime.parse(bookingData['checkInDate'])),
-              style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+              'Booking No#: ${bookingData['bookingNumber']}',
+              style: pw.TextStyle(fontSize: 12),
             ),
-          ],
-        ),
-        pw.Column(
-          crossAxisAlignment: pw.CrossAxisAlignment.end,
-          children: [
-            pw.Text('CHECK-OUT'),
             pw.Text(
-              DateFormat('dd MMM yyyy').format(DateTime.parse(bookingData['checkOutDate'])),
-              style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+              'Support Contact No:\n+923219667909',
+              style: pw.TextStyle(fontSize: 12),
+              textAlign: pw.TextAlign.right,
             ),
           ],
         ),
       ],
-    );
-  }
+    ),
+  );
+}
 
-  pw.Widget _buildRoomDetailsTable(Map<String, dynamic> bookingData) {
-    return pw.Table(
-      border: pw.TableBorder.all(color: PdfColors.grey300),
-      children: [
-        // Header
-        pw.TableRow(
-          decoration: pw.BoxDecoration(color: PdfColors.grey200),
-          children: [
-            _buildTableCell('Room No'),
-            _buildTableCell('Room Type / Board Basis'),
-            _buildTableCell('Guest Name'),
-            _buildTableCell('Adult(s)'),
-            _buildTableCell('Children'),
-          ],
+pw.Widget _buildHotelInformation(Map<String, dynamic> bookingData) {
+  return pw.Column(
+    crossAxisAlignment: pw.CrossAxisAlignment.start,
+    children: [
+      pw.Text(
+        'HOTEL NAME',
+        style: pw.TextStyle(fontSize: 12, color: PdfColors.grey700),
+      ),
+      pw.Text(bookingData['hotelName'], style: pw.TextStyle(fontSize: 14)),
+      pw.Text(bookingData['destination'], style: pw.TextStyle(fontSize: 12)),
+      pw.SizedBox(height: 10),
+      pw.Text(
+        'HOTEL LOCATION',
+        style: pw.TextStyle(fontSize: 12, color: PdfColors.grey700),
+      ),
+      // Map placeholder since we can't include actual maps
+      pw.Container(
+        height: 100,
+        decoration: pw.BoxDecoration(
+          border: pw.Border.all(color: PdfColors.grey300),
         ),
-        // Data rows from bookingData['guestDetails']
-        ...List<pw.TableRow>.generate(
-          (bookingData['guestDetails'] as List).length,
-              (index) => pw.TableRow(
+        child: pw.Center(child: pw.Text('Map Location')),
+      ),
+    ],
+  );
+}
+
+pw.Widget _buildGuestInformation(Map<String, dynamic> bookingData) {
+  return pw.Column(
+    crossAxisAlignment: pw.CrossAxisAlignment.start,
+    children: [
+      pw.Row(
+        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+        children: [
+          pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
             children: [
-              _buildTableCell((index + 1).toString()),
-              _buildTableCell('Standard Room / Bed & Breakfast'),
-              _buildTableCell('${bookingData['guestDetails'][index]['od_gtitle']} ${bookingData['guestDetails'][index]['od_gfname']} ${bookingData['guestDetails'][index]['od_glname']}'),
-              _buildTableCell('2'),
-              _buildTableCell('0'),
+              pw.Text('LEAD GUEST'),
+              pw.Text(bookingData['bookerName']),
             ],
           ),
-        ),
-      ],
-    );
-  }
-
-  pw.Widget _buildBookingPolicy() {
-    return pw.Column(
-      crossAxisAlignment: pw.CrossAxisAlignment.start,
-      children: [
-        pw.Text(
-          'Booking Policy',
-          style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
-        ),
-        pw.SizedBox(height: 5),
-        pw.Text('• The usual check-in time is 12:00-14:00 PM (this may vary).'),
-        pw.Text('• Rooms may not be available for early check-in unless requested.'),
-        pw.Text('• Hotel reservation may be cancelled automatically after 18:00 hours if hotel is not informed about the appointment time of the arrival.'),
-        pw.Text('• The total cost is between 10-12.00 hours between the high-way (non-toll) & the toll road with different destinations.'),
-      ],
-    );
-  }
-
-  pw.Widget _buildRefundPolicy() {
-    return pw.Column(
-      crossAxisAlignment: pw.CrossAxisAlignment.start,
-      children: [
-        pw.Text(
-          'Booking Refund Policy',
-          style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
-        ),
-        pw.SizedBox(height: 5),
-        pw.Text(
-          'Booking payable as per reservation details. Please collect all extras directly from (sleep in) departure. All matters issued are on the condition that all persons acknowledge that in person to taking part must be made, as people for which we shall not be held preliminary. Some may apply, delay or misconnection caused to passenger as a result of any such arrangements. We will not accept any responsibility for additional expenses due to tax changes or delay in air, road, rail, sea or indeed any form of transport.',
-          style: pw.TextStyle(fontSize: 10),
-        ),
-      ],
-    );
-  }
-
-  pw.Widget _buildImportantNote() {
-    return pw.Container(
-      padding: pw.EdgeInsets.all(10),
-      decoration: pw.BoxDecoration(
-        color: PdfColors.pink50,
-        borderRadius: pw.BorderRadius.circular(5),
+          pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.end,
+            children: [pw.Text('ROOM(S)'), pw.Text(bookingData['rooms'])],
+          ),
+          pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.end,
+            children: [pw.Text('NIGHT(S)'), pw.Text(bookingData['nights'])],
+          ),
+        ],
       ),
-      child: pw.Text(
-        'Important Note - Check your Reservation details carefully and inform us immediately if you need any further clarification, please do not hesitate to contact us.',
-        style: pw.TextStyle(
-          fontSize: 10,
-          color: PdfColors.red900,
+      pw.SizedBox(height: 15),
+      _buildDateInformation(bookingData),
+      pw.SizedBox(height: 15),
+      _buildRoomDetailsTable(bookingData),
+    ],
+  );
+}
+
+pw.Widget _buildDateInformation(Map<String, dynamic> bookingData) {
+  return pw.Row(
+    mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+    children: [
+      pw.Column(
+        crossAxisAlignment: pw.CrossAxisAlignment.start,
+        children: [
+          pw.Text('CHECK-IN'),
+          pw.Text(
+            DateFormat(
+              'dd MMM yyyy',
+            ).format(DateTime.parse(bookingData['checkInDate'])),
+            style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+          ),
+        ],
+      ),
+      pw.Column(
+        crossAxisAlignment: pw.CrossAxisAlignment.end,
+        children: [
+          pw.Text('CHECK-OUT'),
+          pw.Text(
+            DateFormat(
+              'dd MMM yyyy',
+            ).format(DateTime.parse(bookingData['checkOutDate'])),
+            style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+          ),
+        ],
+      ),
+    ],
+  );
+}
+
+pw.Widget _buildRoomDetailsTable(Map<String, dynamic> bookingData) {
+  return pw.Table(
+    border: pw.TableBorder.all(color: PdfColors.grey300),
+    children: [
+      // Header
+      pw.TableRow(
+        decoration: pw.BoxDecoration(color: PdfColors.grey200),
+        children: [
+          _buildTableCell('Room No'),
+          _buildTableCell('Room Type / Board Basis'),
+          _buildTableCell('Guest Name'),
+          _buildTableCell('Adult(s)'),
+          _buildTableCell('Children'),
+        ],
+      ),
+      // Data rows from bookingData['guestDetails']
+      ...List<pw.TableRow>.generate(
+        (bookingData['guestDetails'] as List).length,
+        (index) => pw.TableRow(
+          children: [
+            _buildTableCell((index + 1).toString()),
+            _buildTableCell('Standard Room / Bed & Breakfast'),
+            _buildTableCell(
+              '${bookingData['guestDetails'][index]['od_gtitle']} ${bookingData['guestDetails'][index]['od_gfname']} ${bookingData['guestDetails'][index]['od_glname']}',
+            ),
+            _buildTableCell('2'),
+            _buildTableCell('0'),
+          ],
         ),
       ),
-    );
-  }
+    ],
+  );
+}
 
-  pw.Widget _buildTableCell(String text) {
-    return pw.Padding(
-      padding: pw.EdgeInsets.all(5),
-      child: pw.Text(
-        text,
+pw.Widget _buildBookingPolicy() {
+  return pw.Column(
+    crossAxisAlignment: pw.CrossAxisAlignment.start,
+    children: [
+      pw.Text(
+        'Booking Policy',
+        style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+      ),
+      pw.SizedBox(height: 5),
+      pw.Text('• The usual check-in time is 12:00-14:00 PM (this may vary).'),
+      pw.Text(
+        '• Rooms may not be available for early check-in unless requested.',
+      ),
+      pw.Text(
+        '• Hotel reservation may be cancelled automatically after 18:00 hours if hotel is not informed about the appointment time of the arrival.',
+      ),
+      pw.Text(
+        '• The total cost is between 10-12.00 hours between the high-way (non-toll) & the toll road with different destinations.',
+      ),
+    ],
+  );
+}
+
+pw.Widget _buildRefundPolicy() {
+  return pw.Column(
+    crossAxisAlignment: pw.CrossAxisAlignment.start,
+    children: [
+      pw.Text(
+        'Booking Refund Policy',
+        style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+      ),
+      pw.SizedBox(height: 5),
+      pw.Text(
+        'Booking payable as per reservation details. Please collect all extras directly from (sleep in) departure. All matters issued are on the condition that all persons acknowledge that in person to taking part must be made, as people for which we shall not be held preliminary. Some may apply, delay or misconnection caused to passenger as a result of any such arrangements. We will not accept any responsibility for additional expenses due to tax changes or delay in air, road, rail, sea or indeed any form of transport.',
         style: pw.TextStyle(fontSize: 10),
       ),
-    );
-  }
+    ],
+  );
+}
+
+pw.Widget _buildImportantNote() {
+  return pw.Container(
+    padding: pw.EdgeInsets.all(10),
+    decoration: pw.BoxDecoration(
+      color: PdfColors.pink50,
+      borderRadius: pw.BorderRadius.circular(5),
+    ),
+    child: pw.Text(
+      'Important Note - Check your Reservation details carefully and inform us immediately if you need any further clarification, please do not hesitate to contact us.',
+      style: pw.TextStyle(fontSize: 10, color: PdfColors.red900),
+    ),
+  );
+}
+
+pw.Widget _buildTableCell(String text) {
+  return pw.Padding(
+    padding: pw.EdgeInsets.all(5),
+    child: pw.Text(text, style: pw.TextStyle(fontSize: 10)),
+  );
+}

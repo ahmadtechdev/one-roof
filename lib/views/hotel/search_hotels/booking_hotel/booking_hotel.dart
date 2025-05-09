@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:oneroof/utility/colors.dart';
 import 'package:oneroof/views/hotel/search_hotels/booking_hotel/booking_voucher/booking_voucher.dart';
 
-import '../../../../widgets/colors.dart';
 import '../../../../widgets/snackbar.dart';
 import '../../hotel/guests/guests_controller.dart';
 import 'booking_controller.dart';
@@ -18,9 +18,8 @@ class BookingHotelScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        
         elevation: 0,
-        backgroundColor: const Color(0xFFFFAB00),
+        backgroundColor: TColors.primary,
         title: const Text(
           "Complete Your Booking",
           style: TextStyle(
@@ -64,7 +63,7 @@ class BookingHotelScreen extends StatelessWidget {
             ),
             if (bookingController.isLoading.value)
               const Center(
-                child: CircularProgressIndicator(color: Color(0xFFFFAB00)),
+                child: CircularProgressIndicator(color: TColors.primary),
               ),
           ],
         ),
@@ -100,7 +99,7 @@ class BookingHotelScreen extends StatelessWidget {
                   style: const TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFFFFAB00),
+                    color: TColors.primary,
                   ),
                 ),
                 const Spacer(),
@@ -186,7 +185,7 @@ class BookingHotelScreen extends StatelessWidget {
                   controller: guestInfo.firstNameController,
                   hint: 'First Name',
                   prefixIcon: Icons.person_outline,
-                  iconColor: const Color(0xFFFFAB00),
+                  iconColor: TColors.primary,
                 ),
               ),
               const SizedBox(width: 12),
@@ -195,7 +194,7 @@ class BookingHotelScreen extends StatelessWidget {
                   controller: guestInfo.lastNameController,
                   hint: 'Last Name',
                   prefixIcon: Icons.person_outline,
-                  iconColor: const Color(0xFFFFAB00),
+                  iconColor: TColors.primary,
                 ),
               ),
             ],
@@ -220,7 +219,7 @@ class BookingHotelScreen extends StatelessWidget {
               style: TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.bold,
-                color: Color(0xFFFFAB00),
+                color: TColors.primary,
               ),
             ),
             const SizedBox(height: 20),
@@ -244,7 +243,7 @@ class BookingHotelScreen extends StatelessWidget {
                     controller: bookingController.firstNameController,
                     hint: 'First Name',
                     prefixIcon: Icons.person_outline,
-                    iconColor: const Color(0xFFFFAB00),
+                    iconColor: TColors.primary,
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -253,7 +252,7 @@ class BookingHotelScreen extends StatelessWidget {
                     controller: bookingController.lastNameController,
                     hint: 'Last Name',
                     prefixIcon: Icons.person_outline,
-                    iconColor: const Color(0xFFFFAB00),
+                    iconColor: TColors.primary,
                   ),
                 ),
               ],
@@ -263,7 +262,7 @@ class BookingHotelScreen extends StatelessWidget {
               controller: bookingController.emailController,
               hint: 'Email',
               prefixIcon: Icons.email_outlined,
-              iconColor: const Color(0xFFFFAB00),
+              iconColor: TColors.primary,
               keyboardType: TextInputType.emailAddress,
             ),
             const SizedBox(height: 16),
@@ -271,7 +270,7 @@ class BookingHotelScreen extends StatelessWidget {
               controller: bookingController.phoneController,
               hint: 'Phone Number',
               prefixIcon: Icons.phone_outlined,
-              iconColor: const Color(0xFFFFAB00),
+              iconColor: TColors.primary,
               keyboardType: TextInputType.phone,
             ),
             const SizedBox(height: 16),
@@ -282,7 +281,7 @@ class BookingHotelScreen extends StatelessWidget {
                     controller: bookingController.addressController,
                     hint: 'Address Line',
                     prefixIcon: Icons.location_on_outlined,
-                    iconColor: const Color(0xFFFFAB00),
+                    iconColor: TColors.primary,
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -291,7 +290,7 @@ class BookingHotelScreen extends StatelessWidget {
                     controller: bookingController.cityController,
                     hint: 'City',
                     prefixIcon: Icons.location_city_outlined,
-                    iconColor: const Color(0xFFFFAB00),
+                    iconColor: TColors.primary,
                   ),
                 ),
               ],
@@ -325,7 +324,7 @@ class BookingHotelScreen extends StatelessWidget {
               controller: bookingController.specialRequestsController,
               hint: 'Enter any special requests',
               prefixIcon: Icons.note_add_outlined,
-              iconColor: const Color(0xFFFFAB00),
+              iconColor: TColors.primary,
               maxLines: 3,
             ),
             const SizedBox(height: 16),
@@ -380,7 +379,7 @@ class BookingHotelScreen extends StatelessWidget {
         ),
         value: bookingController.acceptedTerms.value,
         onChanged: (value) => bookingController.acceptedTerms.value = value!,
-        activeColor: const Color(0xFFFFAB00),
+        activeColor: TColors.primary,
         controlAffinity: ListTileControlAffinity.leading,
       ),
     );
@@ -461,7 +460,7 @@ class BookingHotelScreen extends StatelessWidget {
       title: Text(title, style: const TextStyle(fontSize: 14)),
       value: value,
       onChanged: onChanged,
-      activeColor: const Color(0xFFFFAB00),
+      activeColor: TColors.primary,
       controlAffinity: ListTileControlAffinity.leading,
       contentPadding: EdgeInsets.zero,
     );
@@ -476,7 +475,7 @@ class BookingHotelScreen extends StatelessWidget {
           _handleSubmit();
         },
         style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFFFFAB00),
+          backgroundColor: TColors.primary,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),

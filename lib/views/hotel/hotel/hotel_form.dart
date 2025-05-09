@@ -145,17 +145,19 @@ class HotelForm extends StatelessWidget {
 
           // City Input Field
           _buildFormField(
-            child: CustomTextField(
-              hintText: 'Enter City Name',
-              icon: Icons.location_on,
-              controller: cityController,
-              onCitySelected: (cityData) {
-                // Store the selected city data
-                selectedCity.value = cityData;
-                print('Selected city: ${cityData.value}, ${cityData.countryCode}');
-              },
-            ),
-          )
+                child: CustomTextField(
+                  hintText: 'Enter City Name',
+                  icon: Icons.location_on,
+                  controller: cityController,
+                  onCitySelected: (cityData) {
+                    // Store the selected city data
+                    selectedCity.value = cityData;
+                    print(
+                      'Selected city: ${cityData.value}, ${cityData.countryCode}',
+                    );
+                  },
+                ),
+              )
               .animate()
               .fadeIn(delay: const Duration(milliseconds: 300))
               .slideX(begin: 0.1, end: 0),
@@ -164,9 +166,9 @@ class HotelForm extends StatelessWidget {
 
           // Field Title
           _buildSectionTitle(
-            'When are you planning to travel?',
-            Icons.calendar_today,
-          )
+                'When are you planning to travel?',
+                Icons.calendar_today,
+              )
               .animate()
               .fadeIn(delay: const Duration(milliseconds: 400))
               .slideX(begin: -0.1, end: 0),
@@ -175,15 +177,15 @@ class HotelForm extends StatelessWidget {
 
           // Date Range Selector
           _buildFormField(
-            child: Obx(
-              () => CustomDateRangeSelector(
-                dateRange: hotelDateController.dateRange.value,
-                onDateRangeChanged: hotelDateController.updateDateRange,
-                nights: hotelDateController.nights.value,
-                onNightsChanged: hotelDateController.updateNights,
-              ),
-            ),
-          )
+                child: Obx(
+                  () => CustomDateRangeSelector(
+                    dateRange: hotelDateController.dateRange.value,
+                    onDateRangeChanged: hotelDateController.updateDateRange,
+                    nights: hotelDateController.nights.value,
+                    onNightsChanged: hotelDateController.updateNights,
+                  ),
+                ),
+              )
               .animate()
               .fadeIn(delay: const Duration(milliseconds: 500))
               .slideX(begin: 0.1, end: 0),
@@ -208,12 +210,12 @@ class HotelForm extends StatelessWidget {
 
           // Search Button
           Center(
-            child: SizedBox(
-              width: double.infinity,
-              height: 55,
-              child: _buildSearchButton(context),
-            ),
-          )
+                child: SizedBox(
+                  width: double.infinity,
+                  height: 55,
+                  child: _buildSearchButton(context),
+                ),
+              )
               .animate()
               .fadeIn(delay: const Duration(milliseconds: 800))
               .scale(begin: const Offset(0.95, 0.95), end: const Offset(1, 1)),
@@ -364,18 +366,20 @@ class HotelForm extends StatelessWidget {
 
           // Show loading dialog
           Get.dialog(const LoadingDialog(), barrierDismissible: false);
+          
 
           final hotelDateController = Get.find<HotelDateController>();
           final guestsController = Get.find<GuestsController>();
 
+
           // Get values from selected city
           String destinationCode = selectedCity.value!.value;
           String countryCode = selectedCity.value!.countryCode;
-          
+
           // Default values
           String nationality = "AE"; // You might want to make this dynamic too
-          String currency = "AED";    // You might want to make this dynamic too
-          
+          String currency = "AED"; // You might want to make this dynamic too
+
           String checkInDate =
               hotelDateController.checkInDate.value.toIso8601String();
           String checkOutDate =

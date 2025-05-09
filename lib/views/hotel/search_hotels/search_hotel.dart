@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:get/get.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:oneroof/widgets/colors.dart';
+import 'package:oneroof/utility/colors.dart' show TColors;
 
 import '../../../services/api_service_hotel.dart';
 import 'search_hotel_controller.dart';

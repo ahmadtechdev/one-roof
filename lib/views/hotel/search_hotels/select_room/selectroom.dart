@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:oneroof/services/api_service_hotel.dart';
-import 'package:oneroof/widgets/colors.dart';
+import 'package:oneroof/utility/colors.dart';
 
 import '../../hotel/guests/guests_controller.dart';
 import '../../hotel/hotel_date_controller.dart';
