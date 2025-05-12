@@ -2,13 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'dart:math';
 
-import '../../../../services/api_service_flight.dart';
-import '../flight_package/sabre_flight_package.dart';
-import '../flight_package/sabre_package_modal.dart';
-import '../search_flights.dart';
-import 'helper_functions.dart';
-import 'models/airblue_flight_model.dart';
-import 'models/flight_models.dart';
+import '../../../../../services/api_service_flight.dart';
+import 'sabre_flight_package.dart';
+import 'sabre_package_modal.dart';
+import '../../search_flights.dart';
+import '../../search_flight_utils/helper_functions.dart';
+import '../airblue/airblue_flight_model.dart';
+import 'sabre_flight_models.dart';
 
 class FilterState {
   final RangeValues priceRange;

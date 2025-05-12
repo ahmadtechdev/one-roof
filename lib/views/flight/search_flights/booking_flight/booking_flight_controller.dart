@@ -113,6 +113,8 @@ class BookingFlightController extends GetxController {
     ever(travelersController.infantCount, (_) => updateInfants());
   }
 
+
+
   void initializeTravelers() {
     updateAdults();
     updateChildren();
@@ -204,59 +206,6 @@ class BookingFlightController extends GetxController {
   }
 
   // Create booking payload
-  Map<String, dynamic> createBookingPayload() {
-    return {
-      'booker': {
-        'email': emailController.text,
-        'phone': phoneController.text,
-        'address': addressController.text,
-        'city': cityController.text,
-      },
-      'travelers': {
-        'adults': adults.map((adult) => adult.toJson()).toList(),
-        'children': children.map((child) => child.toJson()).toList(),
-        'infants': infants.map((infant) => infant.toJson()).toList(),
-      },
-      'travelClass': travelersController.travelClass.value,
-      'totalAmount': totalAmount.value,
-      'currencyCode': currencyCode.value,
-    };
-  }
-
-  Future<void> submitBooking() async {
-    if (!validateAll()) {
-      Get.snackbar(
-        'Validation Error',
-        'Please fill in all required fields correctly',
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
-      return;
-    }
-
-    try {
-      isLoading.value = true;
-      // TODO: Implement API call with createBookingPayload()
-      await Future.delayed(const Duration(seconds: 2)); // Simulated API call
-      Get.snackbar(
-        'Success',
-        'Booking submitted successfully',
-        backgroundColor: Colors.green,
-        colorText: Colors.white,
-      );
-      // Navigate to confirmation or payment screen
-    } catch (e) {
-      Get.snackbar(
-        'Error',
-        'Failed to submit booking',
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
-    } finally {
-      isLoading.value = false;
-    }
-  }
-
   void resetForm() {
     // Reset booker information
     emailController.clear();
@@ -272,6 +221,8 @@ class BookingFlightController extends GetxController {
     // Reinitialize travelers based on current counts
     initializeTravelers();
   }
+
+
 
   @override
   void onClose() {

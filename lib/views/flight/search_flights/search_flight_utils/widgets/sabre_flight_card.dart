@@ -8,8 +8,8 @@ import '../../../../../services/api_service_flight.dart';
 
 import '../../../../../utility/colors.dart';
 import '../helper_functions.dart';
-import '../flight_controller.dart';
-import '../models/flight_models.dart';
+import '../../flight_package/sabre/sabre_flight_controller.dart';
+import '../../flight_package/sabre/sabre_flight_models.dart';
 
 class FlightCard extends StatefulWidget {
   final Flight flight;

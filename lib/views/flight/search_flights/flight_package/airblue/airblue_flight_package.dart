@@ -1,18 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:oneroof/views/flight/search_flights/flight_package/airblue/return_flight_page.dart';
 
 import '../../../../../services/api_service_flight.dart';
 import '../../../../../utility/colors.dart';
 import '../../../../../widgets/travelers_selection_bottom_sheet.dart';
 import '../../../form/controllers/flight_date_controller.dart';
-import '../../search_flight_utils/airblue_flight_controller.dart';
-import '../../search_flight_utils/models/airblue_flight_model.dart';
+import '../../../form/flight_booking_controller.dart';
+import '../../review_flight/airblue_review_flight.dart';
+import '../../review_flight/review_flight.dart';
+import 'airblue_flight_controller.dart';
+import 'airblue_flight_model.dart';
 import '../../search_flight_utils/widgets/airblue_flight_card.dart';
-
+import '../../search_flights.dart';
 
 class AirBluePackageSelectionDialog extends StatelessWidget {
   final AirBlueFlight flight;
-  final bool isAnyFlightRemaining;
+  final bool isReturnFlight;
   final RxBool isLoading = false.obs;
 
   // Cache for margin data and calculated prices
@@ -22,18 +26,20 @@ class AirBluePackageSelectionDialog extends StatelessWidget {
   AirBluePackageSelectionDialog({
     super.key,
     required this.flight,
-    required this.isAnyFlightRemaining,
+    required this.isReturnFlight,
   });
 
   final PageController _pageController = PageController(viewportFraction: 0.9);
   final airBlueController = Get.find<AirBlueFlightController>();
-  final flightDateController = Get.find<FlightDateController>();
-  late final travelersController = Get.find<TravelersController>();
+  // Instead, make it a late final variable initialized in build
+  late final FlightBookingController flightBookingController;
+
 
   @override
   Widget build(BuildContext context) {
     // Pre-fetch margin data when dialog opens
     _prefetchMarginData();
+    flightBookingController = Get.find<FlightBookingController>();
 
     return Scaffold(
       backgroundColor: TColors.background,
@@ -45,7 +51,7 @@ class AirBluePackageSelectionDialog extends StatelessWidget {
           onPressed: () => Get.back(),
         ),
         title: Text(
-          isAnyFlightRemaining
+          isReturnFlight
               ? 'Select Return Flight Package'
               : 'Select Flight Package',
           style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
@@ -221,25 +227,9 @@ class AirBluePackageSelectionDialog extends StatelessWidget {
   }
 
   Widget _buildPackageCard(AirBlueFareOption package, int index) {
-    final headerColor = package.seatsAvailable <= 0 ? Colors.grey : TColors.primary;
-    final isSoldOut = package.seatsAvailable <= 0;
-
-    // Generate unique key for this package
-    final String packageKey = '${package.cabinCode}-${package.brandName}';
-
-    // Initialize price for this package if not already done
-    if (!finalPrices.containsKey(packageKey)) {
-      final apiService = Get.find<ApiServiceFlight>();
-      try {
-        final price = apiService.calculatePriceWithMargin(
-          package.price,
-          marginData.value,
-        );
-        finalPrices[packageKey] = price.obs;
-      } catch (e) {
-        finalPrices[packageKey] = package.price.obs;
-      }
-    }
+    final headerColor = TColors.primary;
+    final isSoldOut = false;
+    final price = finalPrices['${package.fareName}-${package.cabinCode}']?.value ?? package.price;
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -256,7 +246,7 @@ class AirBluePackageSelectionDialog extends StatelessWidget {
       ),
       child: Column(
         children: [
-          // Header section with package name and price
+          // Header with package name
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
             decoration: BoxDecoration(
@@ -270,117 +260,59 @@ class AirBluePackageSelectionDialog extends StatelessWidget {
                 topRight: Radius.circular(24),
               ),
             ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        package.brandName.isNotEmpty
-                            ? package.brandName
-                            : package.cabinName,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: TColors.background,
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                  ),
+            child: Center(
+              child: Text(
+                package.fareName,
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: TColors.background,
                 ),
-                const SizedBox(width: 8),
-                if (!isSoldOut)
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      Obx(() => Text(
-                        finalPrices[packageKey]?.value.toStringAsFixed(2) ?? package.price.toStringAsFixed(2),
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: TColors.background,
-                        ),
-                      )),
-                      Text(
-                        package.currency,
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: TColors.background.withOpacity(0.9),
-                        ),
-                      ),
-                    ],
-                  ),
-                if (isSoldOut)
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8, vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: TColors.background.withOpacity(0.3),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: const Text(
-                      'SOLD OUT',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                        color: TColors.background,
-                      ),
-                    ),
-                  ),
-              ],
+              ),
             ),
           ),
 
-          // Package details section
+          // Package details
           Expanded(
             child: SingleChildScrollView(
-              physics: const BouncingScrollPhysics(),
               child: Padding(
                 padding: const EdgeInsets.all(20),
                 child: Column(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
                     _buildPackageDetail(
-                      Icons.airline_seat_recline_normal,
-                      'Cabin',
-                      package.cabinName,
+                      Icons.luggage,
+                      'Hand Baggage',
+                      '7 KG', // Hardcoded as per web
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 8),
                     _buildPackageDetail(
                       Icons.luggage,
-                      'Baggage',
-                      isSoldOut
-                          ? 'Not available'
-                          : package.baggageAllowance,
+                      'Checked Baggage',
+                      package.baggageAllowance,
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 8),
                     _buildPackageDetail(
                       Icons.restaurant,
                       'Meal',
-                      isSoldOut
-                          ? 'Not available'
-                          : getMealInfo(package.mealCode),
+                      'Yes', // Hardcoded as per web
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 8),
                     _buildPackageDetail(
-                      Icons.event_seat,
-                      'Seats Available',
-                      isSoldOut
-                          ? '0'
-                          : package.seatsAvailable.toString(),
+                      Icons.airline_seat_recline_normal,
+                      'Cabin Class',
+                      '${package.cabinCode} (${package.cabinCode})',
                     ),
+                    const SizedBox(height: 8),
+                    _buildPackageDetail(
+                      Icons.change_circle,
+                      'Change Fee',
+                      package.changeFee,
+                    ),
+                    const SizedBox(height: 8),
                     _buildPackageDetail(
                       Icons.currency_exchange,
-                      'Refundable',
-                      isSoldOut
-                          ? 'Not applicable'
-                          : (package.isRefundable
-                          ? 'Refundable'
-                          : 'Non-Refundable'),
+                      'Refund Fee',
+                      package.refundFee,
                     ),
                   ],
                 ),
@@ -388,48 +320,49 @@ class AirBluePackageSelectionDialog extends StatelessWidget {
             ),
           ),
 
-          // Button section
+          // Price and button
           Padding(
             padding: const EdgeInsets.all(16),
-            child: Obx(
-                  () => ElevatedButton(
-                onPressed: isSoldOut || isLoading.value
-                    ? null
-                    : () => onSelectPackage(index),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: isSoldOut ? Colors.grey : TColors.primary,
-                  minimumSize: const Size(double.infinity, 48),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(24),
+            child: Column(
+              children: [
+                Text(
+                  '${package.currency} ${price.toStringAsFixed(2)}',
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: TColors.text,
                   ),
-                  elevation: 2,
                 ),
-                child: isLoading.value
-                    ? SizedBox(
-                  width: 24,
-                  height: 24,
-                  child: CircularProgressIndicator(
+                const SizedBox(height: 12),
+                Obx(() => ElevatedButton(
+                  onPressed: isSoldOut || isLoading.value
+                      ? null
+                      : () => onSelectPackage(index),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: isSoldOut ?  Colors.grey : TColors.primary,
+                    minimumSize: const Size(double.infinity, 48),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(24),
+                    ),
+                    elevation: 2,
+                  ),
+                  child: isLoading.value
+                      ? const CircularProgressIndicator(
                     strokeWidth: 3,
-                    valueColor: AlwaysStoppedAnimation<Color>(
-                      TColors.background,
+                    valueColor: AlwaysStoppedAnimation<Color>(TColors.background),
+                  )
+                      : Text(
+                    isReturnFlight
+                        ? 'Select Return Package'
+                        : 'Select Package',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: TColors.background,
                     ),
                   ),
-                )
-                    : Text(
-                  isSoldOut
-                      ? 'Not Available'
-                      : (isAnyFlightRemaining
-                      ? 'Select Return Package'
-                      : 'Select Package'),
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: isSoldOut
-                        ? Colors.white70
-                        : TColors.background,
-                  ),
-                ),
-              ),
+                )),
+              ],
             ),
           ),
         ],
@@ -437,33 +370,28 @@ class AirBluePackageSelectionDialog extends StatelessWidget {
     );
   }
 
-
   Widget _buildPackageDetail(IconData icon, String title, String value) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: TColors.secondary,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(icon, color: TColors.primary, size: 18),
-          ),
-          const SizedBox(width: 16),
+          Icon(icon, color: TColors.primary, size: 20),
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   title,
-                  style: const TextStyle(fontSize: 12, color: TColors.grey),
+                  style: const TextStyle(
+                    fontSize: 14,
+                    color: TColors.grey,
+                  ),
                 ),
                 Text(
                   value,
                   style: const TextStyle(
-                    fontSize: 14,
+                    fontSize: 15,
                     fontWeight: FontWeight.w600,
                     color: TColors.text,
                   ),
@@ -475,25 +403,63 @@ class AirBluePackageSelectionDialog extends StatelessWidget {
       ),
     );
   }
-
+// Update in airblue_flight_package.dart
   void onSelectPackage(int selectedPackageIndex) async {
     try {
       isLoading.value = true;
 
       // Get all fare options for this flight
-      final List<AirBlueFareOption> fareOptions = airBlueController.getFareOptionsForFlight(flight);
+      final List<AirBlueFareOption> fareOptions =
+      airBlueController.getFareOptionsForFlight(flight);
 
       // Get the selected fare option
       final selectedFareOption = fareOptions[selectedPackageIndex];
 
-      // // Navigate to review page
-      // Get.to(
-      //       () => ReviewAirBlueTripPage(
-      //     isMulti: false,
-      //     flight: flight,
-      //     selectedFareOption: selectedFareOption,
-      //   ),
-      // );
+      // Check if this is a one-way flight or we need to select a return flight
+      final tripType = flightBookingController.tripType.value;
+
+      if (tripType == TripType.oneWay || isReturnFlight) {
+        // For one-way trip or if this is already the return flight selection
+        Get.back(); // Close the package selection dialog
+
+        // Store the selected flight and package
+        if (isReturnFlight) {
+          airBlueController.selectedReturnFareOption = selectedFareOption;
+        } else {
+          airBlueController.selectedOutboundFareOption = selectedFareOption;
+        }
+
+        print("return");
+        print(airBlueController.selectedReturnFareOption);
+        print("outbound");
+        print(airBlueController.selectedOutboundFareOption);
+
+        // TODO: Navigate to booking details page
+        Get.snackbar(
+          'Success',
+          isReturnFlight
+              ? 'Return flight package selected. Proceeding to booking details.'
+              : 'Flight package selected. Proceeding to booking details.',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.green,
+          colorText: Colors.white,
+        );
+        Get.to(() => AirBlueReviewTripPage(
+         flight: flight,
+          // The full API response for this flight
+          isReturn: isReturnFlight,
+        ));
+      } else {
+        // For round trip, show return flights
+        Get.back(); // Close the package selection dialog
+
+        // Store the selected outbound flight and package
+        airBlueController.selectedOutboundFlight = flight;
+        airBlueController.selectedOutboundFareOption = selectedFareOption;
+
+        // Show return flights
+        _showReturnFlights();
+      }
     } catch (e) {
       print('Error selecting AirBlue flight package: $e');
       Get.snackbar(
@@ -505,7 +471,28 @@ class AirBluePackageSelectionDialog extends StatelessWidget {
         duration: const Duration(seconds: 3),
       );
     } finally {
-      isLoading.value = false; // Hide loader
+      isLoading.value = false;
     }
+  }
+
+  void _showReturnFlights() {
+    final returnFlights = airBlueController.getReturnFlights();
+
+    if (returnFlights.isEmpty) {
+      Get.snackbar(
+        'No Return Flights',
+        'No suitable return flights were found.',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+      return;
+    }
+
+    // Navigate to a new screen showing return flights
+    Get.to(
+          () => ReturnFlightsPage(returnFlights: returnFlights),
+      transition: Transition.rightToLeft,
+    );
   }
 }

@@ -3,16 +3,13 @@ import 'package:dio/dio.dart';
 
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
-import '../views/flight/search_flights/booking_flight/booking_flight_controller.dart';
-import '../views/flight/search_flights/search_flight_utils/helper_functions.dart';
-import '../views/flight/search_flights/search_flight_utils/models/flight_models.dart';
+import '../views/flight/search_flights/flight_package/sabre/sabre_flight_models.dart';
 import 'api_service_airblue.dart';
 
 class ApiServiceFlight extends GetxService {
   late final Dio dio;
   // Initialize directly instead of using late
-  final FlightShoppingService flightShoppingService = FlightShoppingService();
+  final AirBlueFlightApiService flightShoppingService = AirBlueFlightApiService();
 
   static const String _baseUrl = 'https://api.havail.sabre.com';
   static const String _tokenKey = 'flight_api_token';

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../../../utility/colors.dart';
-import '../flight_controller.dart';
+import '../../flight_package/sabre/sabre_flight_controller.dart';
 
 class FilterBottomSheet extends StatelessWidget {
   final FlightController controller;

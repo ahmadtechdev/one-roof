@@ -4,8 +4,8 @@ import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../../utility/colors.dart';
-import '../models/airblue_flight_model.dart';
-import '../models/flight_models.dart';
+import '../../flight_package/airblue/airblue_flight_model.dart';
+import '../../flight_package/sabre/sabre_flight_models.dart';
 
 class AirBlueFlightCard extends StatefulWidget {
   final AirBlueFlight flight;

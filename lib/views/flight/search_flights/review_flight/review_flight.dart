@@ -8,7 +8,7 @@ import '../../../../widgets/travelers_selection_bottom_sheet.dart';
 import '../../form/travelers/traveler_controller.dart';
 import '../booking_flight/booking_flight.dart';
 import '../search_flight_utils/helper_functions.dart';
-import '../search_flight_utils/models/flight_models.dart';
+import '../flight_package/sabre/sabre_flight_models.dart';
 import '../search_flight_utils/widgets/sabre_flight_card.dart';
 
 class ReviewTripPage extends StatefulWidget {

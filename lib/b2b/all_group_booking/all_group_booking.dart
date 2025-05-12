@@ -515,31 +515,14 @@ class AllGroupBooking extends StatelessWidget {
                     'Total Price',
                     style: TextStyle(fontSize: 12, color: TColors.grey),
                   ),
-                  Text(
-                    'PKR ${NumberFormat('#,###').format(booking.price)}',
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: TColors.primary,
-                    ),
-                  ),
                 ],
               ),
-              ElevatedButton(
-                onPressed: () {},
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 8,
-                  ),
-                ),
-                child: const Text(
-                  'View',
-                  style: TextStyle(color: Colors.white),
+              Text(
+                'PKR ${NumberFormat('#,###').format(booking.price)}',
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: TColors.primary,
                 ),
               ),
             ],

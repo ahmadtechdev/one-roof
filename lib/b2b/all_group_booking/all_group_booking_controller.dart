@@ -120,13 +120,12 @@ class AllGroupBookingController extends GetxController {
           final passengerStatus = PassengerStatus(
             holdAdults: int.tryParse(hold['adults'] ?? '0') ?? 0,
             holdChild: int.tryParse(hold['childs'] ?? '0') ?? 0,
-            
+
             holdInfant: int.tryParse(hold['infants'] ?? '0') ?? 0,
             holdTotal:
                 (int.tryParse(hold['adults'] ?? '0') ?? 0) +
                 (int.tryParse(hold['childs'] ?? '0') ?? 0) +
                 (int.tryParse(hold['infants'] ?? '0') ?? 0),
-                
 
             confirmAdults: int.tryParse(confirmed['adults'] ?? '0') ?? 0,
             confirmChild: int.tryParse(confirmed['childs'] ?? '0') ?? 0,
@@ -147,17 +146,11 @@ class AllGroupBookingController extends GetxController {
 
           // Determine country from group_name
           String country = 'Unknown';
-          final groupName = (bookingData['group_name'] ?? '').toUpperCase();
+          final groupName = (bookingData['group_cat'] ?? '').toUpperCase();
 
-          if (groupName.contains('DXB') ||
-              groupName.contains('SHJ') ||
-              groupName.contains('DUBAI')) {
+          if (groupName.contains('UAE')) {
             country = 'UAE';
-          } else if (groupName.contains('JED') ||
-              groupName.contains('JEDDAH') ||
-              groupName.contains('DMM') ||
-              groupName.contains('DAMMAM') ||
-              groupName.contains('RIYADH')) {
+          } else if (groupName.contains('KSA')) {
             country = 'KSA';
           } else if (groupName.contains('OMAN')) {
             country = 'Oman';

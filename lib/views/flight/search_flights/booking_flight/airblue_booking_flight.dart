@@ -1,28 +1,39 @@
-
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../../../../services/api_service_airblue.dart';
 import '../../../../utility/colors.dart';
 import '../../../../widgets/travelers_selection_bottom_sheet.dart';
-
-import '../flight_package/sabre/sabre_flight_models.dart';
-import '../search_flight_utils/widgets/sabre_flight_card.dart';
+import '../flight_package/airblue/airblue_flight_model.dart';
+import '../search_flight_utils/widgets/airblue_flight_card.dart';
 import 'booking_flight_controller.dart';
 import 'flight_print_voucher.dart';
 
-class BookingForm extends StatefulWidget {
-  final Flight flight;
-  const BookingForm({super.key, required this.flight});
+class AirBlueBookingFlight extends StatefulWidget {
+  final AirBlueFlight flight;
+  final AirBlueFlight? returnFlight;
+  final double totalPrice;
+  final String currency;
+
+  const AirBlueBookingFlight({
+    super.key,
+    required this.flight,
+    this.returnFlight,
+    required this.totalPrice,
+    required this.currency,
+  });
 
   @override
-  State<BookingForm> createState() => _BookingFormState();
+  State<AirBlueBookingFlight> createState() => _AirBlueBookingFlightState();
 }
 
-class _BookingFormState extends State<BookingForm> {
+class _AirBlueBookingFlightState extends State<AirBlueBookingFlight> {
   final _formKey = GlobalKey<FormState>();
-  final BookingFlightController bookingController =
-  Get.put(BookingFlightController());
-  final TravelersController travelersController =
-  Get.put(TravelersController());
+  final BookingFlightController bookingController = Get.put(
+    BookingFlightController(),
+  );
+  final TravelersController travelersController = Get.put(
+    TravelersController(),
+  );
   bool termsAccepted = false;
 
   @override
@@ -41,6 +52,7 @@ class _BookingFormState extends State<BookingForm> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                const SizedBox(height: 24),
                 _buildFlightDetails(),
                 const SizedBox(height: 24),
                 Padding(
@@ -56,7 +68,7 @@ class _BookingFormState extends State<BookingForm> {
                 Padding(
                   padding: const EdgeInsets.all(8.0),
                   child: _buildTermsAndConditions(),
-                )
+                ),
               ],
             ),
           ),
@@ -84,10 +96,7 @@ class _BookingFormState extends State<BookingForm> {
             children: [
               TextSpan(
                 text: 'I accept the ',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.black87,
-                ),
+                style: TextStyle(fontSize: 14, color: Colors.black87),
               ),
               TextSpan(
                 text: 'terms and conditions',
@@ -96,7 +105,6 @@ class _BookingFormState extends State<BookingForm> {
                   color: TColors.primary,
                   decoration: TextDecoration.underline,
                 ),
-                // You can add onTap handler here if you want to show T&C
               ),
             ],
           ),
@@ -114,9 +122,33 @@ class _BookingFormState extends State<BookingForm> {
   }
 
   Widget _buildFlightDetails() {
-    return FlightCard(
-      flight: widget.flight, // Pass the selected flight here
-      showReturnFlight: false, // Set to true if you want to show return flight
+    return Column(
+      children: [
+        if (widget.returnFlight != null) ...[
+          const Padding(
+            padding: EdgeInsets.only(left: 16.0, top: 8.0),
+            child: Text(
+              'Outbound Flight',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            ),
+          ),
+          AirBlueFlightCard(flight: widget.flight, showReturnFlight: false),
+          const SizedBox(height: 16),
+          const Padding(
+            padding: EdgeInsets.only(left: 16.0, top: 8.0),
+            child: Text(
+              'Return Flight',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            ),
+          ),
+          AirBlueFlightCard(
+            flight: widget.returnFlight!,
+            showReturnFlight: false,
+          ),
+        ] else ...[
+          AirBlueFlightCard(flight: widget.flight, showReturnFlight: false),
+        ],
+      ],
     );
   }
 
@@ -124,7 +156,7 @@ class _BookingFormState extends State<BookingForm> {
     return Obx(() {
       final adults = List.generate(
         travelersController.adultCount.value,
-            (index) => _buildTravelerSection(
+        (index) => _buildTravelerSection(
           title: 'Adult ${index + 1}',
           isInfant: false,
           type: 'adult',
@@ -134,7 +166,7 @@ class _BookingFormState extends State<BookingForm> {
 
       final children = List.generate(
         travelersController.childrenCount.value,
-            (index) => _buildTravelerSection(
+        (index) => _buildTravelerSection(
           title: 'Child ${index + 1}',
           isInfant: false,
           type: 'child',
@@ -144,20 +176,15 @@ class _BookingFormState extends State<BookingForm> {
 
       final infants = List.generate(
         travelersController.infantCount.value,
-            (index) => _buildTravelerSection(
-            title: 'Infant ${index + 1}',
-            isInfant: true,
-            type: 'infant',
-            index: index),
+        (index) => _buildTravelerSection(
+          title: 'Infant ${index + 1}',
+          isInfant: true,
+          type: 'infant',
+          index: index,
+        ),
       );
 
-      return Column(
-        children: [
-          ...adults,
-          ...children,
-          ...infants,
-        ],
-      );
+      return Column(children: [...adults, ...children, ...infants]);
     });
   }
 
@@ -167,7 +194,6 @@ class _BookingFormState extends State<BookingForm> {
     required String type,
     required int index,
   }) {
-    // Get the corresponding TravelerInfo object based on the type and index
     TravelerInfo travelerInfo;
     if (type == 'adult') {
       travelerInfo = bookingController.adults[index];
@@ -187,7 +213,6 @@ class _BookingFormState extends State<BookingForm> {
       margin: const EdgeInsets.only(bottom: 20),
       child: Column(
         children: [
-          // Header Section
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
@@ -199,11 +224,7 @@ class _BookingFormState extends State<BookingForm> {
             ),
             child: Row(
               children: [
-                Icon(
-                  _getTravelerIcon(type),
-                  color: TColors.primary,
-                  size: 24,
-                ),
+                Icon(_getTravelerIcon(type), color: TColors.primary, size: 24),
                 const SizedBox(width: 12),
                 Text(
                   title,
@@ -216,14 +237,12 @@ class _BookingFormState extends State<BookingForm> {
               ],
             ),
           ),
-          // Form Fields Section
           Padding(
             padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 if (type == 'adult') ...[
-                  // Keep gender and title in one row
                   Row(
                     children: [
                       Expanded(
@@ -244,7 +263,6 @@ class _BookingFormState extends State<BookingForm> {
                     ],
                   ),
                   const SizedBox(height: 16),
-                  // One field per row for the rest
                   _buildTextField(
                     hint: 'Given Name',
                     prefixIcon: Icons.person_outline,
@@ -294,7 +312,6 @@ class _BookingFormState extends State<BookingForm> {
                   ),
                 ],
                 if (type == 'child') ...[
-                  // Keep gender and title in one row
                   Row(
                     children: [
                       Expanded(
@@ -315,7 +332,6 @@ class _BookingFormState extends State<BookingForm> {
                     ],
                   ),
                   const SizedBox(height: 16),
-                  // One field per row for the rest
                   _buildTextField(
                     hint: 'Given Name',
                     prefixIcon: Icons.person_outline,
@@ -351,7 +367,6 @@ class _BookingFormState extends State<BookingForm> {
                   ),
                 ],
                 if (type == 'infant') ...[
-                  // Keep gender and title in one row
                   Row(
                     children: [
                       Expanded(
@@ -372,7 +387,6 @@ class _BookingFormState extends State<BookingForm> {
                     ],
                   ),
                   const SizedBox(height: 16),
-                  // One field per row for the rest
                   _buildTextField(
                     hint: 'Given Name',
                     prefixIcon: Icons.person_outline,
@@ -417,7 +431,7 @@ class _BookingFormState extends State<BookingForm> {
 
   Widget _buildDateField({
     required String hint,
-    required TextEditingController controller, // Pass the controller
+    required TextEditingController controller,
   }) {
     return Container(
       decoration: BoxDecoration(
@@ -426,13 +440,15 @@ class _BookingFormState extends State<BookingForm> {
         border: Border.all(color: Colors.grey[300]!),
       ),
       child: TextField(
-        controller: controller, // Bind the controller
+        controller: controller,
         decoration: InputDecoration(
           hintText: hint,
           prefixIcon: const Icon(Icons.calendar_today, color: TColors.primary),
           border: InputBorder.none,
-          contentPadding:
-          const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 12,
+            vertical: 12,
+          ),
         ),
         readOnly: true,
         onTap: () async {
@@ -443,15 +459,13 @@ class _BookingFormState extends State<BookingForm> {
             lastDate: DateTime(2100),
           );
           if (pickedDate != null) {
-            controller.text = "${pickedDate.toLocal()}"
-                .split(' ')[0]; // Update the controller
+            controller.text = "${pickedDate.toLocal()}".split(' ')[0];
           }
         },
       ),
     );
   }
 
-// Helper method to get appropriate icons for different traveler types
   IconData _getTravelerIcon(String type) {
     switch (type) {
       case 'adult':
@@ -475,24 +489,19 @@ class _BookingFormState extends State<BookingForm> {
           children: [
             const Text(
               'Booker Details',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 12),
             _buildTextField(
               hint: 'First Name',
               prefixIcon: Icons.person_outline,
-              controller:
-              bookingController.firstNameController, // Bind to controller
+              controller: bookingController.firstNameController,
             ),
             const SizedBox(height: 12),
             _buildTextField(
               hint: 'Last Name',
               prefixIcon: Icons.person_outline,
-              controller:
-              bookingController.lastNameController, // Bind to controller
+              controller: bookingController.lastNameController,
             ),
             const SizedBox(height: 12),
             _buildTextField(
@@ -526,8 +535,6 @@ class _BookingFormState extends State<BookingForm> {
     );
   }
 
-  // Rest of the widget code remains the same...
-
   Widget _buildDropdown({
     required String hint,
     required List<String> items,
@@ -545,12 +552,10 @@ class _BookingFormState extends State<BookingForm> {
           contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
         ),
         hint: Text(hint),
-        items: items.map((String value) {
-          return DropdownMenuItem<String>(
-            value: value,
-            child: Text(value),
-          );
-        }).toList(),
+        items:
+            items.map((String value) {
+              return DropdownMenuItem<String>(value: value, child: Text(value));
+            }).toList(),
         onChanged: (value) {
           controller.text = value ?? '';
         },
@@ -577,8 +582,10 @@ class _BookingFormState extends State<BookingForm> {
           hintText: hint,
           prefixIcon: Icon(prefixIcon, color: TColors.primary),
           border: InputBorder.none,
-          contentPadding:
-          const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 12,
+            vertical: 12,
+          ),
         ),
       ),
     );
@@ -606,7 +613,7 @@ class _BookingFormState extends State<BookingForm> {
             children: [
               const Text('Total Amount'),
               Text(
-                'PKR ${widget.flight.price.toStringAsFixed(0)}',
+                '${widget.currency} ${widget.totalPrice.toStringAsFixed(0)}',
                 style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -616,104 +623,107 @@ class _BookingFormState extends State<BookingForm> {
           ),
           ElevatedButton(
             onPressed: () async {
-              if (_formKey.currentState!.validate()) {
-                // // Print all booker details
-                // print('Booker Details:');
-                // print(
-                //     'First Name: ${bookingController.firstNameController.text}');
-                // print(
-                //     'Last Name: ${bookingController.lastNameController.text}');
-                // print('Email: ${bookingController.emailController.text}');
-                // print('Phone: ${bookingController.phoneController.text}');
-                // print('Address: ${bookingController.addressController.text}');
-                // print('City: ${bookingController.cityController.text}');
-                //
-                // // Print all adult details
-                // for (var i = 0; i < bookingController.adults.length; i++) {
-                //   print('Adult ${i + 1} Details:');
-                //   print(
-                //       'Title: ${bookingController.adults[i].titleController.text}');
-                //   print(
-                //       'First Name: ${bookingController.adults[i].firstNameController.text}');
-                //   print(
-                //       'Last Name: ${bookingController.adults[i].lastNameController.text}');
-                //   print(
-                //       'Date of Birth: ${bookingController.adults[i].dateOfBirthController.text}');
-                //   print(
-                //       'Phone: ${bookingController.adults[i].phoneController.text}');
-                //   print(
-                //       'Email: ${bookingController.adults[i].emailController.text}');
-                //   print(
-                //       'Nationality: ${bookingController.adults[i].nationalityController.text}');
-                //   print(
-                //       'Passport Number: ${bookingController.adults[i].passportController.text}');
-                //   print(
-                //       'Passport Expiry: ${bookingController.adults[i].passportExpiryController.text}');
-                // }
-                //
-                // // Print all child details
-                // for (var i = 0; i < bookingController.children.length; i++) {
-                //   print('Child ${i + 1} Details:');
-                //   print(
-                //       'Title: ${bookingController.children[i].titleController.text}');
-                //   print(
-                //       'First Name: ${bookingController.children[i].firstNameController.text}');
-                //   print(
-                //       'Last Name: ${bookingController.children[i].lastNameController.text}');
-                //   print(
-                //       'Date of Birth: ${bookingController.children[i].dateOfBirthController.text}');
-                //   print(
-                //       'Nationality: ${bookingController.children[i].nationalityController.text}');
-                //   print(
-                //       'Passport Number: ${bookingController.children[i].passportController.text}');
-                //   print(
-                //       'Passport Expiry: ${bookingController.children[i].passportExpiryController.text}');
-                // }
-                //
-                // // Print all infant details
-                // for (var i = 0; i < bookingController.infants.length; i++) {
-                //   print('Infant ${i + 1} Details:');
-                //   print(
-                //       'Title: ${bookingController.infants[i].titleController.text}');
-                //   print(
-                //       'First Name: ${bookingController.infants[i].firstNameController.text}');
-                //   print(
-                //       'Last Name: ${bookingController.infants[i].lastNameController.text}');
-                //   print(
-                //       'Date of Birth: ${bookingController.infants[i].dateOfBirthController.text}');
-                //   print(
-                //       'Nationality: ${bookingController.infants[i].nationalityController.text}');
-                //   print(
-                //       'Passport Number: ${bookingController.infants[i].passportController.text}');
-                //   print(
-                //       'Passport Expiry: ${bookingController.infants[i].passportExpiryController.text}');
-                // }
-                //
-                // // Get the booker's email and phone from the form
-                // final bookerEmail = bookingController.emailController.text;
-                // final bookerPhone = bookingController.phoneController.text;
+              if (_formKey.currentState!.validate() && termsAccepted) {
+                try {
+                  // Show loading
+                  Get.dialog(
+                    const Center(child: CircularProgressIndicator()),
+                    barrierDismissible: false,
+                  );
 
-                // Call the PNR request function
-                // final apiService = ApiServiceFlight();
-                // await apiService.createPNRRequest(
-                //   flight: widget.flight,
-                //   adults: bookingController.adults,
-                //   children: bookingController.children,
-                //   infants: bookingController.infants,
-                //   bookerEmail: bookerEmail,
-                //   bookerPhone: bookerPhone,
-                // );
+                  // Call the API to save booking
+                  final response = await AirBlueFlightApiService().saveAirBlueBooking(
+                    bookingController: bookingController,
+                    flight: widget.flight,
+                    returnFlight: widget.returnFlight,
+                    token: 'your_auth_token_here',
+                  );
 
-                // Optionally, you can navigate to a confirmation screen or show a success message
+                  // Hide loading
+                  Get.back();
+
+                  if (response['status'] == 200) {
+                    Get.snackbar(
+                      'Success',
+                      'Booking created successfully',
+                      backgroundColor: Colors.green,
+                      colorText: Colors.white,
+                    );
+
+                    try {
+                      print('Creating PNR for booking...'); // Debug print
+
+                      final pnrResponse = await AirBlueFlightApiService().createAirBluePNR(
+                        flight: widget.flight,
+                        returnFlight: widget.returnFlight,
+                        bookingController: bookingController,
+                        clientEmail: bookingController.emailController.text,
+                        clientPhone: bookingController.phoneController.text,
+                      );
+
+                      print('PNR created successfully: $pnrResponse'); // Debug print
+                      Get.snackbar(
+                        'Success',
+                        'PNR created successfully',
+                        backgroundColor: Colors.green,
+                        colorText: Colors.white,
+                      );
+
+                    } catch (e) {
+                      print('Error creating PNR but booking was saved: $e'); // Debug print
+                      // Return booking response even if PNR creation failed
+                    }
+
+                    Get.to(() => const FlightBookingDetailsScreen());
+                  } else {
+                    // Handle API success response with error status
+                    String errorMessage = response['message'] ?? 'Failed to create booking';
+                    if (response['errors'] != null) {
+                      errorMessage += '\n${(response['errors'] as Map).entries.map((e) {
+                            return '${e.key}: ${e.value}';
+                          }).join('\n')}';
+                    }
+                    Get.snackbar(
+                      'Error',
+                      errorMessage,
+                      backgroundColor: Colors.red,
+                      colorText: Colors.white,
+                      duration: const Duration(seconds: 5),
+                    );
+                  }
+                } on ApiException catch (e) {
+                  Get.back();
+                  String errorMessage = e.message;
+                  if (e.errors.isNotEmpty) {
+                    errorMessage += '\n' +
+                        e.errors.entries.map((e) {
+                          return '${e.key}: ${e.value}';
+                        }).join('\n');
+                  }
+                  Get.snackbar(
+                    'Error (${e.statusCode ?? 'Unknown'})',
+                    errorMessage,
+                    backgroundColor: Colors.red,
+                    colorText: Colors.white,
+                    duration: const Duration(seconds: 5),
+                  );
+                } catch (e) {
+                  Get.back();
+                  Get.snackbar(
+                    'Error',
+                    e.toString(),
+                    backgroundColor: Colors.red,
+                    colorText: Colors.white,
+                    duration: const Duration(seconds: 5),
+                  );
+                }
+              } else if (!termsAccepted) {
                 Get.snackbar(
-                  'Success',
-                  // 'PNR request created successfully',
-                  'Booking created successfully',
-                  backgroundColor: Colors.green,
+                  'Error',
+                  'Please accept terms and conditions',
+                  backgroundColor: Colors.red,
                   colorText: Colors.white,
                 );
-
-                Get.to(()=> const FlightBookingDetailsScreen());
               }
             },
             style: ElevatedButton.styleFrom(

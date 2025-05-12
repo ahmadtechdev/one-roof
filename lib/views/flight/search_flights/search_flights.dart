@@ -1,68 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:oneroof/views/flight/search_flights/search_flight_utils/airblue_flight_controller.dart';
+import 'package:oneroof/views/flight/search_flights/flight_package/airblue/airblue_flight_controller.dart';
 import 'package:oneroof/views/flight/search_flights/search_flight_utils/widgets/airblue_flight_card.dart';
 
 import '../../../utility/colors.dart';
-import 'search_flight_utils/flight_controller.dart';
+import 'flight_package/sabre/sabre_flight_controller.dart';
 import 'search_flight_utils/widgets/currency_dialog.dart';
 import 'search_flight_utils/widgets/flight_bottom_sheet.dart';
 import 'search_flight_utils/widgets/sabre_flight_card.dart';
 
 enum FlightScenario { oneWay, returnFlight, multiCity }
 
-class ReturnCaseScenario extends StatelessWidget {
-  final String stepNumber;
-  final String stepText;
-  final bool isActive;
 
-  const ReturnCaseScenario({
-    super.key,
-    required this.stepNumber,
-    required this.stepText,
-    this.isActive = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-
-      padding: const EdgeInsets.symmetric(horizontal: 8),
-      child: Row(
-        children: [
-          Container(
-            width: 20,
-            height: 20,
-            decoration: BoxDecoration(
-              color: isActive ? TColors.primary : TColors.grey,
-              shape: BoxShape.circle,
-              borderRadius: BorderRadius.circular(16),
-
-            ),
-
-            alignment: Alignment.center,
-            child: Text(
-              stepNumber,
-              style: const TextStyle(
-                color: TColors.background,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-          const SizedBox(width: 8),
-          Text(
-            stepText,
-            style: TextStyle(
-              color: isActive ? TColors.primary : TColors.grey,
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
 
 class FlightBookingPage extends StatelessWidget {
   final FlightScenario scenario;
@@ -269,7 +218,7 @@ class FlightBookingPage extends StatelessWidget {
 
     return Expanded(
       child: Obx(() {
-        // Handle cases when data is still loading
+        // Get loading states
         bool sabreLoading = flightController.isLoading.value;
         bool airBlueLoading = airBlueController.isLoading.value;
 
@@ -279,7 +228,10 @@ class FlightBookingPage extends StatelessWidget {
           ...flightController.filteredFlights
         ];
 
-        // If both APIs returned no results and neither is still loading
+        // Show loading only if BOTH are loading and we have no data
+        bool showInitialLoading = sabreLoading && airBlueLoading && combinedFlights.isEmpty;
+
+        // If we have no flights and neither is loading
         if (combinedFlights.isEmpty && !sabreLoading && !airBlueLoading) {
           return const Center(
             child: Text(
@@ -290,12 +242,28 @@ class FlightBookingPage extends StatelessWidget {
         }
 
         return ListView.builder(
-          // Add a key for better performance when list changes
           key: ValueKey('${airBlueController.flights.length}-${flightController.filteredFlights.length}'),
-          itemCount: combinedFlights.length + (sabreLoading || airBlueLoading ? 1 : 0),
+          itemCount: combinedFlights.length +
+              ((sabreLoading || airBlueLoading) && combinedFlights.isNotEmpty ? 1 : 0),
           itemBuilder: (context, index) {
-            // Show loading indicator at the bottom if needed
-            if ( (sabreLoading || airBlueLoading)) {
+            // Show initial loading if no data yet
+            if (showInitialLoading) {
+              return const Padding(
+                padding: EdgeInsets.symmetric(vertical: 16.0),
+                child: Center(
+                  child: Column(
+                    children: [
+                      CircularProgressIndicator(strokeWidth: 2),
+                      SizedBox(height: 8),
+                      Text('Loading flights...', style: TextStyle(color: TColors.grey))
+                    ],
+                  ),
+                ),
+              );
+            }
+
+            // Show loading more indicator at the bottom if we already have some flights
+            if ((sabreLoading || airBlueLoading) && index == combinedFlights.length) {
               return const Padding(
                 padding: EdgeInsets.symmetric(vertical: 16.0),
                 child: Center(

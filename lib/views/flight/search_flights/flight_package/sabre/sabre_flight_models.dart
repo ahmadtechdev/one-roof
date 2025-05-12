@@ -1,5 +1,5 @@
-import '../../flight_package/sabre_package_modal.dart';
-import '../flight_controller.dart';
+import 'sabre_package_modal.dart';
+import 'sabre_flight_controller.dart';
 
 class Flight {
   final String imgPath;
