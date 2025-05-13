@@ -48,7 +48,7 @@ class BookingModel {
       case "0":
         return "Error";
       default:
-        return "Unknown";
+        return "Issuance Request";
     }
   }
 

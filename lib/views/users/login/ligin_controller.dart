@@ -1,7 +1,6 @@
 import 'package:get/get.dart';
 import 'package:flutter/material.dart';
 import '../../../b2b/agent_dashboard/agent_dashboard.dart';
-import '../../../common/bottom_navbar.dart';
 import 'login_api_service/login_api.dart';
 
 class LoginController extends GetxController {
@@ -12,6 +11,19 @@ class LoginController extends GetxController {
 
   final isLoading = false.obs;
   final errorMessage = ''.obs;
+
+  @override
+  void onInit() {
+    super.onInit();
+    checkLoginStatus();
+  }
+
+  Future<void> checkLoginStatus() async {
+    final isLoggedIn = await authController.isLoggedIn();
+    if (isLoggedIn) {
+      Get.off(() => AgentDashboard());
+    }
+  }
 
   void resetError() {
     errorMessage.value = '';
@@ -31,11 +43,12 @@ class LoginController extends GetxController {
         password: passwordController.text,
       );
 
+
+
       isLoading.value = false;
 
       if (result['success']) {
-        // Navigate to home screen on successful login
-        Get.to(() => AgentDashboard());
+        Get.off(() => AgentDashboard());
       } else {
         errorMessage.value = result['message'];
       }

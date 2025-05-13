@@ -1,5 +1,4 @@
 import 'dart:convert';
-
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
@@ -12,10 +11,12 @@ class AuthController extends GetxController {
   // Keys for SharedPreferences
   static const String _tokenKey = 'user_auth_token';
   static const String _tokenExpiryKey = 'user_token_expiry';
+  static const String _userDataKey = 'user_data';
 
   // Observable values
   final RxBool isLoading = false.obs;
   final RxBool isLoggedInValue = false.obs;
+  final RxMap<String, dynamic> userData = <String, dynamic>{}.obs;
 
   @override
   void onInit() {
@@ -40,9 +41,17 @@ class AuthController extends GetxController {
     checkLoginStatus();
   }
 
-  // Check login status
+  // Check login status and load user data if logged in
   Future<void> checkLoginStatus() async {
-    isLoggedInValue.value = await isLoggedIn();
+    final loginStatus = await isLoggedIn();
+    isLoggedInValue.value = loginStatus;
+
+    if (loginStatus) {
+      final data = await getUserData();
+      if (data != null) {
+        userData.value = data;
+      }
+    }
   }
 
   // Check if token is valid or get a new one if needed
@@ -69,21 +78,38 @@ class AuthController extends GetxController {
     return token; // Valid token
   }
 
-  // Store token with expiry
-  Future<void> _storeTokenWithExpiry(String token, int expiryTimestamp) async {
+  // Store token with expiry and user data
+  Future<void> _storeAuthData(
+    String token,
+    int expiryTimestamp,
+    Map<String, dynamic> userData,
+  ) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_tokenKey, token);
     await prefs.setInt(_tokenExpiryKey, expiryTimestamp);
+    await prefs.setString(_userDataKey, jsonEncode(userData));
 
     if (kDebugMode) {
       final expiryDate = DateTime.fromMillisecondsSinceEpoch(
         expiryTimestamp * 1000,
       );
       print('Token stored, expires on: $expiryDate');
+      print('User data stored: $userData');
     }
 
-    // Update login status
+    // Update login status and user data
     isLoggedInValue.value = true;
+    this.userData.value = userData;
+  }
+
+  // Get stored user data
+  Future<Map<String, dynamic>?> getUserData() async {
+    final prefs = await SharedPreferences.getInstance();
+    final userDataString = prefs.getString(_userDataKey);
+    if (userDataString != null) {
+      return jsonDecode(userDataString);
+    }
+    return null;
   }
 
   Future<Map<String, dynamic>> login({
@@ -99,18 +125,20 @@ class AuthController extends GetxController {
       );
 
       if (response.statusCode == 200 && response.data != null) {
-        // Parse token and expiry
+        // Parse token, expiry and user data
         final token = response.data['token'];
         final expiryTimestamp = response.data['expire'];
+        final userData = response.data['UserData'] ?? {};
 
         if (token != null && expiryTimestamp != null) {
-          // Store token with expiry
-          await _storeTokenWithExpiry(token, expiryTimestamp);
+          // Store token with expiry and user data
+          await _storeAuthData(token, expiryTimestamp, userData);
 
           isLoading.value = false;
           return {
             'success': true,
             'token': token,
+            'userData': userData,
             'message': 'Login successful',
           };
         }
@@ -141,6 +169,86 @@ class AuthController extends GetxController {
         'message': 'An unexpected error occurred: ${e.toString()}',
       };
     }
+  }
+
+  Future<void> logout() async {
+    isLoading.value = true;
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_tokenKey);
+    await prefs.remove(_tokenExpiryKey);
+    await prefs.remove(_userDataKey);
+
+    // Reset login status and user data
+    isLoggedInValue.value = false;
+    userData.value = {};
+    isLoading.value = false;
+  }
+
+  // Method to check if user is logged in with valid token
+  Future<bool> isLoggedIn() async {
+    final token = await getValidToken();
+    return token != null;
+  }
+
+  // Helper method to handle Dio errors consistently
+  Map<String, dynamic> _handleDioError(DioException e, String operation) {
+    String errorMessage;
+
+    switch (e.type) {
+      case DioExceptionType.connectionTimeout:
+        errorMessage =
+            'Connection timeout. Please check your internet connection.';
+        break;
+      case DioExceptionType.receiveTimeout:
+        errorMessage =
+            'Server took too long to respond. Please try again later.';
+        break;
+      case DioExceptionType.sendTimeout:
+        errorMessage =
+            'Request timeout. Please check your internet connection.';
+        break;
+      case DioExceptionType.badResponse:
+        if (e.response != null) {
+          // Try to extract error message from response
+          if (e.response!.data is Map) {
+            errorMessage =
+                e.response!.data['message'] ??
+                e.response!.data['error'] ??
+                '$operation failed with status: ${e.response!.statusCode}';
+          } else {
+            errorMessage =
+                '$operation failed with status: ${e.response!.statusCode}';
+          }
+        } else {
+          errorMessage = 'Bad server response';
+        }
+        break;
+      case DioExceptionType.cancel:
+        errorMessage = 'Request was cancelled';
+        break;
+      case DioExceptionType.connectionError:
+        errorMessage = 'No internet connection. Please check your network.';
+        break;
+      case DioExceptionType.unknown:
+      default:
+        if (e.message != null && e.message!.contains('SocketException')) {
+          errorMessage = 'No internet connection. Please check your network.';
+        } else {
+          errorMessage = 'An unexpected error occurred: ${e.message}';
+        }
+    }
+
+    // Log the error in debug mode
+    if (kDebugMode) {
+      print('$operation API Error: $errorMessage');
+      if (e.response != null) {
+        print('Response status: ${e.response!.statusCode}');
+        print('Response data: ${e.response!.data}');
+      }
+    }
+
+    return {'success': false, 'message': errorMessage};
   }
 
   Future<Map<String, dynamic>> register({
@@ -238,84 +346,6 @@ class AuthController extends GetxController {
         'message': 'Registration failed: ${e.toString()}',
       };
     }
-  }
-
-  // Helper method to handle Dio errors consistently
-  Map<String, dynamic> _handleDioError(DioException e, String operation) {
-    String errorMessage;
-
-    switch (e.type) {
-      case DioExceptionType.connectionTimeout:
-        errorMessage =
-            'Connection timeout. Please check your internet connection.';
-        break;
-      case DioExceptionType.receiveTimeout:
-        errorMessage =
-            'Server took too long to respond. Please try again later.';
-        break;
-      case DioExceptionType.sendTimeout:
-        errorMessage =
-            'Request timeout. Please check your internet connection.';
-        break;
-      case DioExceptionType.badResponse:
-        if (e.response != null) {
-          // Try to extract error message from response
-          if (e.response!.data is Map) {
-            errorMessage =
-                e.response!.data['message'] ??
-                e.response!.data['error'] ??
-                '$operation failed with status: ${e.response!.statusCode}';
-          } else {
-            errorMessage =
-                '$operation failed with status: ${e.response!.statusCode}';
-          }
-        } else {
-          errorMessage = 'Bad server response';
-        }
-        break;
-      case DioExceptionType.cancel:
-        errorMessage = 'Request was cancelled';
-        break;
-      case DioExceptionType.connectionError:
-        errorMessage = 'No internet connection. Please check your network.';
-        break;
-      case DioExceptionType.unknown:
-      default:
-        if (e.message != null && e.message!.contains('SocketException')) {
-          errorMessage = 'No internet connection. Please check your network.';
-        } else {
-          errorMessage = 'An unexpected error occurred: ${e.message}';
-        }
-    }
-
-    // Log the error in debug mode
-    if (kDebugMode) {
-      print('$operation API Error: $errorMessage');
-      if (e.response != null) {
-        print('Response status: ${e.response!.statusCode}');
-        print('Response data: ${e.response!.data}');
-      }
-    }
-
-    return {'success': false, 'message': errorMessage};
-  }
-
-  // Method to check if user is logged in with valid token
-  Future<bool> isLoggedIn() async {
-    final token = await getValidToken();
-    return token != null;
-  }
-
-  Future<void> logout() async {
-    isLoading.value = true;
-
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove(_tokenKey);
-    await prefs.remove(_tokenExpiryKey);
-
-    // Update login status
-    isLoggedInValue.value = false;
-    isLoading.value = false;
   }
 
   // Add this method to your AuthController class

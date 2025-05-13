@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:get/utils.dart';
 import 'package:oneroof/b2b/all_flight_booking/all_flight_booking.dart';
 import 'package:oneroof/b2b/all_group_booking/all_group_booking.dart';
 import 'package:oneroof/utility/colors.dart';
+import 'package:oneroof/views/home/home_screen.dart';
+import 'package:oneroof/views/users/login/login.dart';
+import 'package:oneroof/views/users/login/login_api_service/login_api.dart';
 
 import '../all_hotel_booking/all_hotel_booking.dart';
 
@@ -16,16 +18,62 @@ class AgentDashboard extends StatefulWidget {
 
 class _AgentDashboardState extends State<AgentDashboard> {
   final _formKey = GlobalKey<FormState>();
+  final authController = Get.find<AuthController>();
+
+  // Initialize with empty map
+  Map<String, dynamic> userData = {};
+  bool isLoading = true;
 
   // Controllers for form fields
-  final _agencyNameController = TextEditingController(text: "Journey Online");
-  final _emailController = TextEditingController(text: "tech@sastayhotels.pk");
-  final _contactPersonController = TextEditingController(
-    text: "Journey Online",
-  );
-  final _phoneController = TextEditingController(text: "+92 3377513");
-  final _cityController = TextEditingController(text: "Faisalabad");
-  final _countryController = TextEditingController(text: "Pakistan");
+  late TextEditingController _agencyNameController;
+  late TextEditingController _emailController;
+  late TextEditingController _contactPersonController;
+  late TextEditingController _phoneController;
+  late TextEditingController _cityController;
+  late TextEditingController _countryController;
+
+  @override
+  void initState() {
+    super.initState();
+    _initializeData();
+  }
+
+  Future<void> _initializeData() async {
+    final data = await authController.getUserData();
+    if (data != null) {
+      setState(() {
+        userData = data;
+        _initializeControllers();
+        isLoading = false;
+      });
+    } else {
+      setState(() {
+        _initializeControllers();
+        isLoading = false;
+      });
+    }
+  }
+
+  void _initializeControllers() {
+    _agencyNameController = TextEditingController(
+      text: userData['cs_company'] ?? "Journey Online",
+    );
+    _emailController = TextEditingController(
+      text: userData['cs_email'] ?? "tech@sastayhotels.pk",
+    );
+    _contactPersonController = TextEditingController(
+      text: userData['cs_fname'] ?? "Journey Online",
+    );
+    _phoneController = TextEditingController(
+      text: userData['cs_phone'] ?? "+92 3377513",
+    );
+    _cityController = TextEditingController(
+      text: userData['cs_city'] ?? "Faisalabad",
+    );
+    _countryController = TextEditingController(
+      text: userData['cs_country'] ?? "Pakistan",
+    );
+  }
 
   @override
   void dispose() {
@@ -40,6 +88,13 @@ class _AgentDashboardState extends State<AgentDashboard> {
 
   @override
   Widget build(BuildContext context) {
+    if (isLoading) {
+      return Scaffold(
+        backgroundColor: TColors.background,
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
     return Scaffold(
       backgroundColor: TColors.background,
       appBar: AppBar(
@@ -67,7 +122,7 @@ class _AgentDashboardState extends State<AgentDashboard> {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 30),
-      child: const Column(
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
@@ -78,7 +133,7 @@ class _AgentDashboardState extends State<AgentDashboard> {
               color: TColors.secondary,
             ),
           ),
-          SizedBox(height: 8),
+          const SizedBox(height: 8),
           Text(
             'Keep your agency information up to date',
             style: TextStyle(fontSize: 14, color: TColors.grey),
@@ -155,6 +210,8 @@ class _AgentDashboardState extends State<AgentDashboard> {
       ),
     );
   }
+
+  // ... rest of your existing methods remain the same ...
 
   Widget _buildFormRow(String label, Widget field) {
     return Column(
@@ -310,14 +367,21 @@ class _AgentDashboardState extends State<AgentDashboard> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  const CircleAvatar(
+                  CircleAvatar(
                     backgroundColor: TColors.white,
                     radius: 30,
-                    child: Icon(Icons.person, size: 30, color: TColors.primary),
+                    child:
+                        userData['cs_logo'] != null
+                            ? Image.network(userData['cs_logo'])
+                            : Icon(
+                              Icons.person,
+                              size: 30,
+                              color: TColors.primary,
+                            ),
                   ),
                   const SizedBox(height: 10),
-                  const Text(
-                    'Journey Online',
+                  Text(
+                    userData['cs_company'] ?? 'Journey Online',
                     style: TextStyle(
                       color: TColors.white,
                       fontSize: 18,
@@ -325,8 +389,8 @@ class _AgentDashboardState extends State<AgentDashboard> {
                     ),
                   ),
                   Text(
-                    _emailController.text,
-                    style: const TextStyle(color: TColors.white, fontSize: 12),
+                    userData['cs_email'] ?? 'tech@sastayhotels.pk',
+                    style: TextStyle(color: TColors.white, fontSize: 12),
                   ),
                 ],
               ),
@@ -336,16 +400,15 @@ class _AgentDashboardState extends State<AgentDashboard> {
               Get.to(() => AllFlightBookingScreen());
             }),
             _buildDrawerItem(Icons.hotel, 'Hotel Bookings', false, () {
-              Get.to(()=>AllHotelBooking());
+              Get.to(() => AllHotelBooking());
             }),
             _buildDrawerItem(Icons.group, 'All Group Bookings', false, () {
               Get.to(() => AllGroupBooking());
             }),
-            _buildDrawerItem(Icons.account_balance, 'Accounts'),
-            _buildDrawerItem(Icons.account_balance_wallet, 'Bank Details'),
-            _buildDrawerItem(Icons.person, 'My Profile'),
-            _buildDrawerItem(Icons.password, 'Change Password'),
-            _buildDrawerItem(Icons.logout, 'Logout'),
+            _buildDrawerItem(Icons.logout, 'Logout', false, () async {
+              await authController.logout();
+              Get.offAll(() => HomeScreen());
+            }),
           ],
         ),
       ),
