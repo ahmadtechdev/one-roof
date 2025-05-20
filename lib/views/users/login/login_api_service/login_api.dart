@@ -152,6 +152,7 @@ class AuthController extends GetxController {
             response.data['error'] ??
             'Login failed with status code: ${response.statusCode}';
       }
+      
 
       isLoading.value = false;
       return {

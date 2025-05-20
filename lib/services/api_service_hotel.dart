@@ -266,7 +266,38 @@ class ApiServiceHotel extends GetxService {
 
       if (response.statusCode == 200) {
         print('Prebook Successful: ${response.data}');
-        return response.data as Map<String, dynamic>;
+
+        // Extract and print the condition list
+        final data = response.data as Map<String, dynamic>;
+        final hotel = data['hotel'] as Map<String, dynamic>?;
+        if (hotel != null) {
+          final rooms = hotel['rooms'] as Map<String, dynamic>?;
+          if (rooms != null) {
+            final roomList = rooms['room'] as List<dynamic>?;
+            if (roomList != null && roomList.isNotEmpty) {
+              for (int i = 0; i < roomList.length; i++) {
+                final room = roomList[i] as Map<String, dynamic>;
+                final policies = room['policies'] as Map<String, dynamic>?;
+                if (policies != null) {
+                  final policyList = policies['policy'] as List<dynamic>?;
+                  if (policyList != null) {
+                    for (int j = 0; j < policyList.length; j++) {
+                      final policy = policyList[j] as Map<String, dynamic>;
+                      final conditions = policy['condition'] as List<dynamic>?;
+                      if (conditions != null) {
+                        print(
+                          'Room ${i + 1} Policy ${j + 1} Conditions: $conditions',
+                        );
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+
+        return data;
       } else {
         print('Prebook Failed: ${response.statusMessage}');
       }
@@ -355,12 +386,13 @@ class ApiServiceHotel extends GetxService {
   Future<bool> bookHotel(Map<String, dynamic> requestBody) async {
     final BookingController bookingcontroller = Get.put(BookingController());
 
+    // Update to HTTPS if supported, or keep HTTP if that's what the server requires
     const String bookingEndpoint =
-        'https://sastayhotels.pk/mobile_thankyou.php';
+        'https://onerooftravel.net/mobile_thankyou.php';
 
     try {
       // Log the request for debugging
-      print('\n=== SENDING BOOKING REQUEST1 ===');
+      print('\n=== SENDING BOOKING REQUEST ===');
       print('Endpoint: $bookingEndpoint');
       print('Request Body: ${json.encode(requestBody)}');
 
@@ -372,6 +404,10 @@ class ApiServiceHotel extends GetxService {
           validateStatus: (status) {
             return status! < 500;
           },
+          // Enable following redirects
+          followRedirects: true,
+          // Maximum number of redirects to follow
+          maxRedirects: 5,
         ),
       );
 
@@ -380,7 +416,9 @@ class ApiServiceHotel extends GetxService {
       print('Status Code: ${response.statusCode}');
       print('Response Data: ${response.data}');
 
-      if (response.statusCode == 200) {
+      if (response.statusCode != null &&
+          response.statusCode! >= 200 &&
+          response.statusCode! < 300) {
         if (response.data != null) {
           // Extract and store booking number
           if (response.data is Map && response.data['BookingNO'] != null) {
