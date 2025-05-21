@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
+import 'package:oneroof/views/users/login/login_api_service/login_api.dart';
 import '../../../../services/api_service_hotel.dart';
 import '../../hotel/guests/guests_controller.dart';
 import '../../hotel/hotel_date_controller.dart';
@@ -86,6 +87,24 @@ class BookingController extends GetxController {
     super.onInit();
     // Initialize with existing GuestsController data
     initializeRoomGuests();
+    loadUserEmail();
+  }
+
+  // New method to load user email from shared preferences
+  Future<void> loadUserEmail() async {
+    try {
+      // Import the AuthController to access user data
+      final authController = Get.find<AuthController>();
+      final userData = await authController.getUserData();
+      
+
+      if (userData != null && userData['cs_email'] != null) {
+        // Set the email controller with the user's email
+        emailController.text = userData['cs_email'];
+      }
+    } catch (e) {
+      print('Error loading user email: $e');
+    }
   }
 
   void initializeRoomGuests() {
