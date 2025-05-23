@@ -23,37 +23,39 @@ class TravelDataController extends GetxController {
 
   // Modification for data_controller.dart
 
-Future<void> loadAirlines() async {
-  try {
-    // Use combined airlines method
-    final List<dynamic> airlineData = await apiController.fetchCombinedAirlines();
-    print("Combined airline data received: ${airlineData.length} airlines");
+  Future<void> loadAirlines() async {
+    try {
+      // Use combined airlines method
+      final List<dynamic> airlineData =
+          await apiController.fetchCombinedAirlines_logos();
+      print("Combined airline data received: ${airlineData.length} airlines");
 
-    airlines.value =
-        airlineData
-            .map((item) {
-              // Ensure item is a Map<String, dynamic>
-              if (item is Map<String, dynamic>) {
-                try {
-                  return Airline.fromJson(item);
-                } catch (e) {
-                  print('Error parsing airline: $e');
-                  print('Item data: $item');
+      airlines.value =
+          airlineData
+              .map((item) {
+                // Ensure item is a Map<String, dynamic>
+                if (item is Map<String, dynamic>) {
+                  try {
+                    return Airline.fromJson(item);
+                  } catch (e) {
+                    print('Error parsing airline: $e');
+                    print('Item data: $item');
+                    return null;
+                  }
+                } else {
+                  print('Invalid airline data type: ${item.runtimeType}');
                   return null;
                 }
-              } else {
-                print('Invalid airline data type: ${item.runtimeType}');
-                return null;
-              }
-            })
-            .whereType<Airline>()
-            .toList(); // Filter out null values
+              })
+              .whereType<Airline>()
+              .toList(); // Filter out null values
 
-    print("Processed airlines: ${airlines.length}");
-  } catch (e) {
-    print('Error loading airlines: $e');
+      print("Processed airlines: ${airlines.length}");
+    } catch (e) {
+      print('Error loading airlines: $e');
+    }
   }
-}
+
   // Method to load sectors
   Future<void> loadSectors() async {
     try {
@@ -83,7 +85,7 @@ Future<void> loadAirlines() async {
   // Get airline by ID
   Airline? getAirlineById(int id) {
     // loadAirlines();
-    print("id check:" );
+    print("id check:");
     print(airlines);
     try {
       return airlines.firstWhere((airline) => airline.id == id);

@@ -19,8 +19,10 @@ class GroupTicketingController extends GetxController {
   }
 
   // Fetch Airlines - fixed to return List instead of Map
-  Future<List<dynamic>> fetchAirlines() async {
+  Future<List<dynamic>> fetchtravelnetworkAirlines() async {
     try {
+
+      
       var response = await dio1.get(
         'https://travelnetwork.pk/api/available/airlines',
         options: dio.Options(headers: getHeaders()),
@@ -166,18 +168,18 @@ class GroupTicketingController extends GetxController {
           "agent_notes": agentNotes ?? "",
         },
         "booking_details":
-        passengers
-            .map(
-              (passenger) => {
-            "surname": passenger['lastName'],
-            "given_name": passenger['firstName'],
-            "title": passenger['title'],
-            "passport_no": passenger['passportNumber'] ?? "",
-            "dob": passenger['dateOfBirth'] ?? "",
-            "doe": passenger['passportExpiry'] ?? "",
-          },
-        )
-            .toList(),
+            passengers
+                .map(
+                  (passenger) => {
+                    "surname": passenger['lastName'],
+                    "given_name": passenger['firstName'],
+                    "title": passenger['title'],
+                    "passport_no": passenger['passportNumber'] ?? "",
+                    "dob": passenger['dateOfBirth'] ?? "",
+                    "doe": passenger['passportExpiry'] ?? "",
+                  },
+                )
+                .toList(),
         "group_price_detail_id": groupPriceDetailId,
       };
 
@@ -226,7 +228,7 @@ class GroupTicketingController extends GetxController {
         return {
           'success': false,
           'message':
-          'Request timed out. Please check your internet connection and try again.',
+              'Request timed out. Please check your internet connection and try again.',
           'error_details': e.message,
           'data': null,
         };
@@ -306,7 +308,7 @@ class GroupTicketingController extends GetxController {
       'Accept': 'application/json',
       'Authorization': 'Bearer $alhaidertoken',
       'Cookie':
-      'XSRF-TOKEN=your_xsrf_token_here; al_haider_international_travels_tours_session=your_session_token_here',
+          'XSRF-TOKEN=your_xsrf_token_here; al_haider_international_travels_tours_session=your_session_token_here',
     };
 
     try {
@@ -346,10 +348,10 @@ class GroupTicketingController extends GetxController {
   }
 
   // Add method to fetch all airlines from both services
-  Future<List<dynamic>> fetchCombinedAirlines() async {
+  Future<List<dynamic>> fetchCombinedAirlines_logos() async {
     try {
       // Fetch airlines from both APIs concurrently
-      final travelNetworkFuture = fetchAirlines();
+      final travelNetworkFuture = fetchtravelnetworkAirlines();
       final alhaiderFuture = fetchAlhaiderAirlines();
 
       // Wait for both to complete

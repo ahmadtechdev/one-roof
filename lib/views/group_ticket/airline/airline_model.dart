@@ -25,7 +25,8 @@ class Airline {
       logoUrl: json['logo_url'],
     );
   }
-
+ 
+ 
   Map<String, dynamic> toJson() {
     return {
       'id': id,

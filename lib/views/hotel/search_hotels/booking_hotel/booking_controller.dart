@@ -96,7 +96,6 @@ class BookingController extends GetxController {
       // Import the AuthController to access user data
       final authController = Get.find<AuthController>();
       final userData = await authController.getUserData();
-      
 
       if (userData != null && userData['cs_email'] != null) {
         // Set the email controller with the user's email
