@@ -21,8 +21,6 @@ class GroupTicketingController extends GetxController {
   // Fetch Airlines - fixed to return List instead of Map
   Future<List<dynamic>> fetchtravelnetworkAirlines() async {
     try {
-
-      
       var response = await dio1.get(
         'https://travelnetwork.pk/api/available/airlines',
         options: dio.Options(headers: getHeaders()),
@@ -39,6 +37,8 @@ class GroupTicketingController extends GetxController {
       return [];
     }
   }
+
+
 
   // Fetch Sectors - fixed to return List instead of Map
   Future<List<dynamic>> fetchSectors() async {
@@ -60,7 +60,8 @@ class GroupTicketingController extends GetxController {
     }
   }
 
-  Future<List<dynamic>> fetchGroups(String type) async {
+  Future<List<dynamic>> fetchGroups(String type) 
+  async {
     selectedRegion.value = type;
     print("Fetching groups for region: $type");
 
@@ -368,6 +369,7 @@ class GroupTicketingController extends GetxController {
       return [];
     }
   }
+  
 
   // Modify fetchAlhaiderAirlines to return a List
   Future<List<dynamic>> fetchAlhaiderAirlines() async {

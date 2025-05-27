@@ -57,17 +57,11 @@ class _FlightCardState extends State<FlightCard>
       final data = await apiService.getMargin();
       marginData.value = data;
 
-
-      print("flight price: ");
-      print(widget.flight.price);
       // Calculate final price with margin
       finalPrice.value = apiService.calculatePriceWithMargin(
         widget.flight.price,
         data,
       );
-
-      print("flight price after margin: ");
-      print(finalPrice.value);
     } catch (e) {
       print('Error fetching margin data: $e');
       // If margin fetch fails, use original price

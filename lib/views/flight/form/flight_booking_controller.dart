@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
+import 'package:oneroof/views/flight/search_flights/flight_package/pia/pia_flight_controller.dart';
 
 import '../../../services/api_service_flight.dart';
+import '../../../services/api_service_pia.dart';
 import '../../../widgets/city_selection_bottom_sheet.dart';
 import '../../../widgets/class_selection_bottom_sheet.dart';
 import '../../../widgets/travelers_selection_bottom_sheet.dart';
@@ -81,6 +83,7 @@ class FlightBookingController extends GetxController {
   // API Service and Flight Controller
   final ApiServiceFlight apiServiceFlight = Get.put(ApiServiceFlight());
   final FlightController flightController = Get.put(FlightController());
+  final PIAFlightApiService piaFlightApiService = Get.put(PIAFlightApiService());
 
   // Getter for formatted origins string
   String get formattedOrigins =>
@@ -261,6 +264,9 @@ class FlightBookingController extends GetxController {
   final AirBlueFlightController airBlueFlightController = Get.put(
     AirBlueFlightController(),
   );
+  final PIAFlightController piaFlightController = Get.put(
+    PIAFlightController(),
+  );
 
   // Update the searchFlights method
   //   Future<void> searchFlights() async {
@@ -402,6 +408,47 @@ class FlightBookingController extends GetxController {
   //       isSearching.value = false;
   //     }
   //   }
+  // Update the searchFlights method to include PIA API call
+// Add this method to handle PIA API call
+  Future<void> _callPiaApi({
+    required String fromCity,
+    required String toCity,
+    required String departureDate,
+    required int adultCount,
+    required int childCount,
+    required int infantCount,
+    required String tripType,
+    String? returnDate,
+    List<Map<String, String>>? multiCitySegments,
+  }) async {
+    try {
+      final result = await piaFlightApiService.piaFlightAvailability(
+        fromCity: fromCity,
+        toCity: toCity,
+        departureDate: departureDate,
+        adultCount: adultCount,
+        childCount: childCount,
+        infantCount: infantCount,
+        tripType: tripType,
+        returnDate: returnDate,
+        multiCitySegments: multiCitySegments,
+      );
+
+      if (result.containsKey('error')) {
+        piaFlightController.setErrorMessage(result['error']);
+      } else {
+        piaFlightController.loadFlights(result);
+      }
+
+      print("pia flight check");
+      print(piaFlightController.filteredFlights);
+    } catch (e) {
+      debugPrint('PIA API error: $e');
+      piaFlightController.setErrorMessage('PIA API error: ${e.toString()}');
+    }
+  }
+
+// Update the searchFlights method to include proper PIA API calls
   Future<void> searchFlights() async {
     try {
       isSearching.value = true;
@@ -409,8 +456,9 @@ class FlightBookingController extends GetxController {
       // Clear previous results
       flightController.clearFlights();
       airBlueFlightController.clearFlights();
+      piaFlightController.clearFlights();
 
-      // Prepare parameters (same as before)
+      // Prepare parameters
       String origin = '';
       String destination = '';
       String formattedDates = '';
@@ -438,56 +486,83 @@ class FlightBookingController extends GetxController {
         origin = ',${fromCity.value}';
         destination = ',${toCity.value}';
         formattedDates =
-            ',${_formatDateForAPI(DateFormat('dd/MM/yyyy').parse(departureDate.value))}';
+        ',${_formatDateForAPI(DateFormat('dd/MM/yyyy').parse(departureDate.value))}';
         if (tripType.value == TripType.roundTrip) {
           formattedDates +=
-              ',${_formatDateForAPI(DateFormat('dd/MM/yyyy').parse(returnDate.value))}';
+          ',${_formatDateForAPI(DateFormat('dd/MM/yyyy').parse(returnDate.value))}';
         }
       }
 
-      // Call both APIs but don't wait for both
-      _callSabreApi(
-        type:
-            tripType.value == TripType.multiCity
-                ? 2
-                : (tripType.value == TripType.roundTrip ? 1 : 0),
-        origin: origin,
-        destination: destination,
-        depDate: formattedDates,
-        adult: adultCount.value,
-        child: childrenCount.value,
-        infant: infantCount.value,
-        cabin: travelClass.value.toUpperCase(),
-      );
-
-      _callAirBlueApi(
-        type:
-            tripType.value == TripType.multiCity
-                ? 2
-                : (tripType.value == TripType.roundTrip ? 1 : 0),
-        origin: origin,
-        destination: destination,
-        depDate: formattedDates,
-        adult: adultCount.value,
-        child: childrenCount.value,
-        infant: infantCount.value,
-        cabin: travelClass.value,
-      );
-
-      // Navigate immediately to results page
-      Get.to(
-        () => FlightBookingPage(
-          scenario:
-              tripType.value == TripType.roundTrip
-                  ? FlightScenario.returnFlight
-                  : (tripType.value == TripType.multiCity
-                      ? FlightScenario.multiCity
-                      : FlightScenario.oneWay),
+      // Call all APIs in parallel
+      final futures = [
+        _callSabreApi(
+          type: tripType.value == TripType.multiCity
+              ? 2
+              : (tripType.value == TripType.roundTrip ? 1 : 0),
+          origin: origin,
+          destination: destination,
+          depDate: formattedDates,
+          adult: adultCount.value,
+          child: childrenCount.value,
+          infant: infantCount.value,
+          cabin: travelClass.value.toUpperCase(),
         ),
-      );
+        _callAirBlueApi(
+          type: tripType.value == TripType.multiCity
+              ? 2
+              : (tripType.value == TripType.roundTrip ? 1 : 0),
+          origin: origin,
+          destination: destination,
+          depDate: formattedDates,
+          adult: adultCount.value,
+          child: childrenCount.value,
+          infant: infantCount.value,
+          cabin: travelClass.value,
+        ),
+      ];
+
+      // Add PIA API call based on trip type
+      if (tripType.value == TripType.multiCity && cityPairs.isNotEmpty) {
+        futures.add(_callPiaApi(
+          fromCity: cityPairs.first.fromCity.value,
+          toCity: cityPairs.first.toCity.value,
+          departureDate: _formatDateForAPI(
+              DateFormat('dd/MM/yyyy').parse(cityPairs.first.departureDate.value)),
+          adultCount: adultCount.value,
+          childCount: childrenCount.value,
+          infantCount: infantCount.value,
+          tripType: 'MULTI_DIRECTIONAL',
+        ));
+      } else {
+        futures.add(_callPiaApi(
+          fromCity: fromCity.value,
+          toCity: toCity.value,
+          departureDate: _formatDateForAPI(
+              DateFormat('dd/MM/yyyy').parse(departureDate.value)),
+          adultCount: adultCount.value,
+          childCount: childrenCount.value,
+          infantCount: infantCount.value,
+          tripType: tripType.value == TripType.roundTrip ? 'ROUND_TRIP' : 'ONE_WAY',
+          returnDate: tripType.value == TripType.roundTrip
+              ? _formatDateForAPI(DateFormat('dd/MM/yyyy').parse(returnDate.value))
+              : null,
+        ));
+      }
+
+      // Wait for all API calls to complete
+      await Future.wait(futures);
+
+      // Navigate to results page
+      Get.to(() => FlightBookingPage(
+        scenario: tripType.value == TripType.roundTrip
+            ? FlightScenario.returnFlight
+            : (tripType.value == TripType.multiCity
+            ? FlightScenario.multiCity
+            : FlightScenario.oneWay),
+      ));
     } catch (e, stackTrace) {
-      print('Error in searchFlights: $e');
-      print('Stack trace: $stackTrace');
+      debugPrint('Error in searchFlights: $e');
+      debugPrint('Stack trace: $stackTrace');
       Get.snackbar(
         'Error',
         'Error searching flights: $e',
@@ -509,7 +584,7 @@ class FlightBookingController extends GetxController {
     required int child,
     required int infant,
     required String cabin,
-  }) async {
+  }) async   {
     try {
       final result = await apiServiceFlight.searchFlights(
         type: type,

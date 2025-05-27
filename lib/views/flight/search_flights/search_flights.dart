@@ -4,9 +4,12 @@ import 'package:oneroof/views/flight/search_flights/flight_package/airblue/airbl
 import 'package:oneroof/views/flight/search_flights/search_flight_utils/widgets/airblue_flight_card.dart';
 
 import '../../../utility/colors.dart';
+import 'flight_package/pia/pia_flight_controller.dart';
+import 'flight_package/pia/pia_flight_model.dart';
 import 'flight_package/sabre/sabre_flight_controller.dart';
 import 'search_flight_utils/widgets/currency_dialog.dart';
 import 'search_flight_utils/widgets/flight_bottom_sheet.dart';
+import 'search_flight_utils/widgets/pia_flight_card.dart';
 import 'search_flight_utils/widgets/sabre_flight_card.dart';
 
 enum FlightScenario { oneWay, returnFlight, multiCity }
@@ -212,8 +215,10 @@ class FlightBookingPage extends StatelessWidget {
   //   );
   // }
 
+  // In the _buildFlightList method
   Widget _buildFlightList() {
     final airBlueController = Get.put(AirBlueFlightController());
+    final piaController = Get.put(PIAFlightController());
     final flightController = Get.find<FlightController>();
 
     return Expanded(
@@ -221,18 +226,20 @@ class FlightBookingPage extends StatelessWidget {
         // Get loading states
         bool sabreLoading = flightController.isLoading.value;
         bool airBlueLoading = airBlueController.isLoading.value;
+        bool piaLoading = piaController.isLoading.value;
 
         // Combine all available flights, with AirBlue flights first
         final List<dynamic> combinedFlights = [
           ...airBlueController.flights,
-          ...flightController.filteredFlights
+          ...flightController.filteredFlights,
+          ...piaController.filteredFlights
         ];
 
         // Show loading only if BOTH are loading and we have no data
-        bool showInitialLoading = sabreLoading && airBlueLoading && combinedFlights.isEmpty;
+        bool showInitialLoading = sabreLoading && piaLoading && airBlueLoading && combinedFlights.isEmpty;
 
         // If we have no flights and neither is loading
-        if (combinedFlights.isEmpty && !sabreLoading && !airBlueLoading) {
+        if (combinedFlights.isEmpty && !sabreLoading && !airBlueLoading && !piaLoading) {
           return const Center(
             child: Text(
               'No flights match your criteria.',
@@ -242,9 +249,9 @@ class FlightBookingPage extends StatelessWidget {
         }
 
         return ListView.builder(
-          key: ValueKey('${airBlueController.flights.length}-${flightController.filteredFlights.length}'),
+          key: ValueKey('${airBlueController.flights.length}-${flightController.filteredFlights.length}-${piaController.filteredFlights.length}'),
           itemCount: combinedFlights.length +
-              ((sabreLoading || airBlueLoading) && combinedFlights.isNotEmpty ? 1 : 0),
+              ((sabreLoading || airBlueLoading || piaLoading) && combinedFlights.isNotEmpty ? 1 : 0),
           itemBuilder: (context, index) {
             // Show initial loading if no data yet
             if (showInitialLoading) {
@@ -263,7 +270,7 @@ class FlightBookingPage extends StatelessWidget {
             }
 
             // Show loading more indicator at the bottom if we already have some flights
-            if ((sabreLoading || airBlueLoading) && index == combinedFlights.length) {
+            if ((sabreLoading || airBlueLoading || piaLoading) && index == combinedFlights.length) {
               return const Padding(
                 padding: EdgeInsets.symmetric(vertical: 16.0),
                 child: Center(
@@ -286,6 +293,11 @@ class FlightBookingPage extends StatelessWidget {
               return GestureDetector(
                 onTap: () => airBlueController.handleAirBlueFlightSelection(flight),
                 child: AirBlueFlightCard(flight: flight),
+              );
+            } else if(flight.runtimeType.toString().contains('PIA')){
+              return GestureDetector(
+                onTap: () => piaController.handlePIAFlightSelection(flight),
+                child: PIAFlightCard(flight: flight),
               );
             } else {
               // Sabre flight
