@@ -5,13 +5,18 @@ import 'package:xml/xml.dart' as xml;
 
 import '../../../../../services/api_service_pia.dart';
 import 'pia_flight_model.dart';
+import 'pia_return_flight_page.dart';
 
 class PIAFlightController extends GetxController {
-  final RxList<PIAFlight> flights = <PIAFlight>[].obs;
+  final RxList<PIAFlight> outboundFlights = <PIAFlight>[].obs;
+  final RxList<PIAFlight> inboundFlights = <PIAFlight>[].obs;
   final RxList<PIAFlight> filteredFlights = <PIAFlight>[].obs;
   final RxBool isLoading = false.obs;
   final RxString errorMessage = ''.obs;
   final RxString selectedCurrency = 'PKR'.obs;
+  final RxBool isRoundTrip = false.obs;
+  final Rx<PIAFlight?> selectedOutboundFlight = Rx<PIAFlight?>(null);
+  final RxBool showReturnFlights = false.obs;
 
   final PIAFlightApiService _apiService = Get.put(PIAFlightApiService());
 
@@ -20,9 +25,13 @@ class PIAFlightController extends GetxController {
   }
 
   void clearFlights() {
-    flights.clear();
-    filteredFlights.clear(); // Also clear filtered flights
+    outboundFlights.clear();
+    inboundFlights.clear();
+    filteredFlights.clear();
     errorMessage.value = '';
+    isRoundTrip.value = false;
+    selectedOutboundFlight.value = null;
+    showReturnFlights.value = false;
   }
 
   void setErrorMessage(String message) {
@@ -30,7 +39,6 @@ class PIAFlightController extends GetxController {
   }
 
   Future<void> loadFlights(Map<String, dynamic> apiResponse) async {
-
     try {
       isLoading.value = true;
       clearFlights();
@@ -43,123 +51,89 @@ class PIAFlightController extends GetxController {
         throw Exception(apiResponse['error']);
       }
 
-      // For Badgerfish conversion, namespaces become attributes with '@'
-      final envelope = apiResponse['S:Envelope'] ??
-          apiResponse['soapenv:Envelope'] ??
-          apiResponse['Envelope'] ??
-          apiResponse['@S:Envelope'] ??
-          apiResponse['@soapenv:Envelope'];
+      // Handle both direct response and SOAP envelope
+      Map<String, dynamic> availability;
 
-      if (envelope == null) {
-        // Try direct access if conversion flattened the structure
-        if (apiResponse['Availability'] != null) {
-          _processAvailability(apiResponse);
-          return;
-        }
-        throw Exception('Invalid API response format - missing envelope');
+      // Check for SOAP envelope structure
+      if (apiResponse['S:Envelope'] != null || apiResponse['soapenv:Envelope'] != null) {
+        final envelope = apiResponse['S:Envelope'] ?? apiResponse['soapenv:Envelope'];
+        final body = envelope['S:Body'] ?? envelope['soapenv:Body'];
+        final response = body['ns2:GetAvailabilityResponse'] ?? body['impl:GetAvailabilityResponse'];
+        availability = response['Availability'] ?? {};
+      } else {
+        availability = apiResponse;
       }
 
-      // Handle Badgerfish format where body might be under '$' or '@'
-      final body = envelope['S:Body'] ??
-          envelope['soapenv:Body'] ??
-          envelope['Body'] ??
-          envelope['@S:Body'] ??
-          envelope['@soapenv:Body'] ??
-          envelope['\$']?['S:Body'] ??
-          envelope['\$']?['soapenv:Body'];
+      // Check if this is a round trip response
+      final availabilityRouteLists = availability['availabilityRouteList'] ??
+          availability['availabilityResultList']?['availabilityRouteList'];
 
-      if (body == null) {
-        throw Exception('Invalid API response format - missing body');
+      if (availabilityRouteLists == null) {
+        throw Exception('No availability route lists found');
       }
 
-      final response = body['ns2:GetAvailabilityResponse'] ??
-          body['impl:GetAvailabilityResponse'] ??
-          body['GetAvailabilityResponse'] ??
-          body['@ns2:GetAvailabilityResponse'] ??
-          body['@impl:GetAvailabilityResponse'] ??
-          body['\$']?['ns2:GetAvailabilityResponse'] ??
-          body['\$']?['impl:GetAvailabilityResponse'];
+      // Handle both single route list and list of route lists
+      final routeLists = availabilityRouteLists is List ? availabilityRouteLists : [availabilityRouteLists];
+      isRoundTrip.value = routeLists.length > 1;
 
-      if (response == null) {
-        throw Exception('Invalid API response format - missing availability response');
+      for (int i = 0; i < routeLists.length; i++) {
+        final routeList = routeLists[i];
+        final bool isOutbound = i == 0; // First route is outbound
+
+        _processRouteList(routeList, isOutbound: isOutbound);
       }
 
-      final availability = response['Availability'] ??
-          response['\$']?['Availability'] ??
-          response['@Availability'];
+      // For one-way trips, show all flights immediately
+      // For round trips, only show outbound flights first
+      filteredFlights.assignAll(isRoundTrip.value ? outboundFlights : [...outboundFlights, ...inboundFlights]);
 
-      if (availability == null) {
-        throw Exception('No availability data in response');
-      }
-
-      _processAvailability(availability);
     } catch (e, stackTrace) {
       debugPrint('Error loading PIA flights: $e');
       debugPrint('Stack trace: $stackTrace');
       setErrorMessage('Failed to load PIA flights: ${e.toString()}');
-      flights.value = [];
+      outboundFlights.value = [];
+      inboundFlights.value = [];
       filteredFlights.value = [];
     } finally {
       isLoading.value = false;
     }
   }
 
-  void _processAvailability(Map<String, dynamic> availability) {
+  void _processRouteList(Map<String, dynamic> routeList, {required bool isOutbound}) {
     try {
-      debugPrint('Processing availability data: ${availability.keys}');
+      final byDateList = routeList['availabilityByDateList'] ?? routeList['\$']?['availabilityByDateList'];
+      if (byDateList == null) return;
 
-      // Handle different response structures
-      final routeList = availability['availabilityRouteList'] ??
-          availability['availabilityResultList']?['availabilityRouteList'] ??
-          availability['\$']?['availabilityRouteList'];
+      // Handle both single date and list of dates
+      final dateLists = byDateList is List ? byDateList : [byDateList];
 
-      if (routeList == null) {
-        throw Exception('No route list found in availability data');
-      }
+      for (final dateData in dateLists) {
+        final date = _extractStringValue(dateData['dateList']);
+        final options = dateData['originDestinationOptionList'] ?? dateData['\$']?['originDestinationOptionList'];
+        if (options == null) continue;
 
-      // Handle both single route and list of routes
-      final routes = routeList is List ? routeList : [routeList];
-      debugPrint('Found ${routes.length} routes');
+        // Handle both single option and list of options
+        final optionList = options is List ? options : [options];
 
-      for (final route in routes) {
-        final byDateList = route['availabilityByDateList'] ?? route['\$']?['availabilityByDateList'];
-        if (byDateList == null) continue;
+        for (final option in optionList) {
+          final fareGroups = option['fareComponentGroupList'] ?? option['\$']?['fareComponentGroupList'];
+          if (fareGroups == null) continue;
 
-        // Handle both single date and list of dates
-        final dateLists = byDateList is List ? byDateList : [byDateList];
-        debugPrint('Found ${dateLists.length} date lists');
-
-        for (final dateData in dateLists) {
-          final options = dateData['originDestinationOptionList'] ?? dateData['\$']?['originDestinationOptionList'];
-          if (options == null) continue;
-
-          // Handle both single option and list of options
-          final optionList = options is List ? options : [options];
-          debugPrint('Found ${optionList.length} options');
-
-          for (final option in optionList) {
-            final fareGroups = option['fareComponentGroupList'] ?? option['\$']?['fareComponentGroupList'];
-            if (fareGroups == null) continue;
-
-            // Handle both single fare group and list
-            final fareGroupList = fareGroups is List ? fareGroups : [fareGroups];
-            for (final fareGroup in fareGroupList) {
-              _processFareGroup(fareGroup, option);
-            }
+          // Handle both single fare group and list
+          final fareGroupList = fareGroups is List ? fareGroups : [fareGroups];
+          for (final fareGroup in fareGroupList) {
+            _processFareGroup(fareGroup, option, isOutbound: isOutbound, date: date);
           }
         }
       }
-
-      debugPrint('Finished processing. Found ${flights.length} flights.');
-      filteredFlights.assignAll(flights);
     } catch (e, stackTrace) {
-      debugPrint('Error processing availability: $e');
+      debugPrint('Error processing route list: $e');
       debugPrint('Stack trace: $stackTrace');
-      setErrorMessage('Failed to process flight data');
     }
   }
 
-  void _processFareGroup(Map<String, dynamic> fareGroup, Map<String, dynamic> option) {
+  void _processFareGroup(Map<String, dynamic> fareGroup, Map<String, dynamic> option,
+      {required bool isOutbound, String? date}) {
     try {
       final boundList = fareGroup['boundList'] ?? option['boundList'];
       if (boundList == null) return;
@@ -168,6 +142,7 @@ class PIAFlightController extends GetxController {
       final bounds = boundList is List ? boundList : [boundList];
 
       for (final bound in bounds) {
+        final boundCode = _extractStringValue(bound['boundCode']);
         final segments = bound['availFlightSegmentList'];
         if (segments == null) continue;
 
@@ -178,19 +153,29 @@ class PIAFlightController extends GetxController {
         if (segmentList.isEmpty) continue;
         final mainSegment = segmentList[0];
 
-        // Process fare components
+        // Process fare components - only take the first one
         final fareComponents = fareGroup['fareComponentList'];
         if (fareComponents == null) continue;
 
         // Handle both single fare component and list of fare components
         final componentList = fareComponents is List ? fareComponents : [fareComponents];
+        if (componentList.isEmpty) continue;
 
-        for (final component in componentList) {
-          final flight = _createFlightFromComponents(mainSegment, component);
-          if (flight != null) {
-            debugPrint('Adding flight: ${flight.flightNumber}');
-            flights.add(flight);
-            filteredFlights.add(flight);
+        // Only process the first component
+        final firstComponent = componentList[0];
+        final flight = _createFlightFromComponents(
+          mainSegment,
+          firstComponent,
+          isOutbound: isOutbound,
+          boundCode: boundCode,
+          date: date,
+        );
+
+        if (flight != null) {
+          if (isOutbound) {
+            outboundFlights.add(flight);
+          } else {
+            inboundFlights.add(flight);
           }
         }
       }
@@ -201,7 +186,8 @@ class PIAFlightController extends GetxController {
   }
 
   PIAFlight? _createFlightFromComponents(
-      Map<String, dynamic> segment, Map<String, dynamic> fareComponent) {
+      Map<String, dynamic> segment, Map<String, dynamic> fareComponent,
+      {required bool isOutbound, String? boundCode, String? date}) {
     try {
       debugPrint('Creating flight from segment: ${segment['flightNumber']}');
 
@@ -260,7 +246,12 @@ class PIAFlightController extends GetxController {
         'pricingInfo': pricingInfo,
       };
 
-      return PIAFlight.fromApiResponse(flightData);
+      return PIAFlight.fromApiResponse(
+        flightData,
+        isOutbound: isOutbound,
+        boundCode: boundCode,
+        date: date,
+      );
     } catch (e, stackTrace) {
       debugPrint('Error creating flight from components: $e');
       debugPrint('Stack trace: $stackTrace');
@@ -269,13 +260,45 @@ class PIAFlightController extends GetxController {
   }
 
   void handlePIAFlightSelection(PIAFlight flight) {
-    Get.snackbar("PIA Flight Selected", "Yes it is !!!!");
-    // Handle flight selection logic
-    // Get.to(() => PackageSelectionDialog(
-    //   flight: flight,
-    //   isAnyFlightRemaining: false,
-    // ));
+    if (isRoundTrip.value) {
+      if (selectedOutboundFlight.value == null) {
+        // First flight selection (outbound)
+        selectedOutboundFlight.value = flight;
+        showReturnFlights.value = true;
+
+        // Navigate to return flights page
+        Get.to(() => PIAReturnFlightsPage(
+          returnFlights: inboundFlights,
+        ));
+      } else {
+        // Second flight selection (return)
+        // Handle the complete booking with both flights
+        Get.back(); // Close the return flights page
+        Get.snackbar("Booking Selected",
+            "Outbound: ${selectedOutboundFlight.value!.flightNumber} "
+                "Return: ${flight.flightNumber}");
+
+        // Reset selection
+        selectedOutboundFlight.value = null;
+        showReturnFlights.value = false;
+      }
+    } else {
+      // One-way flight selection
+      Get.snackbar("Flight Selected", "Flight ${flight.flightNumber} selected");
+      // Proceed with booking
+    }
   }
 
-// Add filter and sorting methods similar to Sabre controller as needed
+  static String _extractStringValue(dynamic value) {
+    if (value == null) return '';
+    if (value is String) return value.trim();
+    if (value is Map<String, dynamic>) {
+      // Handle Badgerfish format where text might be under '$'
+      if (value.containsKey('\$')) {
+        return _extractStringValue(value['\$']);
+      }
+      return value['text']?.toString().trim() ?? '';
+    }
+    return value.toString().trim();
+  }
 }

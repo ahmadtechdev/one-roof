@@ -40,6 +40,9 @@ class PIAFlight {
   final List<Map<String, dynamic>> legSchedules;
   final List<PIAFlightSegmentInfo> segmentInfo;
   final List<Map<String, dynamic>> pricingInforArray;
+  final bool isOutbound;
+  final String? boundCode;
+  final String? date; // Add date to help with grouping
 
   PIAFlight({
     required this.imgPath,
@@ -78,12 +81,15 @@ class PIAFlight {
     this.connectedFlights,
     this.tripSequence,
     this.tripType,
+    this.isOutbound = true,
+    this.boundCode,
+    this.date,
     required this.legSchedules,
     required this.segmentInfo,
     required this.pricingInforArray,
   });
 
-  factory PIAFlight.fromApiResponse(Map<String, dynamic> flightData) {
+  factory PIAFlight.fromApiResponse(Map<String, dynamic> flightData, {bool isOutbound = true, String? boundCode, String? date}) {
     try {
       final flightSegment = flightData['flightSegment'];
       final fareInfo = flightData['fareInfoList'][0]['fareInfoList'][0];
@@ -186,6 +192,9 @@ class PIAFlight {
         legSchedules: [flightSegment],
         segmentInfo: [PIAFlightSegmentInfo.fromFlightSegment(flightSegment)],
         pricingInforArray: [pricingInfo],
+        isOutbound: isOutbound,
+        boundCode: boundCode,
+        date: date,
       );
     } catch (e, stackTrace) {
       print('Error in PIAFlight.fromApiResponse: $e');

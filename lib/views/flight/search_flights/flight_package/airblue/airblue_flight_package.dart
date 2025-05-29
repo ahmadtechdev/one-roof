@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:oneroof/views/flight/search_flights/flight_package/airblue/return_flight_page.dart';
+import 'package:oneroof/views/flight/search_flights/flight_package/airblue/airblue_return_flight_page.dart';
 
 import '../../../../../services/api_service_flight.dart';
 import '../../../../../utility/colors.dart';

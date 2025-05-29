@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:oneroof/utility/colors.dart';
 import 'package:oneroof/views/flight/form/controllers/flight_date_controller.dart';
-import 'package:oneroof/views/flight/form/travelers/traveler_controller.dart';
 import 'package:oneroof/views/hotel/hotel/guests/guests_controller.dart';
 import 'package:oneroof/views/hotel/hotel/hotel_date_controller.dart';
 import 'package:oneroof/views/hotel/search_hotels/search_hotel_controller.dart';

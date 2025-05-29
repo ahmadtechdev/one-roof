@@ -20,6 +20,7 @@ class FlightBookingPage extends StatelessWidget {
   final FlightScenario scenario;
   final FlightController controller = Get.put(FlightController());
   final AirBlueFlightController airBlueController = Get.put(AirBlueFlightController());
+  final PIAFlightController piaController = Get.put(PIAFlightController());
 
   FlightBookingPage({super.key, required this.scenario}) {
     controller.setScenario(scenario);
@@ -35,7 +36,7 @@ class FlightBookingPage extends StatelessWidget {
         leading: const BackButton(),
         title: Obx(() {
           // Get total flight count
-          final totalFlights = controller.filteredFlights.length + airBlueController.flights.length;
+          final totalFlights = controller.filteredFlights.length + airBlueController.flights.length + piaController.filteredFlights.length;
           final isLoading = controller.isLoading.value || airBlueController.isLoading.value;
 
           return Column(

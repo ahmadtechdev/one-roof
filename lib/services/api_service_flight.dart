@@ -139,8 +139,8 @@ class ApiServiceFlight extends GetxService {
       }else if(flight==1){
         // New Air Blue API call with same parameters
         try {
-          print("Calling Air Blue API with same parameters...");
-
+          // print("Calling Air Blue API with same parameters...");
+          //
 
           final airBlueResponse = await _searchFlightsWithAirBlue(
             type: type,
@@ -154,8 +154,8 @@ class ApiServiceFlight extends GetxService {
             cabin: cabin,
           );
 
-          print("Air Blue API Response received:");
-          _printJsonPretty(airBlueResponse);
+          // print("Air Blue API Response received:");
+          // _printJsonPretty(airBlueResponse);
 
           // Here you would normally process the Air Blue response and merge with Sabre results
           // For now, we're just logging it to console

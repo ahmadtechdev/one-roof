@@ -47,7 +47,7 @@ class CityPair {
 
 class FlightBookingController extends GetxController {
   // Trip type
-  final Rx<TripType> tripType = TripType.roundTrip.obs;
+  final Rx<TripType> tripType = TripType.oneWay.obs;
   var isSearching = false.obs;
 
   // City pairs for multicity
@@ -440,8 +440,6 @@ class FlightBookingController extends GetxController {
         piaFlightController.loadFlights(result);
       }
 
-      print("pia flight check");
-      print(piaFlightController.filteredFlights);
     } catch (e) {
       debugPrint('PIA API error: $e');
       piaFlightController.setErrorMessage('PIA API error: ${e.toString()}');
