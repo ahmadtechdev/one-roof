@@ -1,344 +1,1548 @@
 import 'dart:typed_data';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
-
+import 'package:intl/intl.dart';
 
 class PDFPrintScreen extends StatelessWidget {
-  const PDFPrintScreen({Key? key}) : super(key: key);
+  final Map<String, dynamic> bookingData;
+
+  const PDFPrintScreen({Key? key, required this.bookingData}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
+    // Print complete data in console
+    _printCompleteData();
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Flight Ticket Printer'),
+        title: const Text('Flight Ticket'),
+        backgroundColor: Colors.blue.shade900,
+        foregroundColor: Colors.white,
+        elevation: 0,
       ),
-      body: Center(
+      backgroundColor: Colors.grey.shade50,
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Click below to print your flight ticket',
-              style: TextStyle(fontSize: 18),
-            ),
-            const SizedBox(height: 20),
-            ElevatedButton.icon(
-              icon: const Icon(Icons.print),
-              label: const Text('Print Ticket'),
-              onPressed: () async {
-                try {
-                  await Printing.layoutPdf(
-                    onLayout: (format) => generateFlightTicket(),
-                  );
-                } catch (e) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Printing failed: $e')),
-                  );
-                }
-              },
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 30, vertical: 15),
+            // Header Card
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.grey.withOpacity(0.1),
+                    spreadRadius: 1,
+                    blurRadius: 10,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
               ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Future<Uint8List> generateFlightTicket() async {
-    final pdf = pw.Document();
-    
-    // Load fonts
-    final regularFont = await PdfGoogleFonts.nunitoRegular();
-    final boldFont = await PdfGoogleFonts.nunitoBold();
-    
-    // Add page to the PDF
-    pdf.addPage(
-      pw.Page(
-        pageFormat: PdfPageFormat.a4,
-        build: (pw.Context context) {
-          return pw.Padding(
-            padding: const pw.EdgeInsets.all(20),
-            child: _buildTicketContent(regularFont, boldFont),
-          );
-        },
-      ),
-    );
-    
-    return pdf.save();
-  }
-
-  pw.Widget _buildTicketContent(pw.Font regularFont, pw.Font boldFont) {
-    return pw.Column(
-      crossAxisAlignment: pw.CrossAxisAlignment.start,
-      children: [
-        // Header with date and title
-        pw.Row(
-          mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-          children: [
-            pw.Text(
-              '25/04/2025, 12:10',
-              style: pw.TextStyle(font: regularFont, fontSize: 10),
-            ),
-            pw.Text(
-              'ONE ROOF TRAVEL',
-              style: pw.TextStyle(font: boldFont, fontSize: 12),
-            ),
-          ],
-        ),
-        
-        pw.SizedBox(height: 10),
-        
-        // Booking details
-        pw.Row(
-          crossAxisAlignment: pw.CrossAxisAlignment.start,
-          children: [
-            // Left column for booking info
-            pw.Column(
-              crossAxisAlignment: pw.CrossAxisAlignment.start,
-              children: [
-                _buildLabelValuePair(boldFont, regularFont, 'PNR', 'G202504151702012345'),
-                pw.SizedBox(height: 5),
-                _buildLabelValuePair(boldFont, regularFont, 'Booking #', '82090 | 2802'),
-                pw.SizedBox(height: 5),
-                _buildLabelValuePair(boldFont, regularFont, 'Booked By', 'Journey Online'),
-                pw.SizedBox(height: 5),
-                _buildLabelValuePair(boldFont, regularFont, 'Contact', '+92 337751322'),
-                pw.SizedBox(height: 5),
-                pw.RichText(
-                  text: pw.TextSpan(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Header row with date and company
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      pw.TextSpan(
-                        text: 'Status\n',
-                        style: pw.TextStyle(font: boldFont, fontSize: 12, color: PdfColors.blue900),
+                      Text(
+                        _getCurrentDateTime(),
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey.shade600,
+                        ),
                       ),
-                      pw.TextSpan(
-                        text: 'Hold',
-                        style: pw.TextStyle(font: regularFont, fontSize: 12, color: PdfColors.green),
+                      Text(
+                        'ONE ROOF TRAVEL',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.blue.shade900,
+                        ),
                       ),
                     ],
                   ),
-                ),
-              ],
+
+                  const SizedBox(height: 20),
+
+                  // Booking details row
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Left column - booking info
+                      Expanded(
+                        flex: 3,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildLabelValue(
+                              'PNR',
+                              _getPNR(),
+                              Colors.blue.shade900,
+                            ),
+                            const SizedBox(height: 12),
+                            _buildLabelValue(
+                              'Booking #',
+                              _getBookingId(),
+                              Colors.blue.shade900,
+                            ),
+                            const SizedBox(height: 12),
+                            _buildLabelValue(
+                              'Booked By',
+                              'ONE ROOF TRAVEL',
+                              Colors.blue.shade900,
+                            ),
+                            const SizedBox(height: 12),
+                            _buildLabelValue(
+                              'Contact',
+                              _getMobile(),
+                              Colors.blue.shade900,
+                            ),
+                            const SizedBox(height: 12),
+                            _buildStatusWidget(),
+                          ],
+                        ),
+                      ),
+
+                      // Right column - airline info
+                      Expanded(
+                        flex: 2,
+                        child: Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.teal.shade50,
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: Colors.teal.shade200),
+                          ),
+                          child: Text(
+                            _getAirlineInfo(),
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.teal.shade700,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
-            
-            // Airline logo on the right
-            pw.Expanded(
-              child: pw.Align(
-                alignment: pw.Alignment.topRight,
-                child: pw.Container(
-                  width: 80,
-                  height: 40,
-                  child: pw.Text('SereneAir', style: pw.TextStyle(font: boldFont, color: PdfColors.teal)),
+
+            const SizedBox(height: 20),
+
+            // Flight Details Section
+            Container(
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.grey.withOpacity(0.1),
+                    spreadRadius: 1,
+                    blurRadius: 10,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Section header with orange accent
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      border: Border(
+                        left: BorderSide(color: Colors.orange, width: 4),
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Flight Details',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.grey.shade800,
+                          ),
+                        ),
+                        Flexible(
+                          child: Text(
+                            'Booking Date: ${_getCurrentDateTime()}',
+                            style: TextStyle(
+                              fontSize: 10,
+                              color: Colors.grey.shade600,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // Flight Table
+                  Container(
+                    width: double.infinity,
+                    child: Column(
+                      children: [
+                        // Header Row
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            vertical: 8,
+                            horizontal: 12,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.blue.shade700,
+                          ),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                flex: 2,
+                                child: Text(
+                                  'Flight No.',
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ),
+                              Expanded(
+                                flex: 2,
+                                child: Text(
+                                  'Date',
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ),
+                              Expanded(
+                                flex: 4,
+                                child: Text(
+                                  'Flight Info',
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ),
+                              Expanded(
+                                flex: 2,
+                                child: Text(
+                                  'Baggage',
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ),
+                              Expanded(
+                                flex: 1,
+                                child: Text(
+                                  'Meal',
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        // Data Row
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            vertical: 12,
+                            horizontal: 12,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade800,
+                          ),
+                          child: Row(
+                            children: [
+                              // Flight Number
+                              Expanded(
+                                flex: 2,
+                                child: Text(
+                                  _getFlightNumber(),
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+
+                              // Date
+                              Expanded(
+                                flex: 2,
+                                child: Text(
+                                  _getShortDate(),
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    color: Colors.white,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+
+                              // Flight Info
+                              Expanded(
+                                flex: 4,
+                                child: Container(
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      // Route with arrow
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          // Departure city
+                                          Flexible(
+                                            child: Text(
+                                              _getDepartureCity(),
+                                              style: TextStyle(
+                                                fontSize: 9,
+                                                fontWeight: FontWeight.bold,
+                                                color: Colors.orange.shade300,
+                                              ),
+                                              overflow: TextOverflow.ellipsis,
+                                              maxLines: 1,
+                                            ),
+                                          ),
+
+                                          // Arrow with minimal spacing
+                                          Container(
+                                            margin: const EdgeInsets.symmetric(
+                                              horizontal: 2,
+                                            ),
+                                            child: Icon(
+                                              Icons.arrow_forward,
+                                              color: Colors.orange.shade300,
+                                              size: 8,
+                                            ),
+                                          ),
+
+                                          // Arrival city
+                                          Flexible(
+                                            child: Text(
+                                              _getArrivalCity(),
+                                              style: TextStyle(
+                                                fontSize: 9,
+                                                fontWeight: FontWeight.bold,
+                                                color: Colors.orange.shade300,
+                                              ),
+                                              overflow: TextOverflow.ellipsis,
+                                              maxLines: 1,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+
+                                      const SizedBox(height: 2),
+
+                                      // Times
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Flexible(
+                                            child: Text(
+                                              _getDepartureTime(),
+                                              style: TextStyle(
+                                                fontSize: 8,
+                                                color: Colors.white,
+                                              ),
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          ),
+
+                                          Text(
+                                            ' - ',
+                                            style: TextStyle(
+                                              fontSize: 8,
+                                              color: Colors.grey.shade400,
+                                            ),
+                                          ),
+
+                                          Flexible(
+                                            child: Text(
+                                              _getArrivalTime(),
+                                              style: TextStyle(
+                                                fontSize: 8,
+                                                color: Colors.white,
+                                              ),
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+
+                              // Baggage
+                              Expanded(
+                                flex: 2,
+                                child: Text(
+                                  _getBaggageInfo(),
+                                  style: TextStyle(
+                                    fontSize: 9,
+                                    color: Colors.white,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                  overflow: TextOverflow.ellipsis,
+                                  maxLines: 2,
+                                ),
+                              ),
+
+                              // Meal
+                              Expanded(
+                                flex: 1,
+                                child: Text(
+                                  _getMealInfo(),
+                                  style: TextStyle(
+                                    fontSize: 9,
+                                    color: Colors.white,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  // Passenger info
+                  Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Passengers Information',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.grey.shade800,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+
+                        // Display passenger details
+                        ..._buildPassengersList(),
+
+                        const SizedBox(height: 12),
+
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Flexible(
+                              child: Text(
+                                'Total Passengers: ${_getPassengerCount()}',
+                                style: const TextStyle(fontSize: 12),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.green.shade50,
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Text(
+                                _getStatus(),
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.green.shade700,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+
+                        const SizedBox(height: 12),
+
+                        // Total fare
+                        // Row(
+                        //   mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        //   children: [
+                        //     Text(
+                        //       'Total Fare:',
+                        //       style: TextStyle(
+                        //         fontSize: 14,
+                        //         fontWeight: FontWeight.bold,
+                        //         color: Colors.grey.shade800,
+                        //       ),
+                        //     ),
+                        //     Text(
+                        //       'PKR ${_getTotalFare()}',
+                        //       style: TextStyle(
+                        //         fontSize: 14,
+                        //         fontWeight: FontWeight.bold,
+                        //         color: Colors.green.shade700,
+                        //       ),
+                        //     ),
+                        //   ],
+                        // ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 20),
+
+            // Terms & Conditions Section
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.grey.withOpacity(0.1),
+                    spreadRadius: 1,
+                    blurRadius: 10,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    decoration: BoxDecoration(
+                      border: Border(
+                        left: BorderSide(color: Colors.orange, width: 4),
+                      ),
+                    ),
+                    padding: const EdgeInsets.only(left: 8),
+                    child: Text(
+                      'TERMS & CONDITIONS:',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.grey.shade800,
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 12),
+
+                  _buildBulletPoint(
+                    'Passenger should report at check-in counter at least 4:00 hours prior to the flight.',
+                  ),
+
+                  const SizedBox(height: 8),
+
+                  _buildBulletPoint(
+                    'After confirmation, tickets are non-refundable and non-changeable at any time.',
+                  ),
+
+                  const SizedBox(height: 8),
+
+                  _buildBulletPoint(
+                    'Valid passport and visa (if required) must be presented at check-in.',
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 24),
+
+            // Print Button
+            Container(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                icon: const Icon(Icons.print, size: 24),
+                label: const Text(
+                  'Print Ticket',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                ),
+                onPressed: () async {
+                  try {
+                    await Printing.layoutPdf(
+                      onLayout: (format) => generateFlightTicket(),
+                    );
+                  } catch (e) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Printing failed: $e'),
+                        backgroundColor: Colors.red.shade600,
+                      ),
+                    );
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blue.shade900,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  elevation: 2,
                 ),
               ),
             ),
+
+            const SizedBox(height: 16),
           ],
         ),
-        
-        pw.SizedBox(height: 20),
-        
-        // Flight Details section with orange bar
-        _buildSectionHeader(boldFont, 'Flight Details', 'Booking Date: Fri 25 Apr 2025 12:10', regularFont),
-        
-        pw.SizedBox(height: 10),
-        
-        // Flight details table header
-        _buildTableHeader(regularFont),
-        
-        // Flight details table content
-        _buildFlightDetailsRow(regularFont, boldFont),
-        
-        pw.Container(
-          decoration: const pw.BoxDecoration(
-            border: pw.Border(
-              bottom: pw.BorderSide(color: PdfColors.grey300),
-            ),
-          ),
-          padding: const pw.EdgeInsets.only(bottom: 10),
-        ),
-        
-        pw.SizedBox(height: 10),
-        
-        // Passengers Information
-        pw.Text(
-          'Passengers Information',
-          style: pw.TextStyle(font: boldFont, fontSize: 12),
-        ),
-        
-        pw.SizedBox(height: 5),
-        
-        _buildPassengerInfo(regularFont),
-        
-        pw.SizedBox(height: 20),
-        
-        // Terms and Conditions
-        _buildSectionHeader(boldFont, 'TERMS & CONDITIONS:', '', regularFont),
-        
-        pw.SizedBox(height: 10),
-        
-        _buildBulletPoint(regularFont, 'Passenger should report at check-in counter at least 4:00 hours prior to the flight.'),
-        
-        pw.SizedBox(height: 5),
-        
-        _buildBulletPoint(regularFont, 'After confirmation, tickets are non-refundable and non-changeable at any time.'),
-      ],
+      ),
     );
   }
 
-  pw.Widget _buildLabelValuePair(pw.Font boldFont, pw.Font regularFont, String label, String value) {
-    return pw.RichText(
-      text: pw.TextSpan(
+  // Print complete data in console
+  void _printCompleteData() {
+    print('=== COMPLETE BOOKING DATA ===');
+
+    // Print formatted JSON
+    const JsonEncoder encoder = JsonEncoder.withIndent('  ');
+    String prettyprint = encoder.convert(bookingData);
+    print(prettyprint);
+
+    print('\n=== PARSED DATA SUMMARY ===');
+    print('Booking ID: ${_getBookingId()}');
+    print('PNR: ${_getPNR()}');
+    print('Mobile: ${_getMobile()}');
+    print('Status: ${_getStatus()}');
+    print('Total Fare: ${_getTotalFare()}');
+    print('Sector: ${_getSector()}');
+    print('Flight Number: ${_getFlightNumber()}');
+    print('Departure Date: ${_getDepartureDate()}');
+    print('Departure Time: ${_getDepartureTime()}');
+    print('Arrival Time: ${_getArrivalTime()}');
+    print('Airline Info: ${_getAirlineInfo()}');
+    print('Passenger Count: ${_getPassengerCount()}');
+    print('Baggage Info: ${_getBaggageInfo()}');
+    print('Meal Info: ${_getMealInfo()}');
+
+    // Print passenger details
+    final passengers = _getPassengerDetails();
+    print('\n=== PASSENGER DETAILS ===');
+    for (int i = 0; i < passengers.length; i++) {
+      print('Passenger ${i + 1}:');
+      print('  Name: ${passengers[i]['name']}');
+      print('  Type: ${passengers[i]['type']}');
+      print('  Passport: ${passengers[i]['passport']}');
+      print('  DOB: ${passengers[i]['dob']}');
+      print('  DOE: ${passengers[i]['doe']}');
+      print('  Fare: ${passengers[i]['fare']}');
+    }
+
+    print('=== END OF DATA ===');
+  }
+
+  List<Widget> _buildPassengersList() {
+    final passengers = _getPassengerDetails();
+    List<Widget> widgets = [];
+
+    for (int i = 0; i < passengers.length; i++) {
+      widgets.add(
+        Container(
+          margin: const EdgeInsets.only(bottom: 8),
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Colors.grey.shade50,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: Colors.grey.shade200),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    '${(i + 1).toString()}. ${passengers[i]['name']}',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.blue.shade900,
+                    ),
+                  ),
+                  Text(
+                    '${passengers[i]['type']}',
+                    style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              Row(
+                children: [
+                  Text(
+                    'Passport: ${passengers[i]['passport']} | ',
+                    style: TextStyle(fontSize: 10, color: Colors.grey.shade600),
+                  ),
+                  Text(
+                    'DOB: ${passengers[i]['dob']}',
+                    style: TextStyle(fontSize: 10, color: Colors.grey.shade600),
+                  ),
+                ],
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'DOE: ${passengers[i]['doe']}',
+                    style: TextStyle(fontSize: 10, color: Colors.grey.shade600),
+                  ),
+                  Text(
+                    _getStatus(),
+                    // 'Fare: PKR ${NumberFormat('#,##0').format(passengers[i]['fare'])}',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.green.shade700,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return widgets;
+  }
+
+  Widget _buildLabelValue(String label, String value, Color labelColor) {
+    return RichText(
+      text: TextSpan(
         children: [
-          pw.TextSpan(
+          TextSpan(
             text: '$label\n',
-            style: pw.TextStyle(font: boldFont, fontSize: 12, color: PdfColors.blue900),
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              color: labelColor,
+            ),
           ),
-          pw.TextSpan(
+          TextSpan(
             text: value,
-            style: pw.TextStyle(font: regularFont, fontSize: 12),
+            style: TextStyle(fontSize: 12, color: Colors.grey.shade800),
           ),
         ],
       ),
     );
   }
 
-  pw.Widget _buildSectionHeader(pw.Font boldFont, String title, String subtitle, pw.Font regularFont) {
-    return pw.Container(
-      decoration: pw.BoxDecoration(
-        border: pw.Border(
-          left: pw.BorderSide(color: PdfColors.orange, width: 4),
-        ),
-      ),
-      padding: const pw.EdgeInsets.only(left: 5),
-      child: pw.Row(
-        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+  Widget _buildStatusWidget() {
+    return RichText(
+      text: TextSpan(
         children: [
-          pw.Text(
-            title,
-            style: pw.TextStyle(font: boldFont, fontSize: 14),
-          ),
-          pw.Text(
-            subtitle,
-            style: pw.TextStyle(font: regularFont, fontSize: 10),
-          ),
-        ],
-      ),
-    );
-  }
-
-  pw.Widget _buildTableHeader(pw.Font regularFont) {
-    return pw.Container(
-      decoration: const pw.BoxDecoration(
-        border: pw.Border(
-          bottom: pw.BorderSide(color: PdfColors.grey300),
-        ),
-      ),
-      padding: const pw.EdgeInsets.only(bottom: 5),
-      child: pw.Row(
-        children: [
-          pw.Expanded(
-            flex: 2,
-            child: pw.Text('Flight No.', style: pw.TextStyle(font: regularFont, color: PdfColors.grey700)),
-          ),
-          pw.Expanded(
-            flex: 2,
-            child: pw.Text('Date', style: pw.TextStyle(font: regularFont, color: PdfColors.grey700)),
-          ),
-          pw.Expanded(
-            flex: 4,
-            child: pw.Text('Flight Info', style: pw.TextStyle(font: regularFont, color: PdfColors.grey700)),
-          ),
-          pw.Expanded(
-            flex: 2,
-            child: pw.Text('Baggage', style: pw.TextStyle(font: regularFont, color: PdfColors.grey700)),
-          ),
-          pw.Expanded(
-            flex: 1,
-            child: pw.Text('Meal', style: pw.TextStyle(font: regularFont, color: PdfColors.grey700)),
-          ),
-        ],
-      ),
-    );
-  }
-
-  pw.Widget _buildFlightDetailsRow(pw.Font regularFont, pw.Font boldFont) {
-    return pw.Container(
-      padding: const pw.EdgeInsets.symmetric(vertical: 10),
-      child: pw.Row(
-        crossAxisAlignment: pw.CrossAxisAlignment.start,
-        children: [
-          // Flight number
-          pw.Expanded(
-            flex: 2,
-            child: pw.Text('ER 723', style: pw.TextStyle(font: regularFont)),
-          ),
-          
-          // Date and time
-          pw.Expanded(
-            flex: 2,
-            child: pw.Column(
-              crossAxisAlignment: pw.CrossAxisAlignment.start,
-              children: [
-                pw.Text('26 Apr', style: pw.TextStyle(font: regularFont)),
-                pw.Text('22:55', style: pw.TextStyle(font: boldFont)),
-              ],
+          TextSpan(
+            text: 'Status\n',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              color: Colors.blue.shade900,
             ),
           ),
-          
-          // Route info
-          pw.Expanded(
-            flex: 4,
-            child: pw.Row(
-              mainAxisAlignment: pw.MainAxisAlignment.center,
-              children: [
-                pw.Text('LAHORE', style: pw.TextStyle(font: boldFont, color: PdfColors.blue900)),
-                pw.SizedBox(width: 5),
-                pw.Text('✈️', style: const pw.TextStyle(fontSize: 12)),
-                pw.SizedBox(width: 5),
-                pw.Text('DUBAI', style: pw.TextStyle(font: boldFont, color: PdfColors.blue900)),
-                pw.SizedBox(width: 5),
-                pw.Text('01:20', style: pw.TextStyle(font: boldFont)),
-              ],
+          TextSpan(
+            text: _getStatus(),
+            style: TextStyle(
+              fontSize: 12,
+              color: Colors.green.shade700,
+              fontWeight: FontWeight.w500,
             ),
-          ),
-          
-          // Baggage
-          pw.Expanded(
-            flex: 2,
-            child: pw.Text('20+7 KG', style: pw.TextStyle(font: regularFont)),
-          ),
-          
-          // Meal
-          pw.Expanded(
-            flex: 1,
-            child: pw.Text('Yes', style: pw.TextStyle(font: regularFont)),
           ),
         ],
       ),
     );
   }
 
-  pw.Widget _buildPassengerInfo(pw.Font regularFont) {
-    return pw.Row(
+  Widget _buildBulletPoint(String text) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        pw.Text('1 - SIWO EWEE', style: pw.TextStyle(font: regularFont)),
-        pw.SizedBox(width: 10),
-        pw.Text('ee', style: pw.TextStyle(font: regularFont)),
-        pw.Spacer(),
-        pw.Text('Hold', style: pw.TextStyle(font: regularFont, color: PdfColors.green)),
+        Container(
+          margin: const EdgeInsets.only(top: 6),
+          width: 4,
+          height: 4,
+          decoration: BoxDecoration(
+            color: Colors.grey.shade600,
+            shape: BoxShape.circle,
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            text,
+            style: TextStyle(
+              fontSize: 11,
+              color: Colors.grey.shade700,
+              height: 1.4,
+            ),
+          ),
+        ),
       ],
     );
   }
 
-  pw.Widget _buildBulletPoint(pw.Font regularFont, String text) {
-    return pw.Bullet(
-      text: text,
-      style: pw.TextStyle(font: regularFont, fontSize: 11),
-      bulletSize: 2,
+  // Data extraction methods
+  String _getPNR() {
+    try {
+      return bookingData['data']?['data']?['group']?['pnr']?.toString() ??
+          'N/A';
+    } catch (e) {
+      print('Error getting PNR: $e');
+      return 'N/A';
+    }
+  }
+
+  String _getSector() {
+    try {
+      return bookingData['data']?['data']?['group']?['sector']?.toString() ??
+          'N/A';
+    } catch (e) {
+      print('Error getting sector: $e');
+      return 'N/A';
+    }
+  }
+
+  String _getFlightNumber() {
+    try {
+      final airline = bookingData['data']?['data']?['group']?['airline'];
+      return airline?['short_name']?.toString() ?? 'ER';
+    } catch (e) {
+      print('Error getting flight number: $e');
+      return 'ER';
+    }
+  }
+
+  String _getShortDate() {
+    try {
+      final deptDate = bookingData['data']?['data']?['group']?['dept_date'];
+      if (deptDate != null) {
+        final date = DateTime.parse(deptDate);
+        return DateFormat('dd MMM').format(date);
+      }
+      return DateFormat('dd MMM').format(DateTime.now());
+    } catch (e) {
+      print('Error getting short date: $e');
+      return DateFormat('dd MMM').format(DateTime.now());
+    }
+  }
+
+  String _getDepartureCity() {
+    try {
+      final sector = _getSector();
+      if (sector.contains('TO')) {
+        return sector.split('TO')[0].trim();
+      }
+      return 'UNKNOWN';
+    } catch (e) {
+      return 'UNKNOWN';
+    }
+  }
+
+  String _getArrivalCity() {
+    try {
+      final sector = _getSector();
+      if (sector.contains('TO')) {
+        return sector.split('TO')[1].trim();
+      }
+      return 'UNKNOWN';
+    } catch (e) {
+      return 'UNKNOWN';
+    }
+  }
+
+  String _getDepartureTime() {
+    try {
+      // Since departure time is not in the data, we'll use a default
+      return '02:10';
+    } catch (e) {
+      return '02:10';
+    }
+  }
+
+  String _getArrivalTime() {
+    try {
+      // Since arrival time is not in the data, we'll use a default
+      return '04:40';
+    } catch (e) {
+      return '04:40';
+    }
+  }
+
+  String _getStatus() {
+    try {
+      final status = bookingData['data']?['data']?['status'] ?? 0;
+      return status == 1 ? 'Confirmed' : 'Hold';
+    } catch (e) {
+      print('Error getting status: $e');
+      return 'Hold';
+    }
+  }
+
+  String _getTotalFare() {
+    try {
+      final fares = bookingData['data']?['data']?['fares'] ?? 0;
+      return NumberFormat('#,##0').format(fares);
+    } catch (e) {
+      print('Error getting total fare: $e');
+      return '0';
+    }
+  }
+
+  String _getDepartureDate() {
+    try {
+      final deptDate = bookingData['data']?['data']?['group']?['dept_date'];
+      if (deptDate != null) {
+        final date = DateTime.parse(deptDate);
+        return DateFormat('EEE dd MMM yyyy').format(date);
+      }
+      return DateFormat('EEE dd MMM yyyy').format(DateTime.now());
+    } catch (e) {
+      print('Error getting departure date: $e');
+      return DateFormat('EEE dd MMM yyyy').format(DateTime.now());
+    }
+  }
+
+  String _getAirlineInfo() {
+    try {
+      final airline = bookingData['data']?['data']?['group']?['airline'];
+      final airlineName = airline?['airline_name']?.toString() ?? 'N/A';
+      final shortName = airline?['short_name']?.toString() ?? 'N/A';
+      return '$shortName\n$airlineName';
+    } catch (e) {
+      print('Error getting airline info: $e');
+      return 'N/A';
+    }
+  }
+
+  String _getMealInfo() {
+    try {
+      final meal = bookingData['data']?['data']?['group']?['meal'];
+      return meal != null && meal.toString().toLowerCase() == 'yes'
+          ? 'Yes'
+          : 'No';
+    } catch (e) {
+      print('Error getting meal info: $e');
+      return 'No';
+    }
+  }
+
+  String _getBaggageInfo() {
+    try {
+      final baggage = bookingData['data']?['data']?['group']?['baggage'];
+      return baggage?.toString() ?? '20+7 KG';
+    } catch (e) {
+      print('Error getting baggage info: $e');
+      return '20+7 KG';
+    }
+  }
+
+  String _getCurrentDateTime() {
+    return DateFormat('dd/MM/yyyy, HH:mm').format(DateTime.now());
+  }
+
+  String _getPassengerCount() {
+    try {
+      final adults = bookingData['data']?['data']?['adults'] ?? 0;
+      final children = bookingData['data']?['data']?['child'] ?? 0;
+      final infants = bookingData['data']?['data']?['infant'] ?? 0;
+
+      List<String> parts = [];
+      if (adults > 0) parts.add('$adults Adult${adults > 1 ? 's' : ''}');
+      if (children > 0)
+        parts.add('$children Child${children > 1 ? 'ren' : ''}');
+      if (infants > 0) parts.add('$infants Infant${infants > 1 ? 's' : ''}');
+
+      return parts.isNotEmpty ? parts.join(', ') : '0';
+    } catch (e) {
+      print('Error getting passenger count: $e');
+      return '0';
+    }
+  }
+
+  String _getBookingId() {
+    try {
+      return bookingData['data']?['data']?['id']?.toString() ?? 'N/A';
+    } catch (e) {
+      print('Error getting booking ID: $e');
+      return 'N/A';
+    }
+  }
+
+  String _getMobile() {
+    try {
+      return bookingData['data']?['data']?['mobile']?.toString() ?? 'N/A';
+    } catch (e) {
+      print('Error getting mobile: $e');
+      return 'N/A';
+    }
+  }
+
+  List<Map<String, dynamic>> _getPassengerDetails() {
+    try {
+      final passengers = bookingData['data']?['data']?['passengers'] as List?;
+      if (passengers == null) return [];
+
+      return passengers.map((passenger) {
+        return {
+          'name':
+              '${passenger['surname'] ?? ''} ${passenger['given_name'] ?? ''}',
+          'type': passenger['type'] ?? 'Adult',
+          'passport': passenger['passport_no'] ?? 'N/A',
+          'dob': _formatDate(passenger['dob']),
+          'doe': _formatDate(passenger['doe']),
+          'fare': passenger['fare'] ?? 0,
+        };
+      }).toList();
+    } catch (e) {
+      print('Error getting passenger details: $e');
+      return [];
+    }
+  }
+
+  String _formatDate(String? dateStr) {
+    try {
+      if (dateStr == null) return 'N/A';
+      final date = DateTime.parse(dateStr);
+      return DateFormat('dd/MM/yyyy').format(date);
+    } catch (e) {
+      return dateStr ?? 'N/A';
+    }
+  }
+
+  // PDF Generation Function
+  Future<Uint8List> generateFlightTicket() async {
+    final pdf = pw.Document();
+
+    pdf.addPage(
+      pw.MultiPage(
+        pageFormat: PdfPageFormat.a4,
+        margin: const pw.EdgeInsets.all(20),
+        build:
+            (pw.Context context) => [
+              // Header Section
+              pw.Container(
+                padding: const pw.EdgeInsets.all(16),
+                decoration: pw.BoxDecoration(
+                  border: pw.Border.all(color: PdfColors.grey400),
+                  borderRadius: pw.BorderRadius.circular(8),
+                ),
+                child: pw.Column(
+                  crossAxisAlignment: pw.CrossAxisAlignment.start,
+                  children: [
+                    // Header row with date and company
+                    pw.Row(
+                      mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                      children: [
+                        pw.Text(
+                          _getCurrentDateTime(),
+                          style: pw.TextStyle(
+                            fontSize: 10,
+                            color: PdfColors.grey600,
+                          ),
+                        ),
+                        pw.Text(
+                          'ONE ROOF TRAVEL',
+                          style: pw.TextStyle(
+                            fontSize: 16,
+                            fontWeight: pw.FontWeight.bold,
+                            color: PdfColors.blue900,
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    pw.SizedBox(height: 16),
+
+                    // Booking details row
+                    pw.Row(
+                      crossAxisAlignment: pw.CrossAxisAlignment.start,
+                      children: [
+                        // Left column - booking info
+                        pw.Expanded(
+                          flex: 3,
+                          child: pw.Column(
+                            crossAxisAlignment: pw.CrossAxisAlignment.start,
+                            children: [
+                              _buildPdfLabelValue('PNR', _getPNR()),
+                              pw.SizedBox(height: 8),
+                              _buildPdfLabelValue('Booking #', _getBookingId()),
+                              pw.SizedBox(height: 8),
+                              _buildPdfLabelValue(
+                                'Booked By',
+                                'ONE ROOF TRAVEL',
+                              ),
+                              pw.SizedBox(height: 8),
+                              _buildPdfLabelValue('Contact', _getMobile()),
+                              pw.SizedBox(height: 8),
+                              _buildPdfLabelValue('Status', _getStatus()),
+                            ],
+                          ),
+                        ),
+
+                        pw.SizedBox(width: 20),
+
+                        // Right column - airline info
+                        pw.Expanded(
+                          flex: 1,
+                          child: pw.Container(
+                            padding: const pw.EdgeInsets.all(12),
+                            decoration: pw.BoxDecoration(
+                              color: PdfColors.teal50,
+                              border: pw.Border.all(color: PdfColors.teal200),
+                              borderRadius: pw.BorderRadius.circular(8),
+                            ),
+                            child: pw.Text(
+                              _getAirlineInfo(),
+                              style: pw.TextStyle(
+                                fontSize: 12,
+                                fontWeight: pw.FontWeight.bold,
+                                color: PdfColors.teal700,
+                              ),
+                              textAlign: pw.TextAlign.center,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+
+              pw.SizedBox(height: 20),
+
+              // Flight Details Section
+              pw.Container(
+                decoration: pw.BoxDecoration(
+                  border: pw.Border.all(color: PdfColors.grey400),
+                  borderRadius: pw.BorderRadius.circular(8),
+                ),
+                child: pw.Column(
+                  crossAxisAlignment: pw.CrossAxisAlignment.start,
+                  children: [
+                    // Section header
+                    pw.Container(
+                      width: double.infinity,
+                      padding: const pw.EdgeInsets.all(16),
+                      decoration: pw.BoxDecoration(
+                        border: pw.Border(
+                          left: pw.BorderSide(
+                            color: PdfColors.orange,
+                            width: 4,
+                          ),
+                        ),
+                      ),
+                      child: pw.Row(
+                        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                        children: [
+                          pw.Text(
+                            'Flight Details',
+                            style: pw.TextStyle(
+                              fontSize: 16,
+                              fontWeight: pw.FontWeight.bold,
+                              color: PdfColors.grey800,
+                            ),
+                          ),
+                          pw.Text(
+                            'Booking Date: ${_getCurrentDateTime()}',
+                            style: pw.TextStyle(
+                              fontSize: 10,
+                              color: PdfColors.grey600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    // Flight Table
+                    pw.Table(
+                      border: pw.TableBorder.all(color: PdfColors.grey400),
+                      children: [
+                        // Header Row
+                        pw.TableRow(
+                          decoration: pw.BoxDecoration(
+                            color: PdfColors.blue700,
+                          ),
+                          children: [
+                            _buildPdfTableHeader('Flight No.'),
+                            _buildPdfTableHeader('Date'),
+                            _buildPdfTableHeader('Flight Info'),
+                            _buildPdfTableHeader('Baggage'),
+                            _buildPdfTableHeader('Meal'),
+                          ],
+                        ),
+
+                        // Data Row
+                        pw.TableRow(
+                          decoration: pw.BoxDecoration(
+                            color: PdfColors.grey800,
+                          ),
+                          children: [
+                            _buildPdfTableCell(
+                              _getFlightNumber(),
+                              PdfColors.white,
+                            ),
+                            _buildPdfTableCell(
+                              _getShortDate(),
+                              PdfColors.white,
+                            ),
+                            _buildPdfFlightInfoCell(),
+                            _buildPdfTableCell(
+                              _getBaggageInfo(),
+                              PdfColors.white,
+                            ),
+                            _buildPdfTableCell(_getMealInfo(), PdfColors.white),
+                          ],
+                        ),
+                      ],
+                    ),
+
+                    pw.SizedBox(height: 16),
+
+                    // Passenger Information
+                    pw.Padding(
+                      padding: const pw.EdgeInsets.all(16),
+                      child: pw.Column(
+                        crossAxisAlignment: pw.CrossAxisAlignment.start,
+                        children: [
+                          pw.Text(
+                            'Passengers Information',
+                            style: pw.TextStyle(
+                              fontSize: 14,
+                              fontWeight: pw.FontWeight.bold,
+                              color: PdfColors.grey800,
+                            ),
+                          ),
+                          pw.SizedBox(height: 8),
+
+                          // Passenger details
+                          ..._buildPdfPassengersList(),
+
+                          pw.SizedBox(height: 12),
+
+                          // Total passengers and status
+                          pw.Row(
+                            mainAxisAlignment:
+                                pw.MainAxisAlignment.spaceBetween,
+                            children: [
+                              pw.Text(
+                                'Total Passengers: ${_getPassengerCount()}',
+                                style: const pw.TextStyle(fontSize: 12),
+                              ),
+                              pw.Container(
+                                padding: const pw.EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 4,
+                                ),
+                                decoration: pw.BoxDecoration(
+                                  color: PdfColors.green50,
+                                  borderRadius: pw.BorderRadius.circular(4),
+                                ),
+                                child: pw.Text(
+                                  _getStatus(),
+                                  style: pw.TextStyle(
+                                    fontSize: 12,
+                                    color: PdfColors.green700,
+                                    fontWeight: pw.FontWeight.normal,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+
+                          pw.SizedBox(height: 12),
+
+                          // Total fare
+                          // pw.Row(
+                          //   mainAxisAlignment:
+                          //       pw.MainAxisAlignment.spaceBetween,
+                          //   children: [
+                          //     pw.Text(
+                          //       'Total Fare:',
+                          //       style: pw.TextStyle(
+                          //         fontSize: 14,
+                          //         fontWeight: pw.FontWeight.bold,
+                          //         color: PdfColors.grey800,
+                          //       ),
+                          //     ),
+                          //     pw.Text(
+                          //       'PKR ${_getTotalFare()}',
+                          //       style: pw.TextStyle(
+                          //         fontSize: 14,
+                          //         fontWeight: pw.FontWeight.bold,
+                          //         color: PdfColors.green700,
+                          //       ),
+                          //     ),
+                          //   ],
+                          // ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              pw.SizedBox(height: 20),
+
+              // Terms & Conditions Section
+              pw.Container(
+                padding: const pw.EdgeInsets.all(16),
+                decoration: pw.BoxDecoration(
+                  border: pw.Border.all(color: PdfColors.grey400),
+                  borderRadius: pw.BorderRadius.circular(8),
+                ),
+                child: pw.Column(
+                  crossAxisAlignment: pw.CrossAxisAlignment.start,
+                  children: [
+                    pw.Container(
+                      decoration: pw.BoxDecoration(
+                        border: pw.Border(
+                          left: pw.BorderSide(
+                            color: PdfColors.orange,
+                            width: 4,
+                          ),
+                        ),
+                      ),
+                      padding: const pw.EdgeInsets.only(left: 8),
+                      child: pw.Text(
+                        'TERMS & CONDITIONS:',
+                        style: pw.TextStyle(
+                          fontSize: 14,
+                          fontWeight: pw.FontWeight.bold,
+                          color: PdfColors.grey800,
+                        ),
+                      ),
+                    ),
+
+                    pw.SizedBox(height: 12),
+
+                    _buildPdfBulletPoint(
+                      'Passenger should report at check-in counter at least 4:00 hours prior to the flight.',
+                    ),
+
+                    pw.SizedBox(height: 8),
+
+                    _buildPdfBulletPoint(
+                      'After confirmation, tickets are non-refundable and non-changeable at any time.',
+                    ),
+
+                    pw.SizedBox(height: 8),
+
+                    _buildPdfBulletPoint(
+                      'Valid passport and visa (if required) must be presented at check-in.',
+                    ),
+                  ],
+                ),
+              ),
+            ],
+      ),
+    );
+
+    return pdf.save();
+  }
+
+  // PDF Helper Methods
+  pw.Widget _buildPdfLabelValue(String label, String value) {
+    return pw.Column(
+      crossAxisAlignment: pw.CrossAxisAlignment.start,
+      children: [
+        pw.Text(
+          label,
+          style: pw.TextStyle(
+            fontSize: 12,
+            fontWeight: pw.FontWeight.bold,
+            color: PdfColors.blue900,
+          ),
+        ),
+        pw.Text(
+          value,
+          style: pw.TextStyle(fontSize: 12, color: PdfColors.grey800),
+        ),
+      ],
+    );
+  }
+
+  pw.Widget _buildPdfTableHeader(String text) {
+    return pw.Container(
+      padding: const pw.EdgeInsets.all(8),
+      child: pw.Text(
+        text,
+        style: pw.TextStyle(
+          fontSize: 10,
+          fontWeight: pw.FontWeight.bold,
+          color: PdfColors.white,
+        ),
+        textAlign: pw.TextAlign.center,
+      ),
+    );
+  }
+
+  pw.Widget _buildPdfTableCell(String text, PdfColor color) {
+    return pw.Container(
+      padding: const pw.EdgeInsets.all(8),
+      child: pw.Text(
+        text,
+        style: pw.TextStyle(fontSize: 10, color: color),
+        textAlign: pw.TextAlign.center,
+      ),
+    );
+  }
+
+  pw.Widget _buildPdfFlightInfoCell() {
+    return pw.Container(
+      padding: const pw.EdgeInsets.all(8),
+      child: pw.Column(
+        mainAxisSize: pw.MainAxisSize.min,
+        children: [
+          // Route
+          pw.Text(
+            '${_getDepartureCity()} → ${_getArrivalCity()}',
+            style: pw.TextStyle(
+              fontSize: 9,
+              fontWeight: pw.FontWeight.bold,
+              color: PdfColors.orange300,
+            ),
+            textAlign: pw.TextAlign.center,
+          ),
+          pw.SizedBox(height: 2),
+          // Times
+          pw.Text(
+            '${_getDepartureTime()} - ${_getArrivalTime()}',
+            style: pw.TextStyle(fontSize: 8, color: PdfColors.white),
+            textAlign: pw.TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+
+  List<pw.Widget> _buildPdfPassengersList() {
+    final passengers = _getPassengerDetails();
+    List<pw.Widget> widgets = [];
+
+    for (int i = 0; i < passengers.length; i++) {
+      widgets.add(
+        pw.Container(
+          margin: const pw.EdgeInsets.only(bottom: 8),
+          padding: const pw.EdgeInsets.all(12),
+          decoration: pw.BoxDecoration(
+            color: PdfColors.grey50,
+            borderRadius: pw.BorderRadius.circular(8),
+            border: pw.Border.all(color: PdfColors.grey200),
+          ),
+          child: pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: [
+              pw.Row(
+                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                children: [
+                  pw.Text(
+                    '${passengers[i]['name']}',
+                    style: pw.TextStyle(
+                      fontSize: 12,
+                      fontWeight: pw.FontWeight.bold,
+                      color: PdfColors.blue900,
+                    ),
+                  ),
+                  pw.Text(
+                    '${passengers[i]['type']}',
+                    style: pw.TextStyle(fontSize: 11, color: PdfColors.grey600),
+                  ),
+                ],
+              ),
+              pw.SizedBox(height: 4),
+              pw.Text(
+                'Passport: ${passengers[i]['passport']} | DOB: ${passengers[i]['dob']}',
+                style: pw.TextStyle(fontSize: 10, color: PdfColors.grey600),
+              ),
+              pw.Row(
+                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                children: [
+                  pw.Text(
+                    'DOE: ${passengers[i]['doe']}',
+                    style: pw.TextStyle(fontSize: 10, color: PdfColors.grey600),
+                  ),
+                  pw.Text(
+                    _getStatus(),
+                    // 'Fare: PKR ${NumberFormat('#,##0').format(passengers[i]['fare'])}',
+                    style: pw.TextStyle(
+                      fontSize: 11,
+                      fontWeight: pw.FontWeight.normal,
+                      color: PdfColors.green700,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return widgets;
+  }
+
+  pw.Widget _buildPdfBulletPoint(String text) {
+    return pw.Row(
+      crossAxisAlignment: pw.CrossAxisAlignment.start,
+      children: [
+        pw.Container(
+          margin: const pw.EdgeInsets.only(top: 6),
+          width: 4,
+          height: 4,
+          decoration: pw.BoxDecoration(
+            color: PdfColors.grey600,
+            shape: pw.BoxShape.circle,
+          ),
+        ),
+        pw.SizedBox(width: 8),
+        pw.Expanded(
+          child: pw.Text(
+            text,
+            style: pw.TextStyle(fontSize: 11, color: PdfColors.grey700),
+          ),
+        ),
+      ],
     );
   }
 }

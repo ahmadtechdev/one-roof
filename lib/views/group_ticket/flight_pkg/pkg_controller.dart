@@ -115,6 +115,7 @@ class FlightPKGController extends GetxController {
 
     return GroupFlightModel(
       id: flightDetails['id'],
+      group_id: flightDetails['group_id'] ?? 0,
       airline: airline['airline_name'] ?? 'Unknown Airline',
       sector: airline['sector'] ?? 'Unknown sector',
       shortName: airline['short_name'] ?? '',

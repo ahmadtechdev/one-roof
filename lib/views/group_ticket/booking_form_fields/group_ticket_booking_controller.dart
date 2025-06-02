@@ -1,7 +1,10 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:oneroof/utility/colors.dart';
 import 'package:oneroof/views/group_ticket/booking_form_fields/model.dart';
+import 'package:oneroof/views/group_ticket/booking_form_fields/print-voucher/print-voucher.dart';
 import '../../../services/api_service_group_tickets.dart';
 import '../flight_pkg/pkg_model.dart';
 
@@ -38,7 +41,7 @@ class GroupTicketBookingController extends GetxController {
     bookingData.update((val) {
       if (val == null) return;
 
-      val.groupId = groupId;
+      val.groupId = flight.group_id;
       val.groupName =
           '${flight.airline}-${flight.origin}-${flight.destination}';
       val.sector = '${flight.origin}-${flight.destination}';
@@ -78,6 +81,8 @@ class GroupTicketBookingController extends GetxController {
     isFormValid.value = formKey.currentState?.validate() ?? false;
   }
 
+  final RxBool isLoading = false.obs;
+
   /// Submits the booking to the API
   Future<void> submitBooking() async {
     if (!isFormValid.value) {
@@ -86,6 +91,9 @@ class GroupTicketBookingController extends GetxController {
     }
 
     try {
+      // Show loading
+      isLoading.value = true;
+
       final passengers =
           bookingData.value.passengers
               .map(
@@ -102,10 +110,10 @@ class GroupTicketBookingController extends GetxController {
 
       final result = await apiController.saveBooking(
         groupId: bookingData.value.groupId,
-        agentName: 'Oneroof Travels',
-        agencyName: 'Oneroof Travels',
+        agentName: 'ONE ROOF TRAVEL',
+        agencyName: 'ONE ROOF TRAVEL',
         email: 'usama@travelnetwork.com',
-        mobile: '+923137358881',
+        mobile: '03137358881',
         adults: bookingData.value.adults,
         children:
             bookingData.value.children > 0 ? bookingData.value.children : null,
@@ -115,20 +123,79 @@ class GroupTicketBookingController extends GetxController {
         groupPriceDetailId: bookingData.value.groupPriceDetailId,
       );
 
+      // Hide loading
+      isLoading.value = false;
+
       if (result['success'] == true) {
         showSuccessSnackbar(result['message']);
-        // Navigate to success screen
-        // Get.to(() => BookingSuccessScreen());
+
+        // Print full result data in chunks
+        printLargeData("the data is ${jsonEncode(result)}");
+
+        // Navigate to PDF print screen with the API response data
+        Get.to(() => PDFPrintScreen(bookingData: result));
       } else {
         showErrorSnackbar(result['message']);
       }
     } catch (e) {
+      // Hide loading on error
+      isLoading.value = false;
       showErrorSnackbar('An error occurred while processing your booking');
     }
   }
 
-  // Passenger count management
-  // ========================
+  // Helper function to print large data in chunks
+  void printLargeData(String data) {
+    const int chunkSize = 800;
+    for (int i = 0; i < data.length; i += chunkSize) {
+      final end = (i + chunkSize < data.length) ? i + chunkSize : data.length;
+      debugPrint(data.substring(i, end));
+    }
+  }
+
+  // Update your save button in the UI to show loading state
+  Widget buildSaveButton() {
+    return Obx(() {
+      return Container(
+        width: double.infinity,
+        child: ElevatedButton(
+          onPressed: isLoading.value ? null : submitBooking,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.blue.shade800,
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+          child:
+              isLoading.value
+                  ? Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            Colors.white,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      const Text('Processing...'),
+                    ],
+                  )
+                  : const Text(
+                    'Save Booking',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                  ),
+        ),
+      );
+    });
+  }
+  // Update your save button in the UI to show loading state
 
   void incrementAdults() {
     if (bookingData.value.totalPassengers < bookingData.value.availableSeats) {
@@ -143,7 +210,7 @@ class GroupTicketBookingController extends GetxController {
         adultPrice: bookingData.value.adultPrice,
         childPrice: bookingData.value.childPrice,
         infantPrice: bookingData.value.infantPrice,
-        groupPriceDetailId: bookingData.value.groupId,
+        groupPriceDetailId: bookingData.value.groupPriceDetailId,
       );
       bookingData.value = updatedData;
     } else {
@@ -189,7 +256,7 @@ class GroupTicketBookingController extends GetxController {
         adultPrice: bookingData.value.adultPrice,
         childPrice: bookingData.value.childPrice,
         infantPrice: bookingData.value.infantPrice,
-        groupPriceDetailId: bookingData.value.groupId,
+        groupPriceDetailId: bookingData.value.groupPriceDetailId,
       );
       bookingData.value = updatedData;
     } else {
@@ -215,7 +282,7 @@ class GroupTicketBookingController extends GetxController {
         adultPrice: bookingData.value.adultPrice,
         childPrice: bookingData.value.childPrice,
         infantPrice: bookingData.value.infantPrice,
-        groupPriceDetailId: bookingData.value.groupId,
+        groupPriceDetailId: bookingData.value.groupPriceDetailId,
       );
       bookingData.value = updatedData;
     }
@@ -234,7 +301,7 @@ class GroupTicketBookingController extends GetxController {
         adultPrice: bookingData.value.adultPrice,
         childPrice: bookingData.value.childPrice,
         infantPrice: bookingData.value.infantPrice,
-        groupPriceDetailId: bookingData.value.groupId,
+        groupPriceDetailId: bookingData.value.groupPriceDetailId,
       );
       bookingData.value = updatedData;
     } else {
@@ -324,19 +391,6 @@ class GroupTicketBookingController extends GetxController {
       val.passengers.removeWhere((p) => infantTitles.contains(p.title));
     }
   }
-
-  // Individual increment/decrement methods (maintained for backward compatibility)
-  // ============================================================================
-
-  // void incrementAdults() => updatePassengerCount('adult', increment: true);
-  // void decrementAdults() => updatePassengerCount('adult', increment: false);
-  // void incrementChildren() => updatePassengerCount('child', increment: true);
-  // void decrementChildren() => updatePassengerCount('child', increment: false);
-  // void incrementInfants() => updatePassengerCount('infant', increment: true);
-  // void decrementInfants() => updatePassengerCount('infant', increment: false);
-
-  // Helper methods
-  // =============
 
   void showErrorSnackbar(String message) {
     Get.snackbar(

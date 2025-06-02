@@ -5,7 +5,9 @@ import 'package:oneroof/utility/colors.dart';
 import 'package:oneroof/views/group_ticket/booking_form_fields/group_ticket_booking_controller.dart';
 
 class PassengerDetailsScreen extends StatelessWidget {
-  final GroupTicketBookingController controller = Get.put(GroupTicketBookingController());
+  final GroupTicketBookingController controller = Get.put(
+    GroupTicketBookingController(),
+  );
   final dateFormat = DateFormat('dd-MM-yyyy');
 
   PassengerDetailsScreen({super.key}) {
@@ -69,7 +71,7 @@ class PassengerDetailsScreen extends StatelessWidget {
               ),
             ),
           ),
-          _buildBottomButton(),
+          controller.buildSaveButton(),
         ],
       ),
     );
@@ -83,21 +85,25 @@ class PassengerDetailsScreen extends StatelessWidget {
     }
 
     for (int i = 0; i < controller.bookingData.value.children; i++) {
-      passengers.add(_buildPassengerForm(
-        'Child ${i + 1}',
-        controller.bookingData.value.adults + i,
-        'child',
-      ));
+      passengers.add(
+        _buildPassengerForm(
+          'Child ${i + 1}',
+          controller.bookingData.value.adults + i,
+          'child',
+        ),
+      );
     }
 
     for (int i = 0; i < controller.bookingData.value.infants; i++) {
-      passengers.add(_buildPassengerForm(
-        'Infant ${i + 1}',
-        controller.bookingData.value.adults +
-            controller.bookingData.value.children +
-            i,
-        'infant',
-      ));
+      passengers.add(
+        _buildPassengerForm(
+          'Infant ${i + 1}',
+          controller.bookingData.value.adults +
+              controller.bookingData.value.children +
+              i,
+          'infant',
+        ),
+      );
     }
 
     return passengers;
@@ -122,27 +128,28 @@ class PassengerDetailsScreen extends StatelessWidget {
           width: double.infinity,
           child: ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: controller.isFormValid.value
-                  ? TColors.secondary
-                  : Colors.grey[300],
+              backgroundColor:
+                  controller.isFormValid.value
+                      ? TColors.secondary
+                      : Colors.grey[300],
               padding: EdgeInsets.symmetric(vertical: 16),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
               elevation: 2,
             ),
-            onPressed: controller.isFormValid.value
-                ? controller.submitBooking
-                : null,
+            onPressed:
+                controller.isFormValid.value ? controller.submitBooking : null,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
                   'Continue to Payment',
                   style: TextStyle(
-                    color: controller.isFormValid.value
-                        ? TColors.white
-                        : TColors.grey,
+                    color:
+                        controller.isFormValid.value
+                            ? TColors.white
+                            : TColors.grey,
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                   ),
@@ -150,9 +157,10 @@ class PassengerDetailsScreen extends StatelessWidget {
                 SizedBox(width: 8),
                 Icon(
                   Icons.arrow_forward,
-                  color: controller.isFormValid.value
-                      ? TColors.white
-                      : TColors.grey,
+                  color:
+                      controller.isFormValid.value
+                          ? TColors.white
+                          : TColors.grey,
                 ),
               ],
             ),
@@ -212,8 +220,8 @@ class PassengerDetailsScreen extends StatelessWidget {
                       SizedBox(height: 4),
                       Text(
                         '${controller.bookingData.value.adults} Adult${controller.bookingData.value.adults > 1 ? 's' : ''}'
-                            '${controller.bookingData.value.children > 0 ? ', ${controller.bookingData.value.children} Child${controller.bookingData.value.children > 1 ? 'ren' : ''}' : ''}'
-                            '${controller.bookingData.value.infants > 0 ? ', ${controller.bookingData.value.infants} Infant${controller.bookingData.value.infants > 1 ? 's' : ''}' : ''}',
+                        '${controller.bookingData.value.children > 0 ? ', ${controller.bookingData.value.children} Child${controller.bookingData.value.children > 1 ? 'ren' : ''}' : ''}'
+                        '${controller.bookingData.value.infants > 0 ? ', ${controller.bookingData.value.infants} Infant${controller.bookingData.value.infants > 1 ? 's' : ''}' : ''}',
                         style: TextStyle(
                           color: TColors.white,
                           fontWeight: FontWeight.w600,
@@ -245,8 +253,6 @@ class PassengerDetailsScreen extends StatelessWidget {
       );
     });
   }
-
-
 
   Widget _buildBookerInformationSection() {
     return Card(
@@ -293,25 +299,25 @@ class PassengerDetailsScreen extends StatelessWidget {
 
   Widget _buildPassengerForm(String title, int index, String type) {
     List<String> titles =
-    type == 'adult'
-        ? controller.adultTitles
-        : type == 'child'
-        ? controller.childTitles
-        : controller.infantTitles;
+        type == 'adult'
+            ? controller.adultTitles
+            : type == 'child'
+            ? controller.childTitles
+            : controller.infantTitles;
 
     IconData categoryIcon =
-    type == 'adult'
-        ? Icons.person
-        : type == 'child'
-        ? Icons.child_care
-        : Icons.baby_changing_station;
+        type == 'adult'
+            ? Icons.person
+            : type == 'child'
+            ? Icons.child_care
+            : Icons.baby_changing_station;
 
     Color headerColor =
-    type == 'adult'
-        ? TColors.secondary
-        : type == 'child'
-        ? TColors.third
-        : Colors.pink[300]!;
+        type == 'adult'
+            ? TColors.secondary
+            : type == 'child'
+            ? TColors.third
+            : Colors.pink[300]!;
 
     return Card(
       margin: EdgeInsets.only(bottom: 16),
@@ -373,7 +379,7 @@ class PassengerDetailsScreen extends StatelessWidget {
                   _buildDateField(
                     'Date of birth',
                     controller.bookingData.value.passengers[index].dateOfBirth,
-                        (picked) {
+                    (picked) {
                       controller
                           .bookingData
                           .value
@@ -392,7 +398,7 @@ class PassengerDetailsScreen extends StatelessWidget {
                         .value
                         .passengers[index]
                         .passportExpiry,
-                        (picked) {
+                    (picked) {
                       controller
                           .bookingData
                           .value
@@ -420,14 +426,14 @@ class PassengerDetailsScreen extends StatelessWidget {
         if (constraints.maxWidth < 600) {
           return Column(
             children:
-            children
-                .map(
-                  (child) => Padding(
-                padding: EdgeInsets.only(bottom: 16),
-                child: child,
-              ),
-            )
-                .toList(),
+                children
+                    .map(
+                      (child) => Padding(
+                        padding: EdgeInsets.only(bottom: 16),
+                        child: child,
+                      ),
+                    )
+                    .toList(),
           );
         }
         // On medium screens, arrange as 2 + 1
@@ -455,13 +461,13 @@ class PassengerDetailsScreen extends StatelessWidget {
                 .map((child) => Expanded(child: child))
                 .toList()
                 .fold<List<Widget>>(
-              [],
+                  [],
                   (list, element) => [
-                ...list,
-                if (list.isNotEmpty) SizedBox(width: 16),
-                element,
-              ],
-            ),
+                    ...list,
+                    if (list.isNotEmpty) SizedBox(width: 16),
+                    element,
+                  ],
+                ),
           );
         }
       },
@@ -496,18 +502,18 @@ class PassengerDetailsScreen extends StatelessWidget {
             ),
             isExpanded: true,
             items:
-            titles
-                .map(
-                  (title) =>
-                  DropdownMenuItem(value: title, child: Text(title)),
-            )
-                .toList(),
+                titles
+                    .map(
+                      (title) =>
+                          DropdownMenuItem(value: title, child: Text(title)),
+                    )
+                    .toList(),
             value:
-            type == 'adult'
-                ? 'Mr'
-                : type == 'child'
-                ? 'Mstr'
-                : 'INF',
+                type == 'adult'
+                    ? 'Mr'
+                    : type == 'child'
+                    ? 'Mstr'
+                    : 'INF',
             onChanged: (value) {
               if (value != null) {
                 controller.bookingData.value.passengers[index].title = value;
@@ -528,10 +534,10 @@ class PassengerDetailsScreen extends StatelessWidget {
   }
 
   Widget _buildTextField(
-      String label,
-      Function(String) onChanged, [
-        IconData? icon,
-      ]) {
+    String label,
+    Function(String) onChanged, [
+    IconData? icon,
+  ]) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -544,9 +550,9 @@ class PassengerDetailsScreen extends StatelessWidget {
           decoration: InputDecoration(
             contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
             prefixIcon:
-            icon != null
-                ? Icon(icon, color: TColors.secondary, size: 20)
-                : null,
+                icon != null
+                    ? Icon(icon, color: TColors.secondary, size: 20)
+                    : null,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
               borderSide: BorderSide(color: Colors.grey.shade300),
@@ -575,13 +581,13 @@ class PassengerDetailsScreen extends StatelessWidget {
   }
 
   Widget _buildDateField(
-      String label,
-      DateTime? currentValue,
-      Function(DateTime) onDateSelected, {
-        required String type,
-        required bool isExpiry,
-        IconData? icon,
-      }) {
+    String label,
+    DateTime? currentValue,
+    Function(DateTime) onDateSelected, {
+    required String type,
+    required bool isExpiry,
+    IconData? icon,
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -595,26 +601,26 @@ class PassengerDetailsScreen extends StatelessWidget {
             final DateTime? picked = await showDatePicker(
               context: Get.context!,
               initialDate:
-              isExpiry
-                  ? DateTime.now().add(Duration(days: 365))
-                  : DateTime.now().subtract(
-                Duration(
-                  days:
-                  type == 'adult'
-                      ? 365 * 18
-                      : type == 'child'
-                      ? 365 * 5
-                      : 180,
-                ),
-              ),
+                  isExpiry
+                      ? DateTime.now().add(Duration(days: 365))
+                      : DateTime.now().subtract(
+                        Duration(
+                          days:
+                              type == 'adult'
+                                  ? 365 * 18
+                                  : type == 'child'
+                                  ? 365 * 5
+                                  : 180,
+                        ),
+                      ),
               firstDate:
-              isExpiry
-                  ? DateTime.now()
-                  : DateTime.now().subtract(Duration(days: 365 * 100)),
+                  isExpiry
+                      ? DateTime.now()
+                      : DateTime.now().subtract(Duration(days: 365 * 100)),
               lastDate:
-              isExpiry
-                  ? DateTime.now().add(Duration(days: 365 * 10))
-                  : DateTime.now(),
+                  isExpiry
+                      ? DateTime.now().add(Duration(days: 365 * 10))
+                      : DateTime.now(),
               builder: (context, child) {
                 return Theme(
                   data: ThemeData.light().copyWith(
@@ -652,9 +658,9 @@ class PassengerDetailsScreen extends StatelessWidget {
                       : 'DD-MM-YYYY',
                   style: TextStyle(
                     color:
-                    currentValue != null
-                        ? TColors.text
-                        : TColors.placeholder,
+                        currentValue != null
+                            ? TColors.text
+                            : TColors.placeholder,
                   ),
                 ),
                 Spacer(),

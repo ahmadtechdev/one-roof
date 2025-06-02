@@ -2,6 +2,7 @@ import 'package:intl/intl.dart';
 
 class GroupFlightModel {
   final int id;
+  final int group_id;
   final String airline;
   final String sector;
   final String shortName;
@@ -18,8 +19,11 @@ class GroupFlightModel {
   final String baggage;
   final String logoUrl;
 
-  GroupFlightModel({
+  GroupFlightModel( {
     required dynamic id,
+    required dynamic group_id,
+
+    
     required this.airline,
     required this.sector,
     required this.shortName,
@@ -37,6 +41,7 @@ class GroupFlightModel {
     required this.logoUrl,
   }) : // Safely convert dynamic types to the required int types with error handling
        id = _parseIntSafely(id, 0),
+       group_id = _parseIntSafely(group_id, 0),
        groupPriceDetailId = _parseIntSafely(groupPriceDetailId, 0),
        price = _parseIntSafely(price, 0),
        seats = _parseIntSafely(seats, 0);
@@ -109,7 +114,9 @@ class GroupFlightModel {
     }
 
     return GroupFlightModel(
+
       id: json['id'] ?? 0,
+      group_id: json['group_id'] ?? 0,
       airline: airline['airline_name']?.toString() ?? '',
       sector: json['sector']?.toString() ?? '',
       shortName: airline['short_name']?.toString() ?? '',

@@ -38,8 +38,6 @@ class GroupTicketingController extends GetxController {
     }
   }
 
-
-
   // Fetch Sectors - fixed to return List instead of Map
   Future<List<dynamic>> fetchSectors() async {
     try {
@@ -60,8 +58,7 @@ class GroupTicketingController extends GetxController {
     }
   }
 
-  Future<List<dynamic>> fetchGroups(String type) 
-  async {
+  Future<List<dynamic>> fetchGroups(String type) async {
     selectedRegion.value = type;
     print("Fetching groups for region: $type");
 
@@ -202,10 +199,44 @@ class GroupTicketingController extends GetxController {
       print('Response data: ${response.data}');
 
       if (response.statusCode == 200 || response.statusCode == 201) {
+        // Check if the response has the nested data structure
+        var responseData = response.data;
+
+        // Check for business logic success/failure in nested data
+        if (responseData is Map<String, dynamic> &&
+            responseData['data'] != null) {
+          var innerData = responseData['data'];
+
+          // Check if the inner data indicates an error or empty data
+          if (innerData is Map<String, dynamic>) {
+            // Check for explicit error flag or success flag
+            if (innerData['error'] == true || innerData['success'] == false) {
+              return {
+                'success': false,
+                'message': innerData['message'] ?? 'Booking failed',
+                'data': null,
+              };
+            }
+
+            // Check if data array is empty (booking not created)
+            if (innerData['data'] is List &&
+                (innerData['data'] as List).isEmpty) {
+              return {
+                'success': false,
+                'message':
+                    innerData['message'] ??
+                    'Booking could not be created - no data returned',
+                'data': null,
+              };
+            }
+          }
+        }
+
+        // If we reach here, the booking was successful
         return {
           'success': true,
-          'message': 'Booking saved successfully',
-          'data': response.data,
+          'message': responseData['message'] ?? 'Booking saved successfully',
+          'data': responseData,
         };
       } else {
         return {
@@ -268,8 +299,7 @@ class GroupTicketingController extends GetxController {
         'data': null,
       };
     }
-  }
-  // ALLHAIDER_APIS
+  } // ALLHAIDER_APIS
 
   var alhaidertoken =
       'eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiI5ZTc4OTIxMS0zZjc0LTQ1ZTUtOWE3NC03YzZhYzNmMWVjZGQiLCJqdGkiOiIxNDE0NDE2YmNlNjE5OTk3YTJkNzE4MWYzYWY3YTRkMTA1YzZmZGUxNDYwNDFhZTJjYjVjZDA5ZTlhYTVhYjQ1Y2Q2M2EyNDI2MzBhZjdiZiIsImlhdCI6MTc0MzA3MjA1NC4yMDk1MTgsIm5iZiI6MTc0MzA3MjA1NC4yMDk1MjMsImV4cCI6MTc3NDYwODA1NC4xOTM4MzYsInN1YiI6Ijc0Iiwic2NvcGVzIjpbXX0.mv6GXni4w0wCJAUKWAtFOcfnH9fmI5bWTSIddDzkS3H3UUgk-0CcehU86U_m_91XRUwljgO_X06VtS3VQs29m3wwjBcNxZcL74gkmWk5zSzgjezhoaMSSuYsF_yHb3-XXODLFe6yq0-6yQ8nydhr57ifa1CLvRZRfVYdfPTCnkZqb6Y6pH_FXex4EjC5vHWHPPUOU9n6jrIvL1TM4sSs7Ie4PznkazOLdJME1XZqwrge1gdVhA7MYSVvEbPZBw7nuRdNAuA1xUHWgS2PC-qvrO_4atWEeWA__2jI6_0_Hr1nE1vUqVbRmtg3eiudmZgqo2Zfb2xjhwNfPdNgVqveFSZDiN2HmweWylN-7oGM6yKZyfa8RMSR1OH1-ubyr2TEcggUiv7Dew0gUGgq5J-kjUTWMIKpWJ_o_yZUXMCrMaBheKqDMXTZQ2w3C4CNqKf96Ky2YIU3kuQHtfgTOwhzysZSzU1Fpd9fCPo6UGbsPbzFut2vTj413dlvu1NdXWT6n-ZGhhbGxoi3JVUuOvWksKP-W1XugsbAUIeh5hyp_tr8iiORpf5DGiGjphD2PEksIxE7n9NTp1iR4TQZlSY_nUXyuW1TNd3KmdWb7eZFhP_lWc2Ycfkmt8Kq9ii_DbtTlrjtimTn24Nud33szwK19mFOfkXN55wA1DXAKA4anDs';
@@ -369,7 +399,6 @@ class GroupTicketingController extends GetxController {
       return [];
     }
   }
-  
 
   // Modify fetchAlhaiderAirlines to return a List
   Future<List<dynamic>> fetchAlhaiderAirlines() async {
