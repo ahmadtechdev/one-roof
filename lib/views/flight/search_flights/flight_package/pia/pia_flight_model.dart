@@ -40,6 +40,10 @@ class PIAFlight {
   final List<Map<String, dynamic>> legSchedules;
   final List<PIAFlightSegmentInfo> segmentInfo;
   final List<Map<String, dynamic>> pricingInforArray;
+  final bool isOutbound;
+  final String? boundCode;
+  final String? date; // Add date to help with grouping
+  final bool isMultiCity;
 
   PIAFlight({
     required this.imgPath,
@@ -78,12 +82,16 @@ class PIAFlight {
     this.connectedFlights,
     this.tripSequence,
     this.tripType,
+    this.isOutbound = true,
+    this.boundCode,
+    this.date,
     required this.legSchedules,
     required this.segmentInfo,
     required this.pricingInforArray,
+    this.isMultiCity = false,
   });
 
-  factory PIAFlight.fromApiResponse(Map<String, dynamic> flightData) {
+  factory PIAFlight.fromApiResponse(Map<String, dynamic> flightData, {bool isOutbound = true, String? boundCode, String? date, bool isMultiCity = false}) {
     try {
       final flightSegment = flightData['flightSegment'];
       final fareInfo = flightData['fareInfoList'][0]['fareInfoList'][0];
@@ -186,6 +194,10 @@ class PIAFlight {
         legSchedules: [flightSegment],
         segmentInfo: [PIAFlightSegmentInfo.fromFlightSegment(flightSegment)],
         pricingInforArray: [pricingInfo],
+        isOutbound: isOutbound,
+        boundCode: boundCode,
+        date: date,
+        isMultiCity: isMultiCity,
       );
     } catch (e, stackTrace) {
       print('Error in PIAFlight.fromApiResponse: $e');
@@ -249,6 +261,60 @@ class PIAFlight {
       return 0;
     }
   }
+
+
+  // In pia_flight_model.dart
+  PIAFlight copyWith({
+    List<Map<String, dynamic>>? legSchedules,
+    String? duration,
+  }) {
+    return PIAFlight(
+      imgPath: imgPath,
+      airline: airline,
+      flightNumber: flightNumber,
+      departureTime: departureTime,
+      arrivalTime: arrivalTime,
+      duration: duration ?? this.duration,
+      price: price,
+      from: from,
+      to: to,
+      type: type,
+      isRefundable: isRefundable,
+      isNonStop: isNonStop,
+      departureTerminal: departureTerminal,
+      arrivalTerminal: arrivalTerminal,
+      departureCity: departureCity,
+      arrivalCity: arrivalCity,
+      aircraftType: aircraftType,
+      taxes: taxes,
+      baggageAllowance: baggageAllowance,
+      packages: packages,
+      stops: stops,
+      stopSchedules: stopSchedules,
+      legElapsedTime: legElapsedTime,
+      cabinClass: cabinClass,
+      mealCode: mealCode,
+      returnFlight: returnFlight,
+      isReturn: isReturn,
+      groupId: groupId,
+      returnDepartureTime: returnDepartureTime,
+      returnArrivalTime: returnArrivalTime,
+      returnFrom: returnFrom,
+      returnTo: returnTo,
+      isRoundTrip: isRoundTrip,
+      connectedFlights: connectedFlights,
+      tripSequence: tripSequence,
+      tripType: tripType,
+      legSchedules: legSchedules ?? this.legSchedules,
+      segmentInfo: segmentInfo,
+      pricingInforArray: pricingInforArray,
+      isOutbound: isOutbound,
+      boundCode: boundCode,
+      date: date,
+
+    );
+  }
+
 }
 
 class PIAPriceInfo {
@@ -600,3 +666,4 @@ class PIASegmentInfo {
     }
   }
 }
+

@@ -846,6 +846,8 @@ class PDFPrintScreen extends StatelessWidget {
   String _getFlightNumber() {
     try {
       final airline = bookingData['data']?['data']?['group']?['airline'];
+      print(airline);
+
       return airline?['short_name']?.toString() ?? 'ER';
     } catch (e) {
       print('Error getting flight number: $e');

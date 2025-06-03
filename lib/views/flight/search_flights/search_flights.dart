@@ -7,6 +7,7 @@ import '../../../utility/colors.dart';
 import 'flight_package/pia/pia_flight_controller.dart';
 import 'flight_package/pia/pia_flight_model.dart';
 import 'flight_package/sabre/sabre_flight_controller.dart';
+import 'search_flight_utils/filter_flight_model.dart';
 import 'search_flight_utils/widgets/currency_dialog.dart';
 import 'search_flight_utils/widgets/flight_bottom_sheet.dart';
 import 'search_flight_utils/widgets/pia_flight_card.dart';
@@ -20,6 +21,7 @@ class FlightBookingPage extends StatelessWidget {
   final FlightScenario scenario;
   final FlightController controller = Get.put(FlightController());
   final AirBlueFlightController airBlueController = Get.put(AirBlueFlightController());
+  final PIAFlightController piaController = Get.put(PIAFlightController());
 
   FlightBookingPage({super.key, required this.scenario}) {
     controller.setScenario(scenario);
@@ -35,7 +37,7 @@ class FlightBookingPage extends StatelessWidget {
         leading: const BackButton(),
         title: Obx(() {
           // Get total flight count
-          final totalFlights = controller.filteredFlights.length + airBlueController.flights.length;
+          final totalFlights = controller.filteredFlights.length + airBlueController.flights.length + piaController.filteredFlights.length;
           final isLoading = controller.isLoading.value || airBlueController.isLoading.value;
 
           return Column(
@@ -107,7 +109,6 @@ class FlightBookingPage extends StatelessWidget {
 
   Widget _buildFilterSection() {
     return Container(
-      // color: TColors.background,
       margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 16),
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
       decoration: BoxDecoration(
@@ -140,7 +141,11 @@ class FlightBookingPage extends StatelessWidget {
                   shape: const RoundedRectangleBorder(
                     borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
                   ),
-                  builder: (_) => FilterBottomSheet(controller: controller),
+                  builder: (_) => FilterBottomSheet(
+                    controller: controller,
+                    airBlueController: airBlueController,
+                    piaController: piaController,
+                  ),
                 );
               },
               child: const Row(
@@ -314,7 +319,10 @@ class FlightBookingPage extends StatelessWidget {
   Widget _filterButton(String text, bool isSelected) {
     return TextButton(
       onPressed: () {
+        // Update sort type in all controllers
         controller.updateSortType(text);
+        airBlueController.applyFilters(FlightFilter(sortType: text));
+        piaController.applyFilters(FlightFilter(sortType: text));
       },
       style: TextButton.styleFrom(
         foregroundColor: isSelected ? TColors.primary : TColors.grey,

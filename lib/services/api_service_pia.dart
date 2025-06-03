@@ -186,7 +186,7 @@ class PIAFlightApiService {
           responseType: ResponseType.plain,
         ),
       );
-
+      //
       // // Print the response in pretty format
       // debugPrint('=== PIA FLIGHT AVAILABILITY RESPONSE ===');
       // _printXmlPretty(response.data.toString());
@@ -205,7 +205,7 @@ class PIAFlightApiService {
       final document = xml.XmlDocument.parse(cleanedXml);
 
       // For debugging - print the parsed XML structure
-      debugPrint('Parsed XML structure: ${document.toXmlString(pretty: true)}');
+      // debugPrint('Parsed XML structure: ${document.toXmlString(pretty: true)}');
 
       final transformer = Xml2Json();
       transformer.parse(cleanedXml);
@@ -214,8 +214,8 @@ class PIAFlightApiService {
       final jsonString = transformer.toParker();
       final jsonResult = jsonDecode(jsonString) as Map<String, dynamic>;
 
-      // Debug print the converted JSON
-      debugPrint('Converted JSON: $jsonResult');
+      // // Debug print the converted JSON
+      // debugPrint('Converted JSON: $jsonResult');
 
       return jsonResult;
     } catch (e, stackTrace) {

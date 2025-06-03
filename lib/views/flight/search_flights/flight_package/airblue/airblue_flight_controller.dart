@@ -2,6 +2,7 @@ import 'package:get/get.dart';
 
 import '../../../../../services/api_service_flight.dart';
 
+import '../../search_flight_utils/filter_flight_model.dart';
 import 'airblue_flight_package.dart';
 import 'airblue_flight_model.dart';
 
@@ -264,5 +265,48 @@ class AirBlueFlightController extends GetxController {
       ),
       barrierDismissible: false,
     );
+  }
+}
+
+// In airblue_flight_controller.dart
+extension AirBlueFlightFiltering on AirBlueFlightController {
+  void applyFilters(FlightFilter filter) {
+    // Filter by airlines (AirBlue only)
+    List<AirBlueFlight> airlineFiltered = flights.where((flight) {
+      if (filter.selectedAirlines.isEmpty) return true;
+      return filter.selectedAirlines.contains('PA'); // AirBlue's code
+    }).toList();
+
+    // Filter by stops (AirBlue flights are usually non-stop)
+    List<AirBlueFlight> stopsFiltered = airlineFiltered.where((flight) {
+      if (filter.maxStops == null) return true;
+      return flight.stopSchedules.length <= filter.maxStops! + 1;
+    }).toList();
+
+    // Sort
+    List<AirBlueFlight> sorted = [...stopsFiltered];
+    switch (filter.sortType) {
+      case 'Cheapest':
+        sorted.sort((a, b) => a.price.compareTo(b.price));
+        break;
+      case 'Fastest':
+        sorted.sort((a, b) {
+          int aDuration = _calculateTotalDuration(a.legSchedules);
+          int bDuration = _calculateTotalDuration(b.legSchedules);
+          return aDuration.compareTo(bDuration);
+        });
+        break;
+      default:
+      // Suggested sorting
+        break;
+    }
+
+    flights.value = sorted;
+  }
+
+  int _calculateTotalDuration(List<Map<String, dynamic>> legSchedules) {
+    return legSchedules.fold(0, (sum, leg) {
+      return sum + (leg['elapsedTime'] as int? ?? 0);
+    });
   }
 }

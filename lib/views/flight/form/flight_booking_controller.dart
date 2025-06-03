@@ -47,7 +47,7 @@ class CityPair {
 
 class FlightBookingController extends GetxController {
   // Trip type
-  final Rx<TripType> tripType = TripType.roundTrip.obs;
+  final Rx<TripType> tripType = TripType.oneWay.obs;
   var isSearching = false.obs;
 
   // City pairs for multicity
@@ -439,9 +439,6 @@ class FlightBookingController extends GetxController {
       } else {
         piaFlightController.loadFlights(result);
       }
-
-      print("pia flight check");
-      print(piaFlightController.filteredFlights);
     } catch (e) {
       debugPrint('PIA API error: $e');
       piaFlightController.setErrorMessage('PIA API error: ${e.toString()}');
@@ -523,6 +520,14 @@ class FlightBookingController extends GetxController {
 
       // Add PIA API call based on trip type
       if (tripType.value == TripType.multiCity && cityPairs.isNotEmpty) {
+        // Prepare multi-city segments
+        final segments = cityPairs.map((pair) => {
+        'from': pair.fromCity.value,
+        'to': pair.toCity.value,
+        'date': _formatDateForAPI(
+        DateFormat('dd/MM/yyyy').parse(pair.departureDate.value))
+        }).toList();
+
         futures.add(_callPiaApi(
           fromCity: cityPairs.first.fromCity.value,
           toCity: cityPairs.first.toCity.value,
@@ -532,6 +537,7 @@ class FlightBookingController extends GetxController {
           childCount: childrenCount.value,
           infantCount: infantCount.value,
           tripType: 'MULTI_DIRECTIONAL',
+          multiCitySegments: segments,
         ));
       } else {
         futures.add(_callPiaApi(
