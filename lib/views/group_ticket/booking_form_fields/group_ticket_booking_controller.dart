@@ -237,7 +237,7 @@ class GroupTicketBookingController extends GetxController {
         adultPrice: bookingData.value.adultPrice,
         childPrice: bookingData.value.childPrice,
         infantPrice: bookingData.value.infantPrice,
-        groupPriceDetailId: bookingData.value.groupId,
+        groupPriceDetailId: bookingData.value.groupPriceDetailId,
       );
       bookingData.value = updatedData;
     }
@@ -327,7 +327,7 @@ class GroupTicketBookingController extends GetxController {
         adultPrice: bookingData.value.adultPrice,
         childPrice: bookingData.value.childPrice,
         infantPrice: bookingData.value.infantPrice,
-        groupPriceDetailId: bookingData.value.groupId,
+        groupPriceDetailId: bookingData.value.groupPriceDetailId,
       );
       bookingData.value = updatedData;
     }

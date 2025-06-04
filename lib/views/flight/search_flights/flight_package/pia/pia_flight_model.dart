@@ -1,6 +1,24 @@
 import 'package:get/get.dart';
 
 class PIAFlight {
+  List<Map<String, dynamic>> getFlightSegments() {
+    if (isMultiCity && legSchedules.isNotEmpty) {
+      return legSchedules;
+    }
+
+    // For non-multi-city flights, create a single segment
+    return [
+      {
+        'departureDateTime': departureTime,
+        'arrivalDateTime': arrivalTime,
+        'departureAirport': {'locationCode': from},
+        'arrivalAirport': {'locationCode': to},
+        'journeyDuration': duration,
+        'stopQuantity': isNonStop ? '0' : stops.length.toString(),
+      },
+    ];
+  }
+
   final String imgPath;
   final String airline;
   final String flightNumber;
@@ -91,31 +109,78 @@ class PIAFlight {
     this.isMultiCity = false,
   });
 
-  factory PIAFlight.fromApiResponse(Map<String, dynamic> flightData, {bool isOutbound = true, String? boundCode, String? date, bool isMultiCity = false}) {
+  factory PIAFlight.fromApiResponse(
+    Map<String, dynamic> flightData, {
+    bool isOutbound = true,
+    String? boundCode,
+    String? date,
+    bool isMultiCity = false,
+  }) {
     try {
       final flightSegment = flightData['flightSegment'];
       final fareInfo = flightData['fareInfoList'][0]['fareInfoList'][0];
       final pricingInfo = flightData['pricingInfo'];
+      List<Map<String, dynamic>> legSchedules = [];
+
+      // For multi-city flights, ensure legSchedules has proper structure
+      if (isMultiCity && flightSegment != null) {
+        final segments =
+            flightSegment is List ? flightSegment : [flightSegment];
+        legSchedules =
+            segments.map((segment) {
+              return {
+                'departureDateTime': segment['departureDateTime'],
+                'arrivalDateTime': segment['arrivalDateTime'],
+                'departureAirport': segment['departureAirport'],
+                'arrivalAirport': segment['arrivalAirport'],
+                'journeyDuration': segment['journeyDuration'],
+                'stopQuantity': segment['stopQuantity'] ?? '0',
+              };
+            }).toList();
+      } else {
+        // For non-multi-city flights, use single segment
+        legSchedules = [flightSegment];
+      }
 
       // Safely extract values with null checks
-      final String departureDateTime = _extractStringValue(flightSegment['departureDateTime']);
-      final String arrivalDateTime = _extractStringValue(flightSegment['arrivalDateTime']);
-      final String journeyDuration = _extractStringValue(flightSegment['journeyDuration']);
+      final String departureDateTime = _extractStringValue(
+        flightSegment['departureDateTime'],
+      );
+      final String arrivalDateTime = _extractStringValue(
+        flightSegment['arrivalDateTime'],
+      );
+      final String journeyDuration = _extractStringValue(
+        flightSegment['journeyDuration'],
+      );
 
       // Safely extract airport codes
-      final String? fromCity = _extractNestedValue(flightSegment, ['departureAirport', 'locationCode']);
-      final String? toCity = _extractNestedValue(flightSegment, ['arrivalAirport', 'locationCode']);
+      final String? fromCity = _extractNestedValue(flightSegment, [
+        'departureAirport',
+        'locationCode',
+      ]);
+      final String? toCity = _extractNestedValue(flightSegment, [
+        'arrivalAirport',
+        'locationCode',
+      ]);
 
       // Safe extraction of required values
-      final String airlineName = _extractNestedValue(flightSegment, ['airline', 'companyShortName'])
-          ?? 'Pakistan International Airlines';
-      final String flightNum = _extractStringValue(flightSegment['flightNumber']);
+      final String airlineName =
+          _extractNestedValue(flightSegment, ['airline', 'companyShortName']) ??
+          'Pakistan International Airlines';
+      final String flightNum = _extractStringValue(
+        flightSegment['flightNumber'],
+      );
 
       // Extract price with fallback
       double flightPrice = 0.0;
       try {
-        final priceValue = _extractNestedValue(pricingInfo, ['totalFare', 'amount', 'value']);
-        flightPrice = priceValue != null ? double.tryParse(priceValue) ?? 0.0 : 0.0;
+        final priceValue = _extractNestedValue(pricingInfo, [
+          'totalFare',
+          'amount',
+          'value',
+        ]);
+        flightPrice =
+            priceValue != null ? double.tryParse(priceValue) ?? 0.0 : 0.0;
       } catch (e) {
         print('Error parsing price: $e');
       }
@@ -142,23 +207,45 @@ class PIAFlight {
       }
 
       // Extract terminals with fallbacks
-      final String depTerminal = _extractNestedValue(flightSegment, ['departureAirport', 'terminal']) ?? '';
-      final String arrTerminal = _extractNestedValue(flightSegment, ['arrivalAirport', 'terminal']) ?? '';
+      final String depTerminal =
+          _extractNestedValue(flightSegment, [
+            'departureAirport',
+            'terminal',
+          ]) ??
+          '';
+      final String arrTerminal =
+          _extractNestedValue(flightSegment, ['arrivalAirport', 'terminal']) ??
+          '';
 
       // Extract city names with fallbacks
-      final String? depCity = _extractNestedValue(
-          flightSegment, ['departureAirport', 'cityInfo', 'city', 'locationName']) ?? fromCity;
-      final String? arrCity = _extractNestedValue(
-          flightSegment, ['arrivalAirport', 'cityInfo', 'city', 'locationName']) ?? toCity;
+      final String? depCity =
+          _extractNestedValue(flightSegment, [
+            'departureAirport',
+            'cityInfo',
+            'city',
+            'locationName',
+          ]) ??
+          fromCity;
+      final String? arrCity =
+          _extractNestedValue(flightSegment, [
+            'arrivalAirport',
+            'cityInfo',
+            'city',
+            'locationName',
+          ]) ??
+          toCity;
 
       // Extract aircraft type
-      final String aircraft = _extractNestedValue(flightSegment, ['equipment', 'airEquipType']) ?? 'Unknown';
+      final String aircraft =
+          _extractNestedValue(flightSegment, ['equipment', 'airEquipType']) ??
+          'Unknown';
 
       // Extract cabin class
       final String cabin = _extractStringValue(fareInfo['cabin']);
 
       // Extract meal code
-      final String meal = _extractNestedValue(flightSegment, ['flightNotes', 'note']) ?? 'N';
+      final String meal =
+          _extractNestedValue(flightSegment, ['flightNotes', 'note']) ?? 'N';
 
       // Create baggage allowance and taxes
       final baggageAllowance = PIABaggageAllowance.fromFareInfo(fareInfo);
@@ -191,13 +278,13 @@ class PIAFlight {
         legElapsedTime: _parseDurationToMinutes(journeyDuration),
         cabinClass: cabin,
         mealCode: meal,
-        legSchedules: [flightSegment],
         segmentInfo: [PIAFlightSegmentInfo.fromFlightSegment(flightSegment)],
         pricingInforArray: [pricingInfo],
         isOutbound: isOutbound,
         boundCode: boundCode,
         date: date,
         isMultiCity: isMultiCity,
+        legSchedules: legSchedules,
       );
     } catch (e, stackTrace) {
       print('Error in PIAFlight.fromApiResponse: $e');
@@ -206,9 +293,11 @@ class PIAFlight {
     }
   }
 
-
   // Helper function to safely navigate nested maps
-  static String? _extractNestedValue(Map<String, dynamic>? data, List<String> keys) {
+  static String? _extractNestedValue(
+    Map<String, dynamic>? data,
+    List<String> keys,
+  ) {
     if (data == null) return null;
 
     dynamic current = data;
@@ -223,7 +312,7 @@ class PIAFlight {
       if (!current.containsKey(key)) {
         // Check if key exists with namespace prefix
         final nsKey = current.keys.firstWhere(
-              (k) => k.endsWith(':${key}') || k.endsWith('@${key}'),
+          (k) => k.endsWith(':${key}') || k.endsWith('@${key}'),
           orElse: () => key,
         );
         if (!current.containsKey(nsKey)) return null;
@@ -248,6 +337,7 @@ class PIAFlight {
     }
     return value.toString().trim();
   }
+
   static int _parseDurationToMinutes(String duration) {
     try {
       if (duration.startsWith('PT')) {
@@ -261,7 +351,6 @@ class PIAFlight {
       return 0;
     }
   }
-
 
   // In pia_flight_model.dart
   PIAFlight copyWith({
@@ -311,10 +400,8 @@ class PIAFlight {
       isOutbound: isOutbound,
       boundCode: boundCode,
       date: date,
-
     );
   }
-
 }
 
 class PIAPriceInfo {
@@ -343,24 +430,29 @@ class PIAPriceInfo {
   factory PIAPriceInfo.fromApiResponse(Map<String, dynamic> fareInfo) {
     final totalFare = fareInfo['totalFare'] as Map<String, dynamic>;
     return PIAPriceInfo(
-      totalPrice: (totalFare['totalPrice'] is int)
-          ? totalFare['totalPrice'].toDouble()
-          : totalFare['totalPrice'] as double,
-      totalTaxAmount: (totalFare['totalTaxAmount'] is int)
-          ? totalFare['totalTaxAmount'].toDouble()
-          : totalFare['totalTaxAmount'] as double,
+      totalPrice:
+          (totalFare['totalPrice'] is int)
+              ? totalFare['totalPrice'].toDouble()
+              : totalFare['totalPrice'] as double,
+      totalTaxAmount:
+          (totalFare['totalTaxAmount'] is int)
+              ? totalFare['totalTaxAmount'].toDouble()
+              : totalFare['totalTaxAmount'] as double,
       currency: totalFare['currency'] as String,
-      baseFareAmount: (totalFare['baseFareAmount'] is int)
-          ? totalFare['baseFareAmount'].toDouble()
-          : totalFare['baseFareAmount'] as double,
+      baseFareAmount:
+          (totalFare['baseFareAmount'] is int)
+              ? totalFare['baseFareAmount'].toDouble()
+              : totalFare['baseFareAmount'] as double,
       baseFareCurrency: totalFare['baseFareCurrency'] as String,
-      constructionAmount: (totalFare['constructionAmount'] is int)
-          ? totalFare['constructionAmount'].toDouble()
-          : totalFare['constructionAmount'] as double,
+      constructionAmount:
+          (totalFare['constructionAmount'] is int)
+              ? totalFare['constructionAmount'].toDouble()
+              : totalFare['constructionAmount'] as double,
       constructionCurrency: totalFare['constructionCurrency'] as String,
-      equivalentAmount: (totalFare['equivalentAmount'] is int)
-          ? totalFare['equivalentAmount'].toDouble()
-          : totalFare['equivalentAmount'] as double,
+      equivalentAmount:
+          (totalFare['equivalentAmount'] is int)
+              ? totalFare['equivalentAmount'].toDouble()
+              : totalFare['equivalentAmount'] as double,
       equivalentCurrency: totalFare['equivalentCurrency'] as String,
     );
   }
@@ -390,7 +482,9 @@ class PIATaxDesc {
     required this.description,
   });
 
-  static List<PIATaxDesc> fromPricingInfoList(Map<String, dynamic> pricingInfo) {
+  static List<PIATaxDesc> fromPricingInfoList(
+    Map<String, dynamic> pricingInfo,
+  ) {
     try {
       final taxList = pricingInfo['taxes']?['taxList'];
       if (taxList == null) return [];
@@ -404,12 +498,17 @@ class PIATaxDesc {
         try {
           code = PIAFlight._extractNestedValue(tax, ['taxCode']) ?? '';
 
-          final amountValue = PIAFlight._extractNestedValue(tax, ['taxAmount', 'value']);
+          final amountValue = PIAFlight._extractNestedValue(tax, [
+            'taxAmount',
+            'value',
+          ]);
           if (amountValue != null) {
             amount = double.tryParse(amountValue) ?? 0.0;
           }
 
-          currency = PIAFlight._extractNestedValue(tax, ['taxAmount', 'currency']) ?? '';
+          currency =
+              PIAFlight._extractNestedValue(tax, ['taxAmount', 'currency']) ??
+              '';
         } catch (e) {
           print('Error parsing tax: $e');
         }
@@ -453,11 +552,23 @@ class PIABaggageAllowance {
         );
       }
 
-      final allowanceType = PIAFlight._extractStringValue(baggage['allowanceType']);
+      final allowanceType = PIAFlight._extractStringValue(
+        baggage['allowanceType'],
+      );
 
       if (allowanceType == 'WEIGHT') {
-        final weightValue = PIAFlight._extractNestedValue(baggage, ['maxAllowedWeight', 'weight']) ?? '0';
-        final unitCode = PIAFlight._extractNestedValue(baggage, ['maxAllowedWeight', 'unitOfMeasureCode']) ?? 'KG';
+        final weightValue =
+            PIAFlight._extractNestedValue(baggage, [
+              'maxAllowedWeight',
+              'weight',
+            ]) ??
+            '0';
+        final unitCode =
+            PIAFlight._extractNestedValue(baggage, [
+              'maxAllowedWeight',
+              'unitOfMeasureCode',
+            ]) ??
+            'KG';
 
         final double parsedWeight = double.tryParse(weightValue) ?? 0.0;
 
@@ -468,7 +579,9 @@ class PIABaggageAllowance {
           type: '$weightValue $unitCode',
         );
       } else {
-        final piecesValue = PIAFlight._extractStringValue(baggage['maxAllowedPieces'] ?? '0');
+        final piecesValue = PIAFlight._extractStringValue(
+          baggage['maxAllowedPieces'] ?? '0',
+        );
         final int parsedPieces = int.tryParse(piecesValue) ?? 0;
 
         return PIABaggageAllowance(
@@ -511,15 +624,22 @@ class PIAFlightPackageInfo {
 
   factory PIAFlightPackageInfo.fromFareInfo(Map<String, dynamic> fareInfo) {
     try {
-      String name = PIAFlight._extractNestedValue(fareInfo, ['fareGroupName']) ?? 'Standard';
-      String code = PIAFlight._extractNestedValue(fareInfo, ['fareReferenceCode']) ?? '';
-      String cabin = PIAFlight._extractNestedValue(fareInfo, ['cabin']) ?? 'Economy';
+      String name =
+          PIAFlight._extractNestedValue(fareInfo, ['fareGroupName']) ??
+          'Standard';
+      String code =
+          PIAFlight._extractNestedValue(fareInfo, ['fareReferenceCode']) ?? '';
+      String cabin =
+          PIAFlight._extractNestedValue(fareInfo, ['cabin']) ?? 'Economy';
 
       // Extract price
       double price = 0.0;
       try {
-        final priceValue = PIAFlight._extractNestedValue(
-            fareInfo, ['pricingInfo', 'totalAmount', 'value']);
+        final priceValue = PIAFlight._extractNestedValue(fareInfo, [
+          'pricingInfo',
+          'totalAmount',
+          'value',
+        ]);
         if (priceValue != null) {
           price = double.tryParse(priceValue) ?? 0.0;
         }
@@ -530,7 +650,9 @@ class PIAFlightPackageInfo {
       // Determine if refundable
       bool refundable = false;
       try {
-        final endorsement = PIAFlight._extractStringValue(fareInfo['endorsementList']);
+        final endorsement = PIAFlight._extractStringValue(
+          fareInfo['endorsementList'],
+        );
         refundable = endorsement != 'NON REFUNDABLE';
       } catch (e) {
         print('Error determining package refundable status: $e');
@@ -591,10 +713,19 @@ class PIAFlightSegmentInfo {
         );
       }
 
-      final String bookingCode = PIAFlight._extractNestedValue(bookingClass, ['resBookDesigCode']) ?? '';
-      final String cabinCode = PIAFlight._extractNestedValue(bookingClass, ['cabin']) ?? 'Y';
-      final String mealCode = PIAFlight._extractNestedValue(segment, ['flightNotes', 'note']) ?? 'N';
-      final String seatsAvailable = PIAFlight._extractNestedValue(bookingClass, ['resBookDesigQuantity']) ?? '0';
+      final String bookingCode =
+          PIAFlight._extractNestedValue(bookingClass, ['resBookDesigCode']) ??
+          '';
+      final String cabinCode =
+          PIAFlight._extractNestedValue(bookingClass, ['cabin']) ?? 'Y';
+      final String mealCode =
+          PIAFlight._extractNestedValue(segment, ['flightNotes', 'note']) ??
+          'N';
+      final String seatsAvailable =
+          PIAFlight._extractNestedValue(bookingClass, [
+            'resBookDesigQuantity',
+          ]) ??
+          '0';
 
       return PIAFlightSegmentInfo(
         bookingCode: bookingCode,
@@ -643,10 +774,19 @@ class PIASegmentInfo {
         );
       }
 
-      final bookingCode = PIAFlight._extractNestedValue(bookingClass, ['resBookDesigCode']) ?? '';
-      final cabinCode = PIAFlight._extractNestedValue(bookingClass, ['cabin']) ?? 'Y';
-      final mealCode = PIAFlight._extractNestedValue(segment, ['flightNotes', 'note']) ?? 'N';
-      final seatsAvailable = PIAFlight._extractNestedValue(bookingClass, ['resBookDesigQuantity']) ?? '0';
+      final bookingCode =
+          PIAFlight._extractNestedValue(bookingClass, ['resBookDesigCode']) ??
+          '';
+      final cabinCode =
+          PIAFlight._extractNestedValue(bookingClass, ['cabin']) ?? 'Y';
+      final mealCode =
+          PIAFlight._extractNestedValue(segment, ['flightNotes', 'note']) ??
+          'N';
+      final seatsAvailable =
+          PIAFlight._extractNestedValue(bookingClass, [
+            'resBookDesigQuantity',
+          ]) ??
+          '0';
 
       return PIASegmentInfo(
         bookingCode: bookingCode,
@@ -666,4 +806,3 @@ class PIASegmentInfo {
     }
   }
 }
-

@@ -31,7 +31,7 @@ class _PIAFlightCardState extends State<PIAFlightCard>
 
   final Rx<Map<String, dynamic>> marginData = Rx<Map<String, dynamic>>({});
   final RxDouble finalPrice = 0.0.obs;
-  int i=1;
+  int i = 1;
 
   @override
   void initState() {
@@ -93,8 +93,6 @@ class _PIAFlightCardState extends State<PIAFlightCard>
     }
     return widget.flight.baggageAllowance.type;
   }
-
-
 
   String formatFullDateTime(String dateTimeString) {
     try {
@@ -187,7 +185,9 @@ class _PIAFlightCardState extends State<PIAFlightCard>
                         child: Row(
                           children: [
                             Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8.0,
+                              ),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
@@ -224,7 +224,7 @@ class _PIAFlightCardState extends State<PIAFlightCard>
                     Column(
                       children: [
                         Obx(
-                              () => Container(
+                          () => Container(
                             padding: const EdgeInsets.symmetric(
                               horizontal: 12,
                               vertical: 2,
@@ -250,6 +250,12 @@ class _PIAFlightCardState extends State<PIAFlightCard>
                     ),
                   ],
                 ),
+                Column(
+                  children: [
+                    for (var i = 0; i < widget.flight.legSchedules.length; i++)
+                      _buildFlightSegmentTimeline(i),
+                  ],
+                ),
 
                 const SizedBox(height: 16),
                 Padding(
@@ -258,27 +264,30 @@ class _PIAFlightCardState extends State<PIAFlightCard>
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       CachedNetworkImage(
-                        imageUrl: 'https://onerooftravel.net/assets/img/airline-logo/PIA-logo.png',
+                        imageUrl:
+                            'https://onerooftravel.net/assets/img/airline-logo/PIA-logo.png',
                         height: 32,
                         width: 32,
-                        placeholder: (context, url) => const SizedBox(
-                          height: 24,
-                          width: 24,
-                          child: Center(
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
+                        placeholder:
+                            (context, url) => const SizedBox(
+                              height: 24,
+                              width: 24,
+                              child: Center(
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              ),
                             ),
-                          ),
-                        ),
-                        errorWidget: (context, url, error) => CachedNetworkImage(
-                          imageUrl: 'https://cdn-icons-png.flaticon.com/128/15700/15700374.png',
-                          height: 24,
-                          width: 24,
-                          errorWidget: (context, url, error) => const Icon(
-                            Icons.flight,
-                            size: 24,
-                          ),
-                        ),
+                        errorWidget:
+                            (context, url, error) => CachedNetworkImage(
+                              imageUrl:
+                                  'https://cdn-icons-png.flaticon.com/128/15700/15700374.png',
+                              height: 24,
+                              width: 24,
+                              errorWidget:
+                                  (context, url, error) =>
+                                      const Icon(Icons.flight, size: 24),
+                            ),
                         fit: BoxFit.contain,
                       ),
 
@@ -304,7 +313,9 @@ class _PIAFlightCardState extends State<PIAFlightCard>
                       Column(
                         children: [
                           Text(
-                            formatDuration(widget.flight.duration), // This will show "3h 45m"
+                            formatDuration(
+                              widget.flight.duration,
+                            ), // This will show "3h 45m"
                             style: const TextStyle(
                               color: TColors.grey,
                               fontSize: 14,
@@ -526,10 +537,7 @@ class _PIAFlightCardState extends State<PIAFlightCard>
               const SizedBox(width: 8),
               const Text(
                 'Segment 1',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 12,
-                ),
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
               ),
             ],
           ),
@@ -555,17 +563,20 @@ class _PIAFlightCardState extends State<PIAFlightCard>
           Row(
             children: [
               CachedNetworkImage(
-                imageUrl: 'https://onerooftravel.net/assets/img/airline-logo/PIA-logo.png',
+                imageUrl:
+                    'https://onerooftravel.net/assets/img/airline-logo/PIA-logo.png',
                 height: 24,
                 width: 24,
-                placeholder: (context, url) => const SizedBox(
-                  height: 24,
-                  width: 24,
-                  child: Center(
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  ),
-                ),
-                errorWidget: (context, url, error) => const Icon(Icons.flight, size: 24),
+                placeholder:
+                    (context, url) => const SizedBox(
+                      height: 24,
+                      width: 24,
+                      child: Center(
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      ),
+                    ),
+                errorWidget:
+                    (context, url, error) => const Icon(Icons.flight, size: 24),
               ),
               const SizedBox(width: 8),
               Text(
@@ -676,6 +687,135 @@ class _PIAFlightCardState extends State<PIAFlightCard>
         ],
       ),
     );
+  }
+
+  Widget _buildFlightSegmentTimeline(int segmentIndex) {
+    final segment = widget.flight.legSchedules[segmentIndex];
+    final isLast = segmentIndex == widget.flight.legSchedules.length - 1;
+
+    // Extract departure and arrival info from PIA's data structure
+    final departureTime =
+        segment['departureDateTime'] ??
+        segment['departure']['time'] ??
+        widget.flight.departureTime;
+
+    final arrivalTime =
+        segment['arrivalDateTime'] ??
+        segment['arrival']['time'] ??
+        widget.flight.arrivalTime;
+
+    final from =
+        segment['departureAirport']?['locationCode'] ??
+        segment['departure']['airport'] ??
+        widget.flight.from;
+
+    final to =
+        segment['arrivalAirport']?['locationCode'] ??
+        segment['arrival']['airport'] ??
+        widget.flight.to;
+
+    final duration = segment['journeyDuration'] ?? widget.flight.duration;
+
+    return Column(
+      children: [
+        const SizedBox(height: 16),
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8.0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              CachedNetworkImage(
+                imageUrl:
+                    'https://onerooftravel.net/assets/img/airline-logo/PIA-logo.png',
+                height: 32,
+                width: 32,
+                // ... existing image code ...
+              ),
+
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    formatTime(departureTime),
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  Text(
+                    from,
+                    style: const TextStyle(color: TColors.grey, fontSize: 15),
+                  ),
+                ],
+              ),
+              Column(
+                children: [
+                  Text(
+                    formatDuration(duration),
+                    style: const TextStyle(color: TColors.grey, fontSize: 14),
+                  ),
+                  // ... timeline visualization code ...
+                  Text(
+                    (segment['stopQuantity'] == '0' || widget.flight.isNonStop)
+                        ? 'Nonstop'
+                        : '${segment['stopQuantity'] ?? (segment['stops']?.length ?? widget.flight.stops.length)} stop(s)',
+                    style: const TextStyle(fontSize: 14, color: TColors.grey),
+                  ),
+                ],
+              ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    formatTime(arrivalTime),
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  Text(
+                    to,
+                    style: const TextStyle(color: TColors.grey, fontSize: 15),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+        if (!isLast)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 40.0),
+            child: Row(
+              children: [
+                const Icon(Icons.flight_land, size: 16, color: Colors.grey),
+                const SizedBox(width: 8),
+                Text(
+                  'Layover: ${_calculateLayoverTime(segment, widget.flight.legSchedules[segmentIndex + 1])}',
+                  style: const TextStyle(fontSize: 12, color: Colors.grey),
+                ),
+              ],
+            ),
+          ),
+      ],
+    );
+  }
+
+  String _calculateLayoverTime(
+    Map<String, dynamic> currentSegment,
+    Map<String, dynamic> nextSegment,
+  ) {
+    try {
+      final currentArrival = DateTime.parse(currentSegment['arrivalDateTime']);
+      final nextDeparture = DateTime.parse(nextSegment['departureDateTime']);
+      final difference = nextDeparture.difference(currentArrival);
+
+      final hours = difference.inHours;
+      final minutes = difference.inMinutes % 60;
+
+      return '${hours}h ${minutes}m';
+    } catch (e) {
+      return 'N/A';
+    }
   }
 
   Widget _buildSectionCard({
