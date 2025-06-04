@@ -6,6 +6,7 @@ import 'package:xml/xml.dart' as xml;
 import '../../../../../services/api_service_pia.dart';
 import '../../search_flight_utils/filter_flight_model.dart';
 import 'pia_flight_model.dart';
+import 'pia_flight_package.dart';
 import 'pia_return_flight_page.dart';
 
 class PIAFlightController extends GetxController {
@@ -16,9 +17,17 @@ class PIAFlightController extends GetxController {
   final RxString errorMessage = ''.obs;
   final RxString selectedCurrency = 'PKR'.obs;
   final RxBool isRoundTrip = false.obs;
-  final Rx<PIAFlight?> selectedOutboundFlight = Rx<PIAFlight?>(null);
+  // final Rx<PIAFlight?> selectedOutboundFlight = Rx<PIAFlight?>(null);
   final RxBool showReturnFlights = false.obs;
   final RxBool isMultiCity = false.obs; // Add this flag
+  final RxMap<String, List<PIAFareOption>> fareOptionsByFlight =
+      <String, List<PIAFareOption>>{}.obs;
+  final Rx<PIAFlight?> selectedFlight = Rx<PIAFlight?>(null);
+  PIAFlight? selectedOutboundFlight;
+  PIAFareOption? selectedOutboundFareOption;
+  PIAFlight? selectedReturnFlight;
+  PIAFareOption? selectedReturnFareOption;
+  int i = 0;
 
   void updateCurrency(String currency) {
     selectedCurrency.value = currency;
@@ -30,7 +39,6 @@ class PIAFlightController extends GetxController {
     filteredFlights.clear();
     errorMessage.value = '';
     isRoundTrip.value = false;
-    selectedOutboundFlight.value = null;
     showReturnFlights.value = false;
   }
 
@@ -84,7 +92,7 @@ class PIAFlightController extends GetxController {
               : [availabilityRouteLists];
 
       // Determine trip type
-      isRoundTrip.value = routeLists.length > 1 && !_isMultiCity(routeLists);
+      isRoundTrip.value = routeLists.length > 1;
       isMultiCity.value = _isMultiCity(routeLists);
 
       for (int i = 0; i < routeLists.length; i++) {
@@ -96,6 +104,8 @@ class PIAFlightController extends GetxController {
 
       // For one-way and multi-city trips, show all flights immediately
       // For round trips, only show outbound flights first
+      print("Ahamd 4");
+      print(inboundFlights.length);
       filteredFlights.assignAll(
         isRoundTrip.value
             ? outboundFlights
@@ -154,6 +164,7 @@ class PIAFlightController extends GetxController {
     return false;
   }
 
+  // Update the _processRouteList method
   void _processRouteList(
     Map<String, dynamic> routeList, {
     required bool isOutbound,
@@ -164,7 +175,6 @@ class PIAFlightController extends GetxController {
           routeList['\$']?['availabilityByDateList'];
       if (byDateList == null) return;
 
-      // Handle both single date and list of dates
       final dateLists = byDateList is List ? byDateList : [byDateList];
 
       for (final dateData in dateLists) {
@@ -174,7 +184,6 @@ class PIAFlightController extends GetxController {
             dateData['\$']?['originDestinationOptionList'];
         if (options == null) continue;
 
-        // Handle both single option and list of options
         final optionList = options is List ? options : [options];
 
         for (final option in optionList) {
@@ -183,15 +192,29 @@ class PIAFlightController extends GetxController {
               option['\$']?['fareComponentGroupList'];
           if (fareGroups == null) continue;
 
-          // Handle both single fare group and list
           final fareGroupList = fareGroups is List ? fareGroups : [fareGroups];
+
           for (final fareGroup in fareGroupList) {
-            _processFareGroup(
-              fareGroup,
-              option,
-              isOutbound: isOutbound,
-              date: date,
-            );
+            final boundList = fareGroup['boundList'] ?? option['boundList'];
+            if (boundList == null) continue;
+
+            final bounds = boundList is List ? boundList : [boundList];
+
+            if (isMultiCity.value && bounds.length > 1) {
+              _processMultiCityFareGroup(
+                bounds,
+                fareGroup,
+                isOutbound: isOutbound,
+                date: date,
+              );
+            } else {
+              _processFareGroup(
+                fareGroup,
+                option,
+                isOutbound: isOutbound,
+                date: date,
+              );
+            }
           }
         }
       }
@@ -200,6 +223,8 @@ class PIAFlightController extends GetxController {
       debugPrint('Stack trace: $stackTrace');
     }
   }
+
+  // Replace the _processFareGroup method in PIAFlightController
 
   void _processFareGroup(
     Map<String, dynamic> fareGroup,
@@ -211,64 +236,62 @@ class PIAFlightController extends GetxController {
       final boundList = fareGroup['boundList'] ?? option['boundList'];
       if (boundList == null) return;
 
-      // Handle both single bound and list of bounds
       final bounds = boundList is List ? boundList : [boundList];
+      final segments = bounds[0]['availFlightSegmentList'];
+      final segmentList = segments is List ? segments : [segments];
+      if (segmentList.isEmpty) return;
 
-      // For multi-city flights, we need to combine all bounds into a single flight
-      if (isMultiCity.value && bounds.length > 1) {
-        _processMultiCityFareGroup(
-          bounds,
-          fareGroup,
-          isOutbound: isOutbound,
-          date: date,
-        );
-        return;
-      }
+      // Process all fare components
+      final fareComponents = fareGroup['fareComponentList'];
+      if (fareComponents == null) return;
 
-      // Process each bound separately (for round trip or one-way)
-      for (final bound in bounds) {
-        final boundCode = _extractStringValue(bound['boundCode']);
-        final segments = bound['availFlightSegmentList'];
-        if (segments == null) continue;
+      final componentList =
+          fareComponents is List ? fareComponents : [fareComponents];
 
-        // Handle both single segment and list of segments
-        final segmentList = segments is List ? segments : [segments];
-
-        // Get the main flight segment (first segment)
-        if (segmentList.isEmpty) continue;
-        final mainSegment = segmentList[0];
-
-        // Process fare components - only take the first one
-        final fareComponents = fareGroup['fareComponentList'];
-        if (fareComponents == null) continue;
-
-        // Handle both single fare component and list of fare components
-        final componentList =
-            fareComponents is List ? fareComponents : [fareComponents];
-        if (componentList.isEmpty) continue;
-
-        // Only process the first component
-        final firstComponent = componentList[0];
+      // Create flight with first component (lowest price)
+      if (componentList.isNotEmpty) {
         final flight = _createFlightFromComponents(
-          mainSegment,
-          firstComponent,
+          segmentList[0],
+          componentList[0],
           isOutbound: isOutbound,
-          boundCode: boundCode,
           date: date,
           isMultiCity: isMultiCity.value,
         );
 
         if (flight != null) {
-          if (isOutbound) {
-            outboundFlights.add(flight);
-          } else {
-            inboundFlights.add(flight);
+          // Store all fare options for this flight - with null checking
+          final fareOptions = <PIAFareOption>[];
+
+          for (final component in componentList) {
+            try {
+              if (component != null && component is Map<String, dynamic>) {
+                final fareOption = PIAFareOption.fromFareInfo(component);
+                fareOptions.add(fareOption);
+              }
+            } catch (e) {
+              print('Error creating fare option from component: $e');
+              // Continue with other components instead of failing completely
+            }
+          }
+
+          // Only store if we have at least one valid fare option
+          if (fareOptions.isNotEmpty) {
+            fareOptionsByFlight[flight.flightNumber] = fareOptions;
+
+            if (isOutbound) {
+              outboundFlights.add(flight);
+            } else {
+              inboundFlights.add(flight);
+              print("ahmad: $i : ");
+              print(inboundFlights);
+            }
           }
         }
       }
     } catch (e, stackTrace) {
       debugPrint('Error processing fare group: $e');
       debugPrint('Stack trace: $stackTrace');
+      // Don't rethrow - just log and continue with other fare groups
     }
   }
 
@@ -322,6 +345,7 @@ class PIAFlightController extends GetxController {
     }
   }
 
+  // Update the _createMultiCityFlight method
   PIAFlight? _createMultiCityFlight(
     List<Map<String, dynamic>> segments,
     Map<String, dynamic> fareComponent, {
@@ -335,6 +359,8 @@ class PIAFlightController extends GetxController {
       final firstSegment = segments[0];
       final flightSegment = firstSegment['flightSegment'] ?? firstSegment;
 
+      print("ahmad");
+      print(flightSegment);
       // Get passenger fare info
       final passengerFareInfoList =
           fareComponent['passengerFareInfoList'] ??
@@ -363,23 +389,6 @@ class PIAFlightController extends GetxController {
           fareInfoList['pricingInfo'] ?? fareInfoList['\$']?['pricingInfo'];
       if (pricingInfo == null) return null;
 
-      // Calculate total duration
-      final totalDuration = segments.fold(Duration.zero, (prev, segment) {
-        final durationStr = segment['journeyDuration'] ?? 'PT0H0M';
-        final hours =
-            int.tryParse(durationStr.substring(2, durationStr.indexOf('H'))) ??
-            0;
-        final minutes =
-            int.tryParse(
-              durationStr.substring(
-                durationStr.indexOf('H') + 1,
-                durationStr.indexOf('M'),
-              ),
-            ) ??
-            0;
-        return prev + Duration(hours: hours, minutes: minutes);
-      });
-
       // Create flight data structure
       final flightData = {
         'flightSegment': flightSegment,
@@ -396,12 +405,14 @@ class PIAFlightController extends GetxController {
         flightData,
         isOutbound: isOutbound,
         date: date,
+        isMultiCity: true,
       );
 
       // Update with multi-city specific data
       return flight.copyWith(
         legSchedules: segments,
-        duration: 'PT${totalDuration.inHours}H${totalDuration.inMinutes % 60}M',
+        duration: _calculateTotalDuration(segments),
+        isMultiCity: true,
       );
     } catch (e, stackTrace) {
       debugPrint('Error creating multi-city flight: $e');
@@ -506,34 +517,88 @@ class PIAFlightController extends GetxController {
     }
   }
 
-  void handlePIAFlightSelection(PIAFlight flight) {
-    if (isRoundTrip.value && !flight.isMultiCity) {
-      if (selectedOutboundFlight.value == null) {
-        // First flight selection (outbound)
-        selectedOutboundFlight.value = flight;
-        showReturnFlights.value = true;
-        Get.to(() => PIAReturnFlightsPage(returnFlights: inboundFlights));
-      } else {
-        // Second flight selection (return)
-        Get.back(); // Close the return flights page
-        Get.snackbar(
-          "Booking Selected",
-          "Outbound: ${selectedOutboundFlight.value!.flightNumber} "
-              "Return: ${flight.flightNumber}",
-        );
-        selectedOutboundFlight.value = null;
-        showReturnFlights.value = false;
-      }
-    } else {
-      // One-way or multi-city flight selection
-      Get.snackbar(
-        "Flight Selected",
-        flight.isMultiCity
-            ? "Multi-city flight selected"
-            : "Flight ${flight.flightNumber} selected",
-      );
-      // Proceed with booking
+  String _calculateTotalDuration(List<Map<String, dynamic>> segments) {
+    int totalMinutes = 0;
+    for (var segment in segments) {
+      final durationStr = segment['journeyDuration'] ?? 'PT0H0M';
+      totalMinutes += _parseDurationToMinutes(durationStr);
     }
+    final hours = totalMinutes ~/ 60;
+    final minutes = totalMinutes % 60;
+    return 'PT${hours}H${minutes}M';
+  }
+
+  int _parseDurationToMinutes(String durationStr) {
+    // Handle null or empty strings
+    if (durationStr.isEmpty) return 0;
+
+    // Remove 'PT' prefix if present
+    String duration = durationStr.replaceFirst('PT', '');
+
+    int hours = 0;
+    int minutes = 0;
+
+    // Extract hours
+    RegExp hoursRegex = RegExp(r'(\d+)H');
+    Match? hoursMatch = hoursRegex.firstMatch(duration);
+    if (hoursMatch != null) {
+      hours = int.parse(hoursMatch.group(1)!);
+    }
+
+    // Extract minutes
+    RegExp minutesRegex = RegExp(r'(\d+)M');
+    Match? minutesMatch = minutesRegex.firstMatch(duration);
+    if (minutesMatch != null) {
+      minutes = int.parse(minutesMatch.group(1)!);
+    }
+
+    // Convert total to minutes
+    return (hours * 60) + minutes;
+  }
+
+  // Update the handlePIAFlightSelection method
+  // Update the handlePIAFlightSelection method
+  void handlePIAFlightSelection(
+    PIAFlight flight, {
+    bool isReturnFlight = false,
+  }) {
+    if (isRoundTrip.value) {
+      print("ahmad 5");
+      print(isReturnFlight);
+      if (!isReturnFlight) {
+        // First flight selection (outbound)
+        selectedOutboundFlight = flight;
+        selectedFlight.value = flight;
+        Get.to(
+          () =>
+              PIAPackageSelectionDialog(flight: flight, isReturnFlight: false),
+        );
+      } else {
+        // Return flight selection
+        selectedReturnFlight = flight;
+        selectedFlight.value = flight;
+        Get.to(
+          () => PIAPackageSelectionDialog(flight: flight, isReturnFlight: true),
+        );
+      }
+    } else if (isMultiCity.value) {
+      // Multi-city flight selection
+      selectedFlight.value = flight;
+      Get.to(
+        () => PIAPackageSelectionDialog(flight: flight, isReturnFlight: false),
+      );
+    } else {
+      // One-way flight selection
+      selectedFlight.value = flight;
+      Get.to(
+        () => PIAPackageSelectionDialog(flight: flight, isReturnFlight: false),
+      );
+    }
+  }
+
+  // Add method to get fare options for a flight
+  List<PIAFareOption> getFareOptionsForFlight(PIAFlight flight) {
+    return fareOptionsByFlight[flight.flightNumber] ?? [];
   }
 
   static String _extractStringValue(dynamic value) {

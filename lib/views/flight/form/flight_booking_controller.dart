@@ -268,182 +268,7 @@ class FlightBookingController extends GetxController {
     PIAFlightController(),
   );
 
-  // Update the searchFlights method
-  //   Future<void> searchFlights() async {
-  //     try {
-  //       isSearching.value = true;
-  //
-  //       // Debugging: Print all search parameters
-  //       print('Search parameters:');
-  //       print('Trip type: ${tripType.value}');
-  //       print('From City: ${fromCity.value}');
-  //       print('To City: ${toCity.value}');
-  //       print('Departure Date: ${departureDate.value}');
-  //       print('Return Date: ${returnDate.value}');
-  //       print('Adults: ${adultCount.value}');
-  //       print('Children: ${childrenCount.value}');
-  //       print('Infants: ${infantCount.value}');
-  //       print('Cabin: ${travelClass.value}');
-  //
-  //       // Validate inputs
-  //       if (fromCity.value.isEmpty || toCity.value.isEmpty) {
-  //         Get.snackbar(
-  //           'Error',
-  //           'Please select both departure and destination cities.',
-  //           snackPosition: SnackPosition.BOTTOM,
-  //           backgroundColor: Colors.red,
-  //           colorText: Colors.white,
-  //         );
-  //         return;
-  //       }
-  //
-  //       // Prepare parameters for API call with leading commas to match API expectations
-  //       String origin = '';
-  //       String destination = '';
-  //       String formattedDates = '';
-  //
-  //       if (tripType.value == TripType.multiCity) {
-  //         // For multi-city trips, populate origins and destinations from cityPairs
-  //         origins.clear();
-  //         destinations.clear();
-  //
-  //         for (var pair in cityPairs) {
-  //           origins.add(pair.fromCity.value);
-  //           destinations.add(pair.toCity.value);
-  //         }
-  //
-  //         // Format dates for multi-city with leading comma
-  //         formattedDates = ','; // Start with a comma
-  //         for (int i = 0; i < cityPairs.length; i++) {
-  //           if (i > 0) formattedDates += ',';
-  //           formattedDates += _formatDateForAPI(
-  //             DateFormat('dd/MM/yyyy').parse(cityPairs[i].departureDate.value),
-  //           );
-  //         }
-  //
-  //         // Use formattedOrigins and formattedDestinations which add a leading comma
-  //         origin = formattedOrigins;
-  //         destination = formattedDestinations;
-  //       } else {
-  //         // For one-way and round-trip, add a leading comma to match API expectations
-  //         origin = ',${fromCity.value}';
-  //         destination = ',${toCity.value}';
-  //
-  //         // Format dates for one-way and round-trip with leading comma
-  //         formattedDates =
-  //         ',${_formatDateForAPI(DateFormat('dd/MM/yyyy').parse(departureDate.value))}';
-  //         if (tripType.value == TripType.roundTrip) {
-  //           formattedDates +=
-  //           ',${_formatDateForAPI(DateFormat('dd/MM/yyyy').parse(returnDate.value))}';
-  //         }
-  //       }
-  //
-  //       // Debugging: Print formatted parameters
-  //       print('Formatted Dates: $formattedDates');
-  //       print('Origin: $origin');
-  //       print('Destination: $destination');
-  //
-  //       // Call both APIs in parallel
-  //       final sabreFuture = apiServiceFlight.searchFlights(
-  //         type: tripType.value == TripType.multiCity
-  //             ? 2
-  //             : (tripType.value == TripType.roundTrip ? 1 : 0),
-  //         origin: origin,
-  //         destination: destination,
-  //         depDate: formattedDates,
-  //         adult: adultCount.value,
-  //         child: childrenCount.value,
-  //         infant: infantCount.value,
-  //         stop: 2, // Assuming max 2 stops
-  //         cabin: travelClass.value.toUpperCase(),
-  //         flight: 0
-  //       );
-  //
-  //       final airBlueFuture = apiServiceFlight.searchFlights(
-  //         type: tripType.value == TripType.multiCity
-  //             ? 2
-  //             : (tripType.value == TripType.roundTrip ? 1 : 0),
-  //         origin: origin,
-  //         destination: destination,
-  //         depDate: formattedDates,
-  //         adult: adultCount.value,
-  //         child: childrenCount.value,
-  //         infant: infantCount.value,
-  //         stop: 2, // AirBlue expects string
-  //         cabin: travelClass.value,
-  //         flight: 1
-  //       );
-  //
-  //       // Wait for both to complete
-  //       await Future.wait([sabreFuture, airBlueFuture]);
-  //
-  //       // Load Sabre results into FlightController
-  //       flightController.loadFlights(await sabreFuture);
-  //       airBlueFlightController.loadFlights(await airBlueFuture);
-  //
-  //       // Navigate to the results page
-  //       Get.to(
-  //             () => FlightBookingPage(
-  //           scenario: tripType.value == TripType.roundTrip
-  //               ? FlightScenario.returnFlight
-  //               : (tripType.value == TripType.multiCity
-  //               ? FlightScenario.multiCity
-  //               : FlightScenario.oneWay),
-  //         ),
-  //       );
-  //     } catch (e, stackTrace) {
-  //       // Debugging: Print the error and stack trace
-  //       print('Error in searchFlights: $e');
-  //       print('Stack trace: $stackTrace');
-  //
-  //       // Show error message to the user
-  //       Get.snackbar(
-  //         'Error',
-  //         'Error searching flights: $e',
-  //         snackPosition: SnackPosition.BOTTOM,
-  //         backgroundColor: Colors.red,
-  //         colorText: Colors.white,
-  //       );
-  //     } finally {
-  //       isSearching.value = false;
-  //     }
-  //   }
-  // Update the searchFlights method to include PIA API call
-// Add this method to handle PIA API call
-  Future<void> _callPiaApi({
-    required String fromCity,
-    required String toCity,
-    required String departureDate,
-    required int adultCount,
-    required int childCount,
-    required int infantCount,
-    required String tripType,
-    String? returnDate,
-    List<Map<String, String>>? multiCitySegments,
-  }) async {
-    try {
-      final result = await piaFlightApiService.piaFlightAvailability(
-        fromCity: fromCity,
-        toCity: toCity,
-        departureDate: departureDate,
-        adultCount: adultCount,
-        childCount: childCount,
-        infantCount: infantCount,
-        tripType: tripType,
-        returnDate: returnDate,
-        multiCitySegments: multiCitySegments,
-      );
 
-      if (result.containsKey('error')) {
-        piaFlightController.setErrorMessage(result['error']);
-      } else {
-        piaFlightController.loadFlights(result);
-      }
-    } catch (e) {
-      debugPrint('PIA API error: $e');
-      piaFlightController.setErrorMessage('PIA API error: ${e.toString()}');
-    }
-  }
 
 // Update the searchFlights method to include proper PIA API calls
   Future<void> searchFlights() async {
@@ -487,97 +312,136 @@ class FlightBookingController extends GetxController {
         if (tripType.value == TripType.roundTrip) {
           formattedDates +=
           ',${_formatDateForAPI(DateFormat('dd/MM/yyyy').parse(returnDate.value))}';
-        }
-      }
+          }
+          }
 
-      // Call all APIs in parallel
-      final futures = [
-        _callSabreApi(
-          type: tripType.value == TripType.multiCity
+          // Call APIs in parallel but skip AirBlue for multi-city
+          final futures = [
+          _callSabreApi(
+              type: tripType.value == TripType.multiCity
               ? 2
-              : (tripType.value == TripType.roundTrip ? 1 : 0),
-          origin: origin,
-          destination: destination,
-          depDate: formattedDates,
-          adult: adultCount.value,
-          child: childrenCount.value,
-          infant: infantCount.value,
-          cabin: travelClass.value.toUpperCase(),
-        ),
-        _callAirBlueApi(
-          type: tripType.value == TripType.multiCity
-              ? 2
-              : (tripType.value == TripType.roundTrip ? 1 : 0),
-          origin: origin,
-          destination: destination,
-          depDate: formattedDates,
-          adult: adultCount.value,
-          child: childrenCount.value,
-          infant: infantCount.value,
-          cabin: travelClass.value,
-        ),
-      ];
+                  : (tripType.value == TripType.roundTrip ? 1 : 0),
+    origin: origin,
+    destination: destination,
+    depDate: formattedDates,
+    adult: adultCount.value,
+    child: childrenCount.value,
+    infant: infantCount.value,
+    cabin: travelClass.value.toUpperCase(),
+    ),
+    ];
 
-      // Add PIA API call based on trip type
-      if (tripType.value == TripType.multiCity && cityPairs.isNotEmpty) {
-        // Prepare multi-city segments
-        final segments = cityPairs.map((pair) => {
-        'from': pair.fromCity.value,
-        'to': pair.toCity.value,
-        'date': _formatDateForAPI(
-        DateFormat('dd/MM/yyyy').parse(pair.departureDate.value))
-        }).toList();
+    // Only call AirBlue if not multi-city
+    if (tripType.value != TripType.multiCity) {
+    futures.add(_callAirBlueApi(
+    type: tripType.value == TripType.roundTrip ? 1 : 0,
+    origin: origin,
+    destination: destination,
+    depDate: formattedDates,
+    adult: adultCount.value,
+    child: childrenCount.value,
+    infant: infantCount.value,
+    cabin: travelClass.value,
+    ));
+    }
 
-        futures.add(_callPiaApi(
-          fromCity: cityPairs.first.fromCity.value,
-          toCity: cityPairs.first.toCity.value,
-          departureDate: _formatDateForAPI(
-              DateFormat('dd/MM/yyyy').parse(cityPairs.first.departureDate.value)),
-          adultCount: adultCount.value,
-          childCount: childrenCount.value,
-          infantCount: infantCount.value,
-          tripType: 'MULTI_DIRECTIONAL',
-          multiCitySegments: segments,
-        ));
-      } else {
-        futures.add(_callPiaApi(
-          fromCity: fromCity.value,
-          toCity: toCity.value,
-          departureDate: _formatDateForAPI(
-              DateFormat('dd/MM/yyyy').parse(departureDate.value)),
-          adultCount: adultCount.value,
-          childCount: childrenCount.value,
-          infantCount: infantCount.value,
-          tripType: tripType.value == TripType.roundTrip ? 'ROUND_TRIP' : 'ONE_WAY',
-          returnDate: tripType.value == TripType.roundTrip
-              ? _formatDateForAPI(DateFormat('dd/MM/yyyy').parse(returnDate.value))
-              : null,
-        ));
-      }
+    // Add PIA API call based on trip type
+    if (tripType.value == TripType.multiCity && cityPairs.isNotEmpty) {
+    // Prepare multi-city segments
+    final segments = cityPairs.map((pair) => {
+    'from': pair.fromCity.value,
+    'to': pair.toCity.value,
+    'date': _formatDateForAPI(
+    DateFormat('dd/MM/yyyy').parse(pair.departureDate.value))
+    }).toList();
 
-      // Wait for all API calls to complete
-      await Future.wait(futures);
+    futures.add(_callPiaApi(
+    fromCity: cityPairs.first.fromCity.value,
+    toCity: cityPairs.first.toCity.value,
+    departureDate: _formatDateForAPI(
+    DateFormat('dd/MM/yyyy').parse(cityPairs.first.departureDate.value)),
+    adultCount: adultCount.value,
+    childCount: childrenCount.value,
+    infantCount: infantCount.value,
+    tripType: 'MULTI_DIRECTIONAL',
+    multiCitySegments: segments,
+    ));
+    } else {
+    futures.add(_callPiaApi(
+    fromCity: fromCity.value,
+    toCity: toCity.value,
+    departureDate: _formatDateForAPI(
+    DateFormat('dd/MM/yyyy').parse(departureDate.value)),
+    adultCount: adultCount.value,
+    childCount: childrenCount.value,
+    infantCount: infantCount.value,
+    tripType: tripType.value == TripType.roundTrip ? 'ROUND_TRIP' : 'ONE_WAY',
+    returnDate: tripType.value == TripType.roundTrip
+    ? _formatDateForAPI(DateFormat('dd/MM/yyyy').parse(returnDate.value))
+        : null,
+    ));
+    }
 
-      // Navigate to results page
-      Get.to(() => FlightBookingPage(
-        scenario: tripType.value == TripType.roundTrip
-            ? FlightScenario.returnFlight
-            : (tripType.value == TripType.multiCity
-            ? FlightScenario.multiCity
-            : FlightScenario.oneWay),
-      ));
+    // Don't wait for all APIs to complete - they'll update UI as they finish
+    Future.wait(futures).catchError((e) {
+    debugPrint('Error in flight search: $e');
+    });
+
+    // Navigate immediately to results page
+    Get.to(() => FlightBookingPage(
+    scenario: tripType.value == TripType.roundTrip
+    ? FlightScenario.returnFlight
+        : (tripType.value == TripType.multiCity
+    ? FlightScenario.multiCity
+        : FlightScenario.oneWay),
+    ));
     } catch (e, stackTrace) {
-      debugPrint('Error in searchFlights: $e');
-      debugPrint('Stack trace: $stackTrace');
-      Get.snackbar(
-        'Error',
-        'Error searching flights: $e',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
+    debugPrint('Error in searchFlights: $e');
+    debugPrint('Stack trace: $stackTrace');
+    Get.snackbar(
+    'Error',
+    'Error searching flights: $e',
+    snackPosition: SnackPosition.BOTTOM,
+    backgroundColor: Colors.red,
+    colorText: Colors.white,
+    );
     } finally {
-      isSearching.value = false;
+    isSearching.value = false;
+    }
+  }
+
+  Future<void> _callPiaApi({
+    required String fromCity,
+    required String toCity,
+    required String departureDate,
+    required int adultCount,
+    required int childCount,
+    required int infantCount,
+    required String tripType,
+    String? returnDate,
+    List<Map<String, String>>? multiCitySegments,
+  }) async {
+    try {
+      final result = await piaFlightApiService.piaFlightAvailability(
+        fromCity: fromCity,
+        toCity: toCity,
+        departureDate: departureDate,
+        adultCount: adultCount,
+        childCount: childCount,
+        infantCount: infantCount,
+        tripType: tripType,
+        returnDate: returnDate,
+        multiCitySegments: multiCitySegments,
+      );
+
+      if (result.containsKey('error')) {
+        piaFlightController.setErrorMessage(result['error']);
+      } else {
+        piaFlightController.loadFlights(result);
+      }
+    } catch (e) {
+      debugPrint('PIA API error: $e');
+      piaFlightController.setErrorMessage('PIA API error: ${e.toString()}');
     }
   }
 

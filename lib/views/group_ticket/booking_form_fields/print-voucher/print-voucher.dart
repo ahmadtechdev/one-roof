@@ -1028,7 +1028,7 @@ class PDFPrintScreen extends StatelessWidget {
       return passengers.map((passenger) {
         return {
           'name':
-              '${passenger['surname'] ?? ''} ${passenger['given_name'] ?? ''}',
+              '${passenger['given_name'] ?? ''} ${passenger['surname'] ?? ''}',
           'type': passenger['type'] ?? 'Adult',
           'passport': passenger['passport_no'] ?? 'N/A',
           'dob': _formatDate(passenger['dob']),
