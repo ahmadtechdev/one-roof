@@ -8,15 +8,11 @@ class PIAFlight {
   final String arrivalTime;
   final String duration;
   final double price;
-  final String from;
-  final String to;
   final String type;
   final bool isRefundable;
   final bool isNonStop;
   final String departureTerminal;
   final String arrivalTerminal;
-  final String departureCity;
-  final String arrivalCity;
   final String aircraftType;
   final List<PIATaxDesc> taxes;
   final PIABaggageAllowance baggageAllowance;
@@ -38,6 +34,7 @@ class PIAFlight {
   final int? tripSequence;
   final String? tripType;
   final List<Map<String, dynamic>> legSchedules;
+  final List<Map<String, dynamic>> legWithStops;
   final List<PIAFlightSegmentInfo> segmentInfo;
   final List<Map<String, dynamic>> pricingInforArray;
   final bool isOutbound;
@@ -53,15 +50,13 @@ class PIAFlight {
     required this.arrivalTime,
     required this.duration,
     required this.price,
-    required this.from,
-    required this.to,
+
     required this.type,
     required this.isRefundable,
     required this.isNonStop,
     required this.departureTerminal,
     required this.arrivalTerminal,
-    required this.departureCity,
-    required this.arrivalCity,
+
     required this.aircraftType,
     required this.taxes,
     required this.baggageAllowance,
@@ -86,13 +81,23 @@ class PIAFlight {
     this.boundCode,
     this.date,
     required this.legSchedules,
+    required this.legWithStops,
     required this.segmentInfo,
     required this.pricingInforArray,
     this.isMultiCity = false,
   });
 
-  factory PIAFlight.fromApiResponse(Map<String, dynamic> flightData, {bool isOutbound = true, String? boundCode, String? date, bool isMultiCity = false}) {
+  factory PIAFlight.fromApiResponse(
+      Map<String, dynamic> flightData, {
+        required List<Map<String, dynamic>> legSchedules,
+        required List<Map<String, dynamic>> legWithStops,
+        bool isOutbound = true,
+        String? boundCode,
+        String? date,
+        bool isMultiCity = false,
+      }) {
     try {
+      final firstSegment = legSchedules.first['flightSegment'] ?? legSchedules.first;
       final flightSegment = flightData['flightSegment'];
       final fareInfo = flightData['fareInfoList'][0]['fareInfoList'][0];
       final pricingInfo = flightData['pricingInfo'];
@@ -165,33 +170,44 @@ class PIAFlight {
       final taxes = PIATaxDesc.fromPricingInfoList(pricingInfo);
       final packages = [PIAFlightPackageInfo.fromFareInfo(fareInfo)];
 
+      // Calculate stops
+      final stops = <String>[];
+      if (legSchedules.length > 1) {
+        for (int i = 1; i < legSchedules.length; i++) {
+          final segment = legSchedules[i];
+          final arrival = _extractNestedValue(segment, ['flightSegment', 'arrivalAirport', 'locationCode']);
+          if (arrival != null) {
+            stops.add(arrival);
+          }
+        }
+      }
+
       return PIAFlight(
         imgPath: 'assets/pia_logo.png',
         airline: airlineName,
         flightNumber: flightNum,
         departureTime: departureDateTime,
         arrivalTime: arrivalDateTime,
-        duration: journeyDuration,
+        duration: _calculateTotalDuration(legSchedules),
         price: flightPrice,
-        from: fromCity!,
-        to: toCity!,
+
         type: fareType,
         isRefundable: refundable,
         isNonStop: nonStop,
         departureTerminal: depTerminal,
         arrivalTerminal: arrTerminal,
-        departureCity: depCity!,
-        arrivalCity: arrCity!,
+
         aircraftType: aircraft,
         taxes: taxes,
         baggageAllowance: baggageAllowance,
         packages: packages,
-        stops: [],
+        stops: stops,
         stopSchedules: [],
         legElapsedTime: _parseDurationToMinutes(journeyDuration),
         cabinClass: cabin,
         mealCode: meal,
-        legSchedules: [flightSegment],
+        legSchedules: legSchedules,
+        legWithStops: legWithStops,
         segmentInfo: [PIAFlightSegmentInfo.fromFlightSegment(flightSegment)],
         pricingInforArray: [pricingInfo],
         isOutbound: isOutbound,
@@ -206,7 +222,47 @@ class PIAFlight {
     }
   }
 
+  // Add these methods:
+  List<String> getStopCities() {
+    final stops = <String>[];
+    if (legSchedules.length > 1) {
+      for (int i = 1; i < legSchedules.length; i++) {
+        final segment = legSchedules[i];
+        final arrival = _extractNestedValue(segment, ['flightSegment', 'arrivalAirport', 'locationCode']);
+        if (arrival != null) {
+          stops.add(arrival);
+        }
+      }
+    }
+    return stops;
+  }
 
+  String getDisplayDeparture() {
+    if (legSchedules.isEmpty) return '';
+    return _extractNestedValue(
+      legSchedules.first,
+      ['flightSegment', 'departureAirport', 'locationCode'],
+    ) ?? '';
+  }
+
+  String getDisplayArrival() {
+    if (legSchedules.isEmpty) return '';
+    return _extractNestedValue(
+      legSchedules.last,
+      ['flightSegment', 'arrivalAirport', 'locationCode'],
+    ) ?? '';
+  }
+
+  static String _calculateTotalDuration(List<Map<String, dynamic>> segments) {
+    int totalMinutes = 0;
+    for (var segment in segments) {
+      final durationStr = segment['journeyDuration'] ?? 'PT0H0M';
+      totalMinutes += _parseDurationToMinutes(durationStr);
+    }
+    final hours = totalMinutes ~/ 60;
+    final minutes = totalMinutes % 60;
+    return 'PT${hours}H${minutes}M';
+  }
   // Helper function to safely navigate nested maps
   static String? _extractNestedValue(Map<String, dynamic>? data, List<String> keys) {
     if (data == null) return null;
@@ -230,6 +286,11 @@ class PIAFlight {
         current = current[nsKey];
       } else {
         current = current[key];
+      }
+
+      // Handle cases where value might be in a map with 'text' key
+      if (current is Map && current.containsKey('text')) {
+        current = current['text'];
       }
     }
 
@@ -264,9 +325,9 @@ class PIAFlight {
 
   List<Map<String, dynamic>> getAllLegsSchedule() {
     if (isMultiCity) {
-      return legSchedules;
+      return legWithStops;
     }
-    return [legSchedules.first];
+    return [legWithStops.first];
   }
 
 // Add this method to calculate total duration for multi-city
@@ -302,15 +363,13 @@ class PIAFlight {
       arrivalTime: arrivalTime,
       duration: duration ?? this.duration,
       price: price,
-      from: from,
-      to: to,
+
       type: type,
       isRefundable: isRefundable,
       isNonStop: isNonStop,
       departureTerminal: departureTerminal,
       arrivalTerminal: arrivalTerminal,
-      departureCity: departureCity,
-      arrivalCity: arrivalCity,
+
       aircraftType: aircraftType,
       taxes: taxes,
       baggageAllowance: baggageAllowance,
@@ -332,6 +391,7 @@ class PIAFlight {
       tripSequence: tripSequence,
       tripType: tripType,
       legSchedules: legSchedules ?? this.legSchedules,
+      legWithStops: legWithStops,
       segmentInfo: segmentInfo,
       pricingInforArray: pricingInforArray,
       isOutbound: isOutbound ?? this.isOutbound,

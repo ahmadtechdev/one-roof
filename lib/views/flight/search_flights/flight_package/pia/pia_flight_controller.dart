@@ -20,14 +20,13 @@ class PIAFlightController extends GetxController {
   // final Rx<PIAFlight?> selectedOutboundFlight = Rx<PIAFlight?>(null);
   final RxBool showReturnFlights = false.obs;
   final RxBool isMultiCity = false.obs; // Add this flag
-  final RxMap<String, List<PIAFareOption>> fareOptionsByFlight =
-      <String, List<PIAFareOption>>{}.obs;
+  final RxMap<String, List<PIAFareOption>> fareOptionsByFlight = <String, List<PIAFareOption>>{}.obs;
   final Rx<PIAFlight?> selectedFlight = Rx<PIAFlight?>(null);
   PIAFlight? selectedOutboundFlight;
   PIAFareOption? selectedOutboundFareOption;
   PIAFlight? selectedReturnFlight;
   PIAFareOption? selectedReturnFareOption;
-  int i = 0;
+  int i=0;
 
   void updateCurrency(String currency) {
     selectedCurrency.value = currency;
@@ -70,7 +69,7 @@ class PIAFlightController extends GetxController {
         final body = envelope['S:Body'] ?? envelope['soapenv:Body'];
         final response =
             body['ns2:GetAvailabilityResponse'] ??
-            body['impl:GetAvailabilityResponse'];
+                body['impl:GetAvailabilityResponse'];
         availability = response['Availability'] ?? {};
       } else {
         availability = apiResponse;
@@ -79,7 +78,7 @@ class PIAFlightController extends GetxController {
       // Check if this is a round trip or multi-city response
       final availabilityRouteLists =
           availability['availabilityRouteList'] ??
-          availability['availabilityResultList']?['availabilityRouteList'];
+              availability['availabilityResultList']?['availabilityRouteList'];
 
       if (availabilityRouteLists == null) {
         throw Exception('No availability route lists found');
@@ -87,9 +86,9 @@ class PIAFlightController extends GetxController {
 
       // Handle both single route list and list of route lists
       final routeLists =
-          availabilityRouteLists is List
-              ? availabilityRouteLists
-              : [availabilityRouteLists];
+      availabilityRouteLists is List
+          ? availabilityRouteLists
+          : [availabilityRouteLists];
 
       // Determine trip type
       isRoundTrip.value = routeLists.length > 1;
@@ -131,21 +130,21 @@ class PIAFlightController extends GetxController {
     for (final routeList in routeLists) {
       final byDateList =
           routeList['availabilityByDateList'] ??
-          routeList['\$']?['availabilityByDateList'];
+              routeList['\$']?['availabilityByDateList'];
       if (byDateList == null) continue;
 
       final dateLists = byDateList is List ? byDateList : [byDateList];
       for (final dateData in dateLists) {
         final options =
             dateData['originDestinationOptionList'] ??
-            dateData['\$']?['originDestinationOptionList'];
+                dateData['\$']?['originDestinationOptionList'];
         if (options == null) continue;
 
         final optionList = options is List ? options : [options];
         for (final option in optionList) {
           final fareGroups =
               option['fareComponentGroupList'] ??
-              option['\$']?['fareComponentGroupList'];
+                  option['\$']?['fareComponentGroupList'];
           if (fareGroups == null) continue;
 
           final fareGroupList = fareGroups is List ? fareGroups : [fareGroups];
@@ -165,13 +164,13 @@ class PIAFlightController extends GetxController {
   }
 
   // Update the _processRouteList method
+  // In PIAFlightController.dart
   void _processRouteList(
-    Map<String, dynamic> routeList, {
-    required bool isOutbound,
-  }) {
+      Map<String, dynamic> routeList, {
+        required bool isOutbound,
+      }) {
     try {
-      final byDateList =
-          routeList['availabilityByDateList'] ??
+      final byDateList = routeList['availabilityByDateList'] ??
           routeList['\$']?['availabilityByDateList'];
       if (byDateList == null) return;
 
@@ -179,43 +178,19 @@ class PIAFlightController extends GetxController {
 
       for (final dateData in dateLists) {
         final date = _extractStringValue(dateData['dateList']);
-        final options =
-            dateData['originDestinationOptionList'] ??
+        final options = dateData['originDestinationOptionList'] ??
             dateData['\$']?['originDestinationOptionList'];
         if (options == null) continue;
 
         final optionList = options is List ? options : [options];
 
+
         for (final option in optionList) {
-          final fareGroups =
-              option['fareComponentGroupList'] ??
-              option['\$']?['fareComponentGroupList'];
-          if (fareGroups == null) continue;
-
-          final fareGroupList = fareGroups is List ? fareGroups : [fareGroups];
-
-          for (final fareGroup in fareGroupList) {
-            final boundList = fareGroup['boundList'] ?? option['boundList'];
-            if (boundList == null) continue;
-
-            final bounds = boundList is List ? boundList : [boundList];
-
-            if (isMultiCity.value && bounds.length > 1) {
-              _processMultiCityFareGroup(
-                bounds,
-                fareGroup,
-                isOutbound: isOutbound,
-                date: date,
-              );
-            } else {
-              _processFareGroup(
-                fareGroup,
-                option,
-                isOutbound: isOutbound,
-                date: date,
-              );
-            }
-          }
+          _processOriginDestinationOption(
+            option,
+            isOutbound: isOutbound,
+            date: date,
+          );
         }
       }
     } catch (e, stackTrace) {
@@ -224,179 +199,133 @@ class PIAFlightController extends GetxController {
     }
   }
 
-  // Replace the _processFareGroup method in PIAFlightController
-
-  void _processFareGroup(
-    Map<String, dynamic> fareGroup,
-    Map<String, dynamic> option, {
-    required bool isOutbound,
-    String? date,
-  }) {
+  void _processOriginDestinationOption(
+      Map<String, dynamic> option, {
+        required bool isOutbound,
+        String? date,
+      }) {
     try {
-      final boundList = fareGroup['boundList'] ?? option['boundList'];
-      if (boundList == null) return;
+      final fareGroups = option['fareComponentGroupList'] ??
+          option['\$']?['fareComponentGroupList'];
+      if (fareGroups == null) return;
 
-      final bounds = boundList is List ? boundList : [boundList];
-      final segments = bounds[0]['availFlightSegmentList'];
-      final segmentList = segments is List ? segments : [segments];
-      if (segmentList.isEmpty) return;
+      final fareGroupList = fareGroups is List ? fareGroups : [fareGroups];
 
-      // Process all fare components
-      final fareComponents = fareGroup['fareComponentList'];
-      if (fareComponents == null) return;
+      for (final fareGroup in fareGroupList) {
+        final boundList = fareGroup['boundList'] ?? option['boundList'];
+        if (boundList == null) continue;
 
-      final componentList =
-          fareComponents is List ? fareComponents : [fareComponents];
+        final bounds = boundList is List ? boundList : [boundList];
+        print("xyz: check");
+        print(bounds.length);
+        // Get fare components
+        final fareComponents = fareGroup['fareComponentList'];
+        if (fareComponents == null) continue;
 
-      // Create flight with first component (lowest price)
-      if (componentList.isNotEmpty) {
-        final flight = _createFlightFromComponents(
-          segmentList[0],
-          componentList[0],
+        final componentList = fareComponents is List ? fareComponents : [fareComponents];
+        if (componentList.isEmpty) continue;
+
+        // Use the first fare component for the flight
+        final firstComponent = componentList[0];
+
+        // Create flight with all legs
+        final flight = _createMultiCityFlight(
+          bounds,
+          firstComponent,
           isOutbound: isOutbound,
           date: date,
-          isMultiCity: isMultiCity.value,
         );
 
         if (flight != null) {
-          // Store all fare options for this flight - with null checking
-          final fareOptions = <PIAFareOption>[];
-
-          for (final component in componentList) {
-            try {
-              if (component != null && component is Map<String, dynamic>) {
-                final fareOption = PIAFareOption.fromFareInfo(component);
-                fareOptions.add(fareOption);
-              }
-            } catch (e) {
-              print('Error creating fare option from component: $e');
-              // Continue with other components instead of failing completely
-            }
+          if (isOutbound) {
+            outboundFlights.add(flight);
+          } else {
+            inboundFlights.add(flight);
           }
 
-          // Only store if we have at least one valid fare option
+          // Store all fare options for this flight
+          final fareOptions = componentList
+              .whereType<Map<String, dynamic>>()
+              .map((c) => PIAFareOption.fromFareInfo(c))
+              .toList();
+
           if (fareOptions.isNotEmpty) {
             fareOptionsByFlight[flight.flightNumber] = fareOptions;
-
-            if (isOutbound) {
-              outboundFlights.add(flight);
-            } else {
-              inboundFlights.add(flight);
-              print("ahmad: $i : ");
-              print(inboundFlights);
-            }
           }
         }
       }
     } catch (e, stackTrace) {
-      debugPrint('Error processing fare group: $e');
-      debugPrint('Stack trace: $stackTrace');
-      // Don't rethrow - just log and continue with other fare groups
-    }
-  }
-
-  void _processMultiCityFareGroup(
-    List<dynamic> bounds,
-    Map<String, dynamic> fareGroup, {
-    required bool isOutbound,
-    String? date,
-  }) {
-    try {
-      // Collect all segments from all bounds
-      List<Map<String, dynamic>> allSegments = [];
-      for (final bound in bounds) {
-        final segments = bound['availFlightSegmentList'];
-        if (segments == null) continue;
-
-        final segmentList = segments is List ? segments : [segments];
-        allSegments.addAll(segmentList as Iterable<Map<String, dynamic>>);
-      }
-
-      if (allSegments.isEmpty) return;
-
-      // Process fare components - only take the first one
-      final fareComponents = fareGroup['fareComponentList'];
-      if (fareComponents == null) return;
-
-      // Handle both single fare component and list of fare components
-      final componentList =
-          fareComponents is List ? fareComponents : [fareComponents];
-      if (componentList.isEmpty) return;
-
-      // Only process the first component
-      final firstComponent = componentList[0];
-
-      // Create a combined flight for all segments
-      final flight = _createMultiCityFlight(
-        allSegments,
-        firstComponent,
-        isOutbound: isOutbound,
-        date: date,
-      );
-
-      if (flight != null) {
-        outboundFlights.add(
-          flight,
-        ); // Multi-city flights are always added to outbound
-      }
-    } catch (e, stackTrace) {
-      debugPrint('Error processing multi-city fare group: $e');
+      debugPrint('Error processing origin-destination option: $e');
       debugPrint('Stack trace: $stackTrace');
     }
   }
+
+
+  // Replace the _processFareGroup method in PIAFlightController
+
+
 
   // Update the _createMultiCityFlight method
   PIAFlight? _createMultiCityFlight(
-    List<Map<String, dynamic>> segments,
-    Map<String, dynamic> fareComponent, {
-    required bool isOutbound,
-    String? date,
-  }) {
+      List<dynamic> segments,
+      Map<String, dynamic> fareComponent, {
+        required bool isOutbound,
+        String? date,
+      }) {
     try {
       if (segments.isEmpty) return null;
 
-      // Use first segment as the base
-      final firstSegment = segments[0];
+      // Extract availFlightSegmentList from each segment
+      final List<Map<String, dynamic>> legSchedules = [];
+      final List<Map<String, dynamic>> legWithStops = [];
+
+      for (var segment in segments) {
+        legSchedules.add(segment);
+        final availFlightSegments = segment['availFlightSegmentList'];
+        if (availFlightSegments == null) continue;
+
+        // Handle both single segment and list of segments
+        if (availFlightSegments is List) {
+          for (var flightSegment in availFlightSegments) {
+            legWithStops.add(flightSegment);
+          }
+        } else {
+          legWithStops.add(availFlightSegments);
+        }
+      }
+
+      if (legSchedules.isEmpty) return null;
+
+      // Use first segment as the base for flight creation
+      final firstSegment = legSchedules[0];
       final flightSegment = firstSegment['flightSegment'] ?? firstSegment;
 
-      print("ahmad");
-      print(flightSegment);
-      // Get passenger fare info
-      final passengerFareInfoList =
-          fareComponent['passengerFareInfoList'] ??
-          fareComponent['\$']?['passengerFareInfoList'];
+      // Get passenger fare info from the fareComponent
+      final passengerFareInfoList = fareComponent['passengerFareInfoList'];
       if (passengerFareInfoList == null) return null;
 
-      final fareInfoList =
-          passengerFareInfoList is List
-              ? (passengerFareInfoList.isNotEmpty
-                  ? passengerFareInfoList[0]
-                  : null)
-              : passengerFareInfoList;
+      // Handle both single fare info and list of fare infos
+      final fareInfoList = passengerFareInfoList is List
+          ? (passengerFareInfoList.isNotEmpty ? passengerFareInfoList[0] : null)
+          : passengerFareInfoList;
       if (fareInfoList == null) return null;
 
-      final fareInfo =
-          fareInfoList['fareInfoList'] ?? fareInfoList['\$']?['fareInfoList'];
+      final fareInfo = fareInfoList['fareInfoList'];
       if (fareInfo == null) return null;
 
-      final firstFareInfo =
-          fareInfo is List
-              ? (fareInfo.isNotEmpty ? fareInfo[0] : null)
-              : fareInfo;
+      // Handle both single fare info and list of fare infos
+      final firstFareInfo = fareInfo is List
+          ? (fareInfo.isNotEmpty ? fareInfo[0] : null)
+          : fareInfo;
       if (firstFareInfo == null) return null;
 
-      final pricingInfo =
-          fareInfoList['pricingInfo'] ?? fareInfoList['\$']?['pricingInfo'];
+      final pricingInfo = fareInfoList['pricingInfo'];
       if (pricingInfo == null) return null;
 
       // Create flight data structure
       final flightData = {
         'flightSegment': flightSegment,
-        'fareInfoList': [
-          {
-            'fareInfoList': [firstFareInfo],
-          },
-        ],
+        'fareInfoList': [{'fareInfoList': [firstFareInfo]}],
         'pricingInfo': pricingInfo,
       };
 
@@ -406,14 +335,11 @@ class PIAFlightController extends GetxController {
         isOutbound: isOutbound,
         date: date,
         isMultiCity: true,
+        legSchedules: legSchedules,
+        legWithStops: legWithStops,
       );
 
-      // Update with multi-city specific data
-      return flight.copyWith(
-        legSchedules: segments,
-        duration: _calculateTotalDuration(segments),
-        isMultiCity: true,
-      );
+      return flight;
     } catch (e, stackTrace) {
       debugPrint('Error creating multi-city flight: $e');
       debugPrint('Stack trace: $stackTrace');
@@ -421,181 +347,48 @@ class PIAFlightController extends GetxController {
     }
   }
 
-  PIAFlight? _createFlightFromComponents(
-    Map<String, dynamic> segment,
-    Map<String, dynamic> fareComponent, {
-    required bool isOutbound,
-    String? boundCode,
-    String? date,
-    bool isMultiCity = false,
-  }) {
-    try {
-      debugPrint('Creating flight from segment: ${segment['flightNumber']}');
-
-      // Handle different segment structures
-      final flightSegment = segment['flightSegment'] ?? segment;
-
-      // Validate required fields are present
-      if (flightSegment['departureAirport'] == null ||
-          flightSegment['arrivalAirport'] == null) {
-        debugPrint(
-          'Missing airport information in segment: ${flightSegment.keys}',
-        );
-        return null;
-      }
-
-      // Get passenger fare info (first passenger type)
-      final passengerFareInfoList =
-          fareComponent['passengerFareInfoList'] ??
-          fareComponent['\$']?['passengerFareInfoList'];
-
-      if (passengerFareInfoList == null) {
-        debugPrint('No passenger fare info list');
-        return null;
-      }
-
-      // Handle both single info and list
-      final fareInfoList =
-          passengerFareInfoList is List
-              ? (passengerFareInfoList.isNotEmpty
-                  ? passengerFareInfoList[0]
-                  : null)
-              : passengerFareInfoList;
-
-      if (fareInfoList == null) {
-        debugPrint('No fare info list');
-        return null;
-      }
-
-      final fareInfo =
-          fareInfoList['fareInfoList'] ?? fareInfoList['\$']?['fareInfoList'];
-      if (fareInfo == null) {
-        debugPrint('No fare info found');
-        return null;
-      }
-
-      // Handle both single fare info and list
-      final firstFareInfo =
-          fareInfo is List
-              ? (fareInfo.isNotEmpty ? fareInfo[0] : null)
-              : fareInfo;
-
-      if (firstFareInfo == null) {
-        debugPrint('No first fare info found');
-        return null;
-      }
-
-      final pricingInfo =
-          fareInfoList['pricingInfo'] ?? fareInfoList['\$']?['pricingInfo'];
-      if (pricingInfo == null) {
-        debugPrint('No pricing info found');
-        return null;
-      }
-
-      // Create flight data structure for the model
-      final flightData = {
-        'flightSegment': flightSegment,
-        'fareInfoList': [
-          {
-            'fareInfoList': [firstFareInfo],
-          },
-        ],
-        'pricingInfo': pricingInfo,
-      };
-
-      return PIAFlight.fromApiResponse(
-        flightData,
-        isOutbound: isOutbound,
-        boundCode: boundCode,
-        date: date,
-        isMultiCity: isMultiCity,
-      );
-    } catch (e, stackTrace) {
-      debugPrint('Error creating flight from components: $e');
-      debugPrint('Stack trace: $stackTrace');
-      return null;
-    }
-  }
-
-  String _calculateTotalDuration(List<Map<String, dynamic>> segments) {
-    int totalMinutes = 0;
-    for (var segment in segments) {
-      final durationStr = segment['journeyDuration'] ?? 'PT0H0M';
-      totalMinutes += _parseDurationToMinutes(durationStr);
-    }
-    final hours = totalMinutes ~/ 60;
-    final minutes = totalMinutes % 60;
-    return 'PT${hours}H${minutes}M';
-  }
-
-  int _parseDurationToMinutes(String durationStr) {
-    // Handle null or empty strings
-    if (durationStr.isEmpty) return 0;
-
-    // Remove 'PT' prefix if present
-    String duration = durationStr.replaceFirst('PT', '');
-
-    int hours = 0;
-    int minutes = 0;
-
-    // Extract hours
-    RegExp hoursRegex = RegExp(r'(\d+)H');
-    Match? hoursMatch = hoursRegex.firstMatch(duration);
-    if (hoursMatch != null) {
-      hours = int.parse(hoursMatch.group(1)!);
-    }
-
-    // Extract minutes
-    RegExp minutesRegex = RegExp(r'(\d+)M');
-    Match? minutesMatch = minutesRegex.firstMatch(duration);
-    if (minutesMatch != null) {
-      minutes = int.parse(minutesMatch.group(1)!);
-    }
-
-    // Convert total to minutes
-    return (hours * 60) + minutes;
-  }
 
   // Update the handlePIAFlightSelection method
   // Update the handlePIAFlightSelection method
-  void handlePIAFlightSelection(
-    PIAFlight flight, {
-    bool isReturnFlight = false,
-  }) {
+  void handlePIAFlightSelection(PIAFlight flight, {bool isReturnFlight = false}) {
+
     if (isRoundTrip.value) {
+
       print("ahmad 5");
       print(isReturnFlight);
       if (!isReturnFlight) {
         // First flight selection (outbound)
         selectedOutboundFlight = flight;
         selectedFlight.value = flight;
-        Get.to(
-          () =>
-              PIAPackageSelectionDialog(flight: flight, isReturnFlight: false),
-        );
+        Get.to(() => PIAPackageSelectionDialog(
+          flight: flight,
+          isReturnFlight: false,
+        ));
       } else {
         // Return flight selection
         selectedReturnFlight = flight;
         selectedFlight.value = flight;
-        Get.to(
-          () => PIAPackageSelectionDialog(flight: flight, isReturnFlight: true),
-        );
+        Get.to(() => PIAPackageSelectionDialog(
+          flight: flight,
+          isReturnFlight: true,
+        ));
       }
     } else if (isMultiCity.value) {
       // Multi-city flight selection
       selectedFlight.value = flight;
-      Get.to(
-        () => PIAPackageSelectionDialog(flight: flight, isReturnFlight: false),
-      );
+      Get.to(() => PIAPackageSelectionDialog(
+        flight: flight,
+        isReturnFlight: false,
+      ));
     } else {
       // One-way flight selection
       selectedFlight.value = flight;
-      Get.to(
-        () => PIAPackageSelectionDialog(flight: flight, isReturnFlight: false),
-      );
+      Get.to(() => PIAPackageSelectionDialog(
+        flight: flight,
+        isReturnFlight: false,
+      ));
     }
   }
-
   // Add method to get fare options for a flight
   List<PIAFareOption> getFareOptionsForFlight(PIAFlight flight) {
     return fareOptionsByFlight[flight.flightNumber] ?? [];
@@ -620,19 +413,19 @@ extension PIAFlightFiltering on PIAFlightController {
   void applyFilters(FlightFilter filter) {
     // Filter by airlines (PIA only)
     List<PIAFlight> airlineFiltered =
-        outboundFlights.where((flight) {
-          if (filter.selectedAirlines.isEmpty) return true;
-          return filter.selectedAirlines.contains('PK'); // PIA's code
-        }).toList();
+    outboundFlights.where((flight) {
+      if (filter.selectedAirlines.isEmpty) return true;
+      return filter.selectedAirlines.contains('PK'); // PIA's code
+    }).toList();
 
     // Filter by stops (PIA flights are usually non-stop)
     List<PIAFlight> stopsFiltered =
-        airlineFiltered.where((flight) {
-          if (filter.maxStops == null) return true;
-          return flight.isNonStop
-              ? 0 <= filter.maxStops!
-              : 1 <= filter.maxStops!;
-        }).toList();
+    airlineFiltered.where((flight) {
+      if (filter.maxStops == null) return true;
+      return flight.isNonStop
+          ? 0 <= filter.maxStops!
+          : 1 <= filter.maxStops!;
+    }).toList();
 
     // Sort
     List<PIAFlight> sorted = [...stopsFiltered];
@@ -642,11 +435,11 @@ extension PIAFlightFiltering on PIAFlightController {
         break;
       case 'Fastest':
         sorted.sort(
-          (a, b) => (a.legElapsedTime ?? 0).compareTo(b.legElapsedTime ?? 0),
+              (a, b) => (a.legElapsedTime ?? 0).compareTo(b.legElapsedTime ?? 0),
         );
         break;
       default:
-        // Suggested sorting
+      // Suggested sorting
         break;
     }
 

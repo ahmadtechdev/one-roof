@@ -152,6 +152,85 @@ class _PIAFlightCardState extends State<PIAFlightCard>
 
 // Update the build method in _PIAFlightCardState to show all leg schedules
 
+  // Helper to get all segments from a leg
+  List<dynamic> _getAllSegments(Map<String, dynamic> leg) {
+    final availFlightSegmentList = leg['availFlightSegmentList'];
+    if (availFlightSegmentList == null) return [];
+
+    if (availFlightSegmentList is List) {
+      return availFlightSegmentList;
+    }
+    return [availFlightSegmentList];
+  }
+
+// Helper to get first departure info
+  Map<String, dynamic>? _getFirstDeparture(Map<String, dynamic> leg) {
+    final segments = _getAllSegments(leg);
+    if (segments.isEmpty) return null;
+
+    return segments.first['flightSegment'];
+  }
+
+// Helper to get last arrival info
+  Map<String, dynamic>? _getLastArrival(Map<String, dynamic> leg) {
+    final segments = _getAllSegments(leg);
+    if (segments.isEmpty) return null;
+
+    return segments.last['flightSegment'];
+  }
+
+// Helper to get via cities (intermediate stops)
+  List<String> _getViaCities(Map<String, dynamic> leg) {
+    final segments = _getAllSegments(leg);
+    if (segments.length <= 1) return [];
+
+    final viaCities = <String>[];
+    for (int i = 1; i < segments.length; i++) {
+      final segment = segments[i];
+      final departureAirport = _extractNestedValue(
+          segment,
+          ['flightSegment', 'departureAirport', 'locationCode']
+      );
+      if (departureAirport != null) {
+        viaCities.add(departureAirport);
+      }
+    }
+
+    return viaCities;
+  }
+
+// Helper to calculate total duration for multi-segment flights
+  String _getTotalDuration(Map<String, dynamic> leg) {
+    final segments = _getAllSegments(leg);
+    if (segments.isEmpty) return 'PT0H0M';
+
+    int totalMinutes = 0;
+    for (var segment in segments) {
+      final duration = _extractStringValue(
+          segment['flightSegment']?['journeyDuration']
+      ) ?? 'PT0H0M';
+      totalMinutes += _parseDurationToMinutes(duration);
+    }
+
+    final hours = totalMinutes ~/ 60;
+    final minutes = totalMinutes % 60;
+    return 'PT${hours}H${minutes}M';
+  }
+
+  static int _parseDurationToMinutes(String duration) {
+    try {
+      if (duration.startsWith('PT')) {
+        final parts = duration.substring(2).split(RegExp(r'[HMS]'));
+        final hours = int.tryParse(parts[0]) ?? 0;
+        final minutes = int.tryParse(parts[1]) ?? 0;
+        return hours * 60 + minutes;
+      }
+      return 0;
+    } catch (e) {
+      return 0;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final piaController = Get.find<PIAFlightController>();
@@ -272,128 +351,7 @@ class _PIAFlightCardState extends State<PIAFlightCard>
                       const SizedBox(height: 16),
                       Padding(
                         padding: const EdgeInsets.symmetric(vertical: 8.0),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            CachedNetworkImage(
-                              imageUrl: 'https://onerooftravel.net/assets/img/airline-logo/PIA-logo.png',
-                              height: 32,
-                              width: 32,
-                              placeholder: (context, url) => const SizedBox(
-                                height: 24,
-                                width: 24,
-                                child: Center(
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                  ),
-                                ),
-                              ),
-                              errorWidget: (context, url, error) => CachedNetworkImage(
-                                imageUrl: 'https://cdn-icons-png.flaticon.com/128/15700/15700374.png',
-                                height: 24,
-                                width: 24,
-                                errorWidget: (context, url, error) => const Icon(
-                                  Icons.flight,
-                                  size: 24,
-                                ),
-                              ),
-                              fit: BoxFit.contain,
-                            ),
-
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  formatTime(leg['departureDateTime'] ?? ''),
-                                  style: const TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                Text(
-                                  _extractNestedValue(leg, ['departureAirport', 'locationCode']) ?? 'N/A',
-                                  style: const TextStyle(
-                                    color: TColors.grey,
-                                    fontSize: 15,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            Column(
-                              children: [
-                                Text(
-                                  formatDuration(leg['journeyDuration'] ?? 'PT0H0M'),
-                                  style: const TextStyle(
-                                    color: TColors.grey,
-                                    fontSize: 14,
-                                  ),
-                                ),
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Container(
-                                      width: 10,
-                                      height: 10,
-                                      decoration: BoxDecoration(
-                                        shape: BoxShape.circle,
-                                        border: Border.all(
-                                          color: Colors.grey.shade300,
-                                          width: 2,
-                                        ),
-                                        color: Colors.white,
-                                      ),
-                                    ),
-                                    Container(
-                                      height: 2,
-                                      width: MediaQuery.of(context).size.width * 0.4,
-                                      color: Colors.grey[300],
-                                    ),
-                                    Container(
-                                      width: 10,
-                                      height: 10,
-                                      decoration: BoxDecoration(
-                                        shape: BoxShape.circle,
-                                        border: Border.all(
-                                          color: Colors.grey.shade300,
-                                          width: 2,
-                                        ),
-                                        color: Colors.white,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                Text(
-                                  (leg['stopQuantity'] == '0' || leg['stopQuantity'] == null)
-                                      ? 'Nonstop'
-                                      : '${leg['stopQuantity']} stop(s)',
-                                  style: const TextStyle(
-                                    fontSize: 14,
-                                    color: TColors.grey,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.end,
-                              children: [
-                                Text(
-                                  formatTime(leg['arrivalDateTime'] ?? ''),
-                                  style: const TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                Text(
-                                  _extractNestedValue(leg, ['arrivalAirport', 'locationCode']) ?? 'N/A',
-                                  style: const TextStyle(
-                                    color: TColors.grey,
-                                    fontSize: 15,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
+                        child: _buildFlightSegmentRow(leg),
                       ),
                     ],
                   ),
@@ -520,6 +478,155 @@ class _PIAFlightCardState extends State<PIAFlightCard>
           ),
         ],
       ),
+    );
+  }
+
+  // New method to build the flight segment row
+  Widget _buildFlightSegmentRow(Map<String, dynamic> leg) {
+    final segments = _getAllSegments(leg);
+    final isMultiSegment = segments.length > 1;
+    final firstDeparture = _getFirstDeparture(leg);
+    final lastArrival = _getLastArrival(leg);
+    final viaCities = _getViaCities(leg);
+    final totalDuration = _getTotalDuration(leg);
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        CachedNetworkImage(
+          imageUrl: 'https://onerooftravel.net/assets/img/airline-logo/PIA-logo.png',
+          height: 32,
+          width: 32,
+          placeholder: (context, url) => const SizedBox(
+            height: 24,
+            width: 24,
+            child: Center(
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+              ),
+            ),
+          ),
+          errorWidget: (context, url, error) => CachedNetworkImage(
+            imageUrl: 'https://cdn-icons-png.flaticon.com/128/15700/15700374.png',
+            height: 24,
+            width: 24,
+            errorWidget: (context, url, error) => const Icon(
+              Icons.flight,
+              size: 24,
+            ),
+          ),
+          fit: BoxFit.contain,
+        ),
+
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              formatTime(_extractStringValue(firstDeparture?['departureDateTime'])),
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            Text(
+              _extractNestedValue(firstDeparture, ['departureAirport', 'locationCode']) ?? 'N/A',
+              style: const TextStyle(
+                color: TColors.grey,
+                fontSize: 15,
+              ),
+            ),
+          ],
+        ),
+
+        Column(
+          children: [
+            // Show total duration for multi-segment flights
+            Text(
+              formatDuration(totalDuration),
+              style: const TextStyle(
+                color: TColors.grey,
+                fontSize: 14,
+              ),
+            ),
+
+
+
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  width: 10,
+                  height: 10,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: Colors.grey.shade300,
+                      width: 2,
+                    ),
+                    color: Colors.white,
+                  ),
+                ),
+                Container(
+                  height: 2,
+                  width: MediaQuery.of(context).size.width * 0.4,
+                  color: Colors.grey[300],
+                ),
+                Container(
+                  width: 10,
+                  height: 10,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: Colors.grey.shade300,
+                      width: 2,
+                    ),
+                    color: Colors.white,
+                  ),
+                ),
+              ],
+            ),
+
+            Text(
+              (segments.length - 1 == 0)
+                  ? 'Nonstop'
+                  : '${segments.length - 1} stop(s)',
+              style: const TextStyle(
+                fontSize: 14,
+                color: TColors.grey,
+              ),
+            ),
+            // Show via cities if this is a multi-segment flight
+            if (isMultiSegment && viaCities.isNotEmpty)
+              Text(
+                'Via ${viaCities.join(', ')}',
+                style: const TextStyle(
+                  color: TColors.grey,
+                  fontSize: 12,
+                ),
+              ),
+          ],
+        ),
+
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Text(
+              formatTime(_extractStringValue(lastArrival?['arrivalDateTime'])),
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            Text(
+              _extractNestedValue(lastArrival, ['arrivalAirport', 'locationCode']) ?? 'N/A',
+              style: const TextStyle(
+                color: TColors.grey,
+                fontSize: 15,
+              ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 
