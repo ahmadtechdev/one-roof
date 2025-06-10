@@ -198,15 +198,13 @@ class PIAFlightController extends GetxController {
       debugPrint('Stack trace: $stackTrace');
     }
   }
-
   void _processOriginDestinationOption(
       Map<String, dynamic> option, {
         required bool isOutbound,
         String? date,
       }) {
     try {
-      final fareGroups = option['fareComponentGroupList'] ??
-          option['\$']?['fareComponentGroupList'];
+      final fareGroups = option['fareComponentGroupList'] ?? option['\$']?['fareComponentGroupList'];
       if (fareGroups == null) return;
 
       final fareGroupList = fareGroups is List ? fareGroups : [fareGroups];
@@ -216,22 +214,25 @@ class PIAFlightController extends GetxController {
         if (boundList == null) continue;
 
         final bounds = boundList is List ? boundList : [boundList];
-        print("xyz: check");
-        print(bounds.length);
-        // Get fare components
+
+        // Get all fare components for this option
         final fareComponents = fareGroup['fareComponentList'];
         if (fareComponents == null) continue;
 
         final componentList = fareComponents is List ? fareComponents : [fareComponents];
         if (componentList.isEmpty) continue;
 
-        // Use the first fare component for the flight
-        final firstComponent = componentList[0];
+        print("check123456");
+        print(componentList.length);
+        print("check12345");
+        print(componentList.first);
+        print("check12345");
+        print(componentList.last);
 
         // Create flight with all legs
         final flight = _createMultiCityFlight(
           bounds,
-          firstComponent,
+          componentList.first, // Use first component for flight creation
           isOutbound: isOutbound,
           date: date,
         );
@@ -243,14 +244,18 @@ class PIAFlightController extends GetxController {
             inboundFlights.add(flight);
           }
 
-          // Store all fare options for this flight
+          // Store ALL fare options for this flight
           final fareOptions = componentList
-              .whereType<Map<String, dynamic>>()
+              .where((c) => c != null)
               .map((c) => PIAFareOption.fromFareInfo(c))
               .toList();
 
+
+
           if (fareOptions.isNotEmpty) {
-            fareOptionsByFlight[flight.flightNumber] = fareOptions;
+            // Use a unique key combining flight number and date since flight number might be null
+            final flightKey = '${flight.flightNumber}-${flight.date}';
+            fareOptionsByFlight[flightKey] = fareOptions;
           }
         }
       }
@@ -260,12 +265,10 @@ class PIAFlightController extends GetxController {
     }
   }
 
-
   // Replace the _processFareGroup method in PIAFlightController
 
 
 
-  // Update the _createMultiCityFlight method
   PIAFlight? _createMultiCityFlight(
       List<dynamic> segments,
       Map<String, dynamic> fareComponent, {
@@ -299,32 +302,36 @@ class PIAFlightController extends GetxController {
       // Use first segment as the base for flight creation
       final firstSegment = legSchedules[0];
       final flightSegment = firstSegment['flightSegment'] ?? firstSegment;
+      final flightNumber = _extractStringValue(flightSegment['flightNumber']) ??
+          _extractStringValue(legSchedules.first['flightSegment']?['flightNumber']) ??
+          '';
 
       // Get passenger fare info from the fareComponent
-      final passengerFareInfoList = fareComponent['passengerFareInfoList'];
+      final passengerFareInfoList = fareComponent['passengerFareInfoList'] ?? fareComponent;
       if (passengerFareInfoList == null) return null;
 
       // Handle both single fare info and list of fare infos
-      final fareInfoList = passengerFareInfoList is List
-          ? (passengerFareInfoList.isNotEmpty ? passengerFareInfoList[0] : null)
-          : passengerFareInfoList;
-      if (fareInfoList == null) return null;
+      final fareInfoList = passengerFareInfoList is Map
+          ? (passengerFareInfoList['fareInfoList'] is List
+          ? passengerFareInfoList['fareInfoList']
+          : [passengerFareInfoList['fareInfoList']])
+          : [fareComponent];
 
-      final fareInfo = fareInfoList['fareInfoList'];
-      if (fareInfo == null) return null;
+      if (fareInfoList.isEmpty) return null;
 
-      // Handle both single fare info and list of fare infos
-      final firstFareInfo = fareInfo is List
-          ? (fareInfo.isNotEmpty ? fareInfo[0] : null)
-          : fareInfo;
-      if (firstFareInfo == null) return null;
+      final firstFareInfo = fareInfoList.firstWhere(
+            (info) => info != null,
+        orElse: () => fareInfoList.first,
+      );
 
-      final pricingInfo = fareInfoList['pricingInfo'];
-      if (pricingInfo == null) return null;
+      final pricingInfo = passengerFareInfoList is Map
+          ? passengerFareInfoList['pricingInfo'] ?? {}
+          : {};
 
       // Create flight data structure
       final flightData = {
         'flightSegment': flightSegment,
+        'flightNumber':flightNumber,
         'fareInfoList': [{'fareInfoList': [firstFareInfo]}],
         'pricingInfo': pricingInfo,
       };
@@ -347,15 +354,11 @@ class PIAFlightController extends GetxController {
     }
   }
 
-
   // Update the handlePIAFlightSelection method
   // Update the handlePIAFlightSelection method
   void handlePIAFlightSelection(PIAFlight flight, {bool isReturnFlight = false}) {
 
     if (isRoundTrip.value) {
-
-      print("ahmad 5");
-      print(isReturnFlight);
       if (!isReturnFlight) {
         // First flight selection (outbound)
         selectedOutboundFlight = flight;
@@ -391,7 +394,8 @@ class PIAFlightController extends GetxController {
   }
   // Add method to get fare options for a flight
   List<PIAFareOption> getFareOptionsForFlight(PIAFlight flight) {
-    return fareOptionsByFlight[flight.flightNumber] ?? [];
+    final flightKey = '${flight.flightNumber}-${flight.date}';
+    return fareOptionsByFlight[flightKey] ?? [];
   }
 
   static String _extractStringValue(dynamic value) {

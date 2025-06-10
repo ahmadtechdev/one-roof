@@ -114,7 +114,10 @@ class PIAFlight {
       // Safe extraction of required values
       final String airlineName = _extractNestedValue(flightSegment, ['airline', 'companyShortName'])
           ?? 'Pakistan International Airlines';
-      final String flightNum = _extractStringValue(flightSegment['flightNumber']);
+      // In PIAFlight.fromApiResponse
+      final String flightNum = _extractStringValue(flightSegment['flightNumber']) ??
+          _extractStringValue(legSchedules.first['flightSegment']?['flightNumber']) ??
+          '';
 
       // Extract price with fallback
       double flightPrice = 0.0;
@@ -529,7 +532,19 @@ class PIABaggageAllowance {
 
   factory PIABaggageAllowance.fromFareInfo(Map<String, dynamic> fareInfo) {
     try {
-      final baggage = fareInfo['fareBaggageAllowance'];
+      // First try to get baggage from fareInfo directly
+      dynamic baggage = fareInfo['passengerFareInfoList']['fareInfoList']['fareBaggageAllowance'];
+
+      // If not found, try looking in passengerFareInfoList
+      if (baggage == null && fareInfo['passengerFareInfoList'] is Map) {
+        baggage = fareInfo['passengerFareInfoList']['fareInfoList']['fareBaggageAllowance'];
+      }
+
+      // If still not found, try looking in fareInfoList
+      if (baggage == null && fareInfo['passengerFareInfoList']['fareInfoList'] is List && fareInfo['passengerFareInfoList']['fareInfoList'].isNotEmpty) {
+        baggage = fareInfo['passengerFareInfoList']['fareInfoList'][0]['fareBaggageAllowance'];
+      }
+
       if (baggage == null) {
         return PIABaggageAllowance(
           pieces: 0,
@@ -542,8 +557,10 @@ class PIABaggageAllowance {
       final allowanceType = PIAFlight._extractStringValue(baggage['allowanceType']);
 
       if (allowanceType == 'WEIGHT') {
-        final weightValue = PIAFlight._extractNestedValue(baggage, ['maxAllowedWeight', 'weight']) ?? '0';
-        final unitCode = PIAFlight._extractNestedValue(baggage, ['maxAllowedWeight', 'unitOfMeasureCode']) ?? 'KG';
+        final weightValue = PIAFlight._extractNestedValue(
+            baggage, ['maxAllowedWeight', 'weight']) ?? '0';
+        final unitCode = PIAFlight._extractNestedValue(
+            baggage, ['maxAllowedWeight', 'unitOfMeasureCode']) ?? 'KG';
 
         final double parsedWeight = double.tryParse(weightValue) ?? 0.0;
 
@@ -554,7 +571,8 @@ class PIABaggageAllowance {
           type: '$weightValue $unitCode',
         );
       } else {
-        final piecesValue = PIAFlight._extractStringValue(baggage['maxAllowedPieces'] ?? '0');
+        final piecesValue = PIAFlight._extractStringValue(
+            baggage['maxAllowedPieces'] ?? '0');
         final int parsedPieces = int.tryParse(piecesValue) ?? 0;
 
         return PIABaggageAllowance(
@@ -783,50 +801,167 @@ class PIAFareOption {
 
   factory PIAFareOption.fromFareInfo(Map<String, dynamic> fareInfo) {
     try {
-      // Extract pricing info
-      final pricingInfo = fareInfo['pricingInfo'] ?? {};
-      final totalFare = pricingInfo['totalFare']?['amount'] ?? {};
+      print("Raw fareInfo: $fareInfo");
 
-      // Extract price and currency
+      // Extract pricing info - handle both direct and nested structures
+      final pricingInfo = fareInfo['passengerFareInfoList'] is Map
+          ? fareInfo['passengerFareInfoList']['pricingInfo']
+          : {};
+
+      print("Pricing info: $pricingInfo");
+
+      // Handle total fare extraction
+      dynamic totalFare;
+      if (pricingInfo is Map) {
+        totalFare = pricingInfo['totalFare']?['amount'] ?? {};
+      } else {
+        totalFare = {};
+      }
+
+      // Extract price and currency with better fallbacks
       double price = 0.0;
       String currency = 'PKR';
 
-      if (totalFare.isNotEmpty) {
+      if (totalFare is Map && totalFare.isNotEmpty) {
         price = double.tryParse(totalFare['value']?.toString() ?? '0') ?? 0.0;
         currency = totalFare['currency']?.toString() ?? 'PKR';
       } else {
         // Fallback to totalAmount if totalFare not available
-        final totalAmount = pricingInfo['totalAmount'] ?? {};
+        final totalAmount = (pricingInfo is Map)
+            ? pricingInfo['totalAmount'] ?? {}
+            : {};
         price = double.tryParse(totalAmount['value']?.toString() ?? '0') ?? 0.0;
         currency = totalAmount['currency']?.toString() ?? 'PKR';
       }
 
-      // Extract baggage allowance
+      // Extract baggage allowance with better error handling and multiple fallback paths
       final baggageAllowance = PIABaggageAllowance.fromFareInfo(fareInfo);
 
-      // Determine refund policy
-      final isRefundable = (fareInfo['endorsementList'] as String?)?.contains('NON REFUNDABLE') != true;
+      // Determine refund policy with multiple checks
+      bool isRefundable = true; // Default to refundable
 
-      // Default fees (can be customized based on fare rules)
-      final changeFee = 'PKR 1000';
-      final refundFee = isRefundable ? 'PKR 2000' : 'Non-Refundable';
+      // Check endorsementList for refund restrictions
+      final endorsementList = fareInfo['endorsementList'];
+      if (endorsementList is String) {
+        isRefundable = !endorsementList.contains('NON REFUNDABLE');
+      } else if (endorsementList is List) {
+        isRefundable = !endorsementList.any((item) =>
+            item.toString().contains('NON REFUNDABLE'));
+      }
+
+      // Get cabin class info with multiple fallback paths
+      String cabin = 'Economy';
+      String cabinCode = 'Y';
+
+      // Try different paths to find cabin information
+      final passengerFareInfo = fareInfo['passengerFareInfoList'];
+      if (passengerFareInfo is Map) {
+        final fareInfoList = passengerFareInfo['fareInfoList'];
+        if (fareInfoList is Map) {
+          // Path 1: Direct cabin field
+          cabin = fareInfoList['cabin']?.toString() ?? cabin;
+          cabinCode = fareInfoList['cabinClassCode']?.toString() ?? cabinCode;
+
+          print("Found cabin from fareInfoList: $cabin, code: $cabinCode");
+        } else if (fareInfoList is List && fareInfoList.isNotEmpty) {
+          // Path 2: If fareInfoList is an array, take first element
+          final firstFareInfo = fareInfoList[0];
+          if (firstFareInfo is Map) {
+            cabin = firstFareInfo['cabin']?.toString() ?? cabin;
+            cabinCode = firstFareInfo['cabinClassCode']?.toString() ?? cabinCode;
+
+            print("Found cabin from fareInfoList[0]: $cabin, code: $cabinCode");
+          }
+        }
+
+        // Path 3: Check directly in passengerFareInfo
+        if (cabin == 'Economy') { // Still default, keep looking
+          cabin = passengerFareInfo['cabin']?.toString() ?? cabin;
+          cabinCode = passengerFareInfo['cabinClassCode']?.toString() ?? cabinCode;
+
+          print("Found cabin from passengerFareInfo: $cabin, code: $cabinCode");
+        }
+      }
+
+      // Path 4: Check root level of fareInfo
+      if (cabin == 'Economy') { // Still default, keep looking
+        cabin = fareInfo['cabin']?.toString() ?? cabin;
+        cabinCode = fareInfo['cabinClassCode']?.toString() ?? cabinCode;
+
+        print("Found cabin from root fareInfo: $cabin, code: $cabinCode");
+      }
+
+      // Normalize cabin class
+      if (cabin.toLowerCase().contains('business') || cabinCode == 'C') {
+        cabin = 'Business';
+        cabinCode = 'C';
+      } else if (cabin.toLowerCase().contains('first') || cabinCode == 'F') {
+        cabin = 'First';
+        cabinCode = 'F';
+      } else if (cabin.toLowerCase().contains('premium') || cabinCode == 'P') {
+        cabin = 'Premium Economy';
+        cabinCode = 'P';
+      } else {
+        cabin = 'Economy';
+        cabinCode = cabinCode == '' ? 'Y' : cabinCode;
+      }
+
+      // Extract fare name with multiple fallback paths
+      String fareName = 'Standard';
+      if (passengerFareInfo is Map) {
+        final fareInfoList = passengerFareInfo['fareInfoList'];
+        if (fareInfoList is Map) {
+          fareName = fareInfoList['fareGroupName']?.toString() ?? fareName;
+        } else if (fareInfoList is List && fareInfoList.isNotEmpty) {
+          final firstFareInfo = fareInfoList[0];
+          if (firstFareInfo is Map) {
+            fareName = firstFareInfo['fareGroupName']?.toString() ?? fareName;
+          }
+        }
+      }
+
+      // Fallback to other fare name fields
+      if (fareName == 'Standard') {
+        fareName = fareInfo['fareReferenceName']?.toString() ??
+            fareInfo['fareName']?.toString() ??
+            fareName;
+      }
+
+      // Extract fare reference code
+      String fareRefCode = '';
+      if (passengerFareInfo is Map) {
+        final fareInfoList = passengerFareInfo['fareInfoList'];
+        if (fareInfoList is Map) {
+          fareRefCode = fareInfoList['fareReferenceCode']?.toString() ?? fareRefCode;
+        } else if (fareInfoList is List && fareInfoList.isNotEmpty) {
+          final firstFareInfo = fareInfoList[0];
+          if (firstFareInfo is Map) {
+            fareRefCode = firstFareInfo['fareReferenceCode']?.toString() ?? fareRefCode;
+          }
+        }
+      }
+
+      print("Final cabin: $cabin, code: $cabinCode");
+      print("Final fare name: $fareName");
+      print("Final fare ref code: $fareRefCode");
 
       return PIAFareOption(
-        fareName: fareInfo['fareGroupName']?.toString() ?? 'Standard',
-        fareReferenceCode: fareInfo['fareReferenceCode']?.toString() ?? '',
+        fareName: fareName,
+        fareReferenceCode: fareRefCode,
         price: price,
         currency: currency,
-        cabinClass: fareInfo['cabin']?.toString() ?? 'Economy',
-        cabinClassCode: fareInfo['cabinClassCode']?.toString() ?? 'Y',
+        cabinClass: cabin,
+        cabinClassCode: cabinCode,
         baggageAllowance: baggageAllowance,
         isRefundable: isRefundable,
-        changeFee: changeFee,
-        refundFee: refundFee,
+        changeFee: 'PKR 1000', // Default value, can be customized
+        refundFee: isRefundable ? 'PKR 2000' : 'Non-Refundable',
         rawData: fareInfo,
       );
     } catch (e, stackTrace) {
       print('Error in PIAFareOption.fromFareInfo: $e');
       print('Stack trace: $stackTrace');
+      print('FareInfo that caused error: $fareInfo');
 
       return PIAFareOption(
         fareName: 'Standard',
