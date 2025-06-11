@@ -169,9 +169,9 @@ class PIAFlightApiService {
 </soapenv:Envelope>
 ''';
 
-      // // Print the request in pretty format
-      // debugPrint('=== PIA FLIGHT AVAILABILITY REQUEST ===');
-      // _printXmlPretty(request);
+      // Print the request in pretty format
+      debugPrint('=== PIA FLIGHT AVAILABILITY REQUEST ===');
+      _printXmlPretty(request);
 
       // Make the API call
       final response = await _dio.post(
@@ -202,7 +202,6 @@ class PIAFlightApiService {
   Map<String, dynamic> _convertXmlToJson(String xmlString) {
     try {
       final cleanedXml = xmlString.trim();
-      final document = xml.XmlDocument.parse(cleanedXml);
 
       // For debugging - print the parsed XML structure
       // debugPrint('Parsed XML structure: ${document.toXmlString(pretty: true)}');

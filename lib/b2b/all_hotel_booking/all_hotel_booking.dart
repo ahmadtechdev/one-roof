@@ -8,7 +8,6 @@ import 'dart:typed_data';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:flutter/services.dart';
-import 'package:intl/intl.dart';
 import 'package:printing/printing.dart';
 
 class AllHotelBooking extends StatelessWidget {
@@ -923,32 +922,6 @@ pw.Widget _buildHeader(Map<String, dynamic> bookingData) {
   );
 }
 
-pw.Widget _buildHotelInformation(Map<String, dynamic> bookingData) {
-  return pw.Column(
-    crossAxisAlignment: pw.CrossAxisAlignment.start,
-    children: [
-      pw.Text(
-        'HOTEL NAME',
-        style: pw.TextStyle(fontSize: 12, color: PdfColors.grey700),
-      ),
-      pw.Text(bookingData['hotelName'], style: pw.TextStyle(fontSize: 14)),
-      pw.Text(bookingData['destination'], style: pw.TextStyle(fontSize: 12)),
-      pw.SizedBox(height: 10),
-      pw.Text(
-        'HOTEL LOCATION',
-        style: pw.TextStyle(fontSize: 12, color: PdfColors.grey700),
-      ),
-      // Map placeholder since we can't include actual maps
-      pw.Container(
-        height: 100,
-        decoration: pw.BoxDecoration(
-          border: pw.Border.all(color: PdfColors.grey300),
-        ),
-        child: pw.Center(child: pw.Text('Map Location')),
-      ),
-    ],
-  );
-}
 
 pw.Widget _buildGuestInformation(Map<String, dynamic> bookingData) {
   return pw.Column(

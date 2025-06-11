@@ -101,10 +101,7 @@ class PIAFlightController extends GetxController {
         _processRouteList(routeList, isOutbound: isOutbound);
       }
 
-      // For one-way and multi-city trips, show all flights immediately
-      // For round trips, only show outbound flights first
-      print("Ahamd 4");
-      print(inboundFlights.length);
+
       filteredFlights.assignAll(
         isRoundTrip.value
             ? outboundFlights
@@ -222,13 +219,6 @@ class PIAFlightController extends GetxController {
         final componentList = fareComponents is List ? fareComponents : [fareComponents];
         if (componentList.isEmpty) continue;
 
-        print("check123456");
-        print(componentList.length);
-        print("check12345");
-        print(componentList.first);
-        print("check12345");
-        print(componentList.last);
-
         // Create flight with all legs
         final flight = _createMultiCityFlight(
           bounds,
@@ -287,7 +277,6 @@ class PIAFlightController extends GetxController {
         final availFlightSegments = segment['availFlightSegmentList'];
         if (availFlightSegments == null) continue;
 
-        // Handle both single segment and list of segments
         if (availFlightSegments is List) {
           for (var flightSegment in availFlightSegments) {
             legWithStops.add(flightSegment);
@@ -299,7 +288,6 @@ class PIAFlightController extends GetxController {
 
       if (legSchedules.isEmpty) return null;
 
-      // Use first segment as the base for flight creation
       final firstSegment = legSchedules[0];
       final flightSegment = firstSegment['flightSegment'] ?? firstSegment;
       final flightNumber = _extractStringValue(flightSegment['flightNumber']) ??
@@ -310,28 +298,61 @@ class PIAFlightController extends GetxController {
       final passengerFareInfoList = fareComponent['passengerFareInfoList'] ?? fareComponent;
       if (passengerFareInfoList == null) return null;
 
-      // Handle both single fare info and list of fare infos
-      final fareInfoList = passengerFareInfoList is Map
-          ? (passengerFareInfoList['fareInfoList'] is List
-          ? passengerFareInfoList['fareInfoList']
-          : [passengerFareInfoList['fareInfoList']])
-          : [fareComponent];
+      // Handle different structures of passengerFareInfoList
+      List<dynamic> fareInfoItems = [];
+      Map<String, dynamic> pricingInfo = {};
 
-      if (fareInfoList.isEmpty) return null;
+      if (passengerFareInfoList is List) {
+        // Case 1: Multiple passenger types (Adult + Child/Infant)
+        fareInfoItems = passengerFareInfoList;
 
-      final firstFareInfo = fareInfoList.firstWhere(
-            (info) => info != null,
-        orElse: () => fareInfoList.first,
+        // Find the adult fare first
+        var adultFare = passengerFareInfoList.firstWhere(
+              (item) => _extractStringValue(item['passengerTypeQuantity']?['passengerType']?['code']) == 'ADLT',
+          orElse: () => passengerFareInfoList.first,
+        );
+
+        pricingInfo = adultFare['pricingInfo'] ?? {};
+      }
+      else if (passengerFareInfoList is Map) {
+        // Case 2: Single passenger type
+        if (passengerFareInfoList['fareInfoList'] != null) {
+          if (passengerFareInfoList['fareInfoList'] is List) {
+            fareInfoItems = passengerFareInfoList['fareInfoList'];
+          } else {
+            fareInfoItems = [passengerFareInfoList['fareInfoList']];
+          }
+        } else {
+          fareInfoItems = [passengerFareInfoList];
+        }
+
+        pricingInfo = passengerFareInfoList['pricingInfo'] ?? {};
+      }
+
+      if (fareInfoItems.isEmpty) return null;
+
+      // Find the first valid fare info (prefer adult fare if available)
+      Map<String, dynamic> firstFareInfo = fareInfoItems.firstWhere(
+            (info) => info != null &&
+            (info['passengerTypeQuantity'] == null ||
+                _extractStringValue(info['passengerTypeQuantity']?['passengerType']?['code']) != 'CHLD'),
+        orElse: () => fareInfoItems.first,
       );
 
-      final pricingInfo = passengerFareInfoList is Map
-          ? passengerFareInfoList['pricingInfo'] ?? {}
-          : {};
+      // If still no pricing info, try to get from first fare info
+      if (pricingInfo.isEmpty) {
+        pricingInfo = firstFareInfo['pricingInfo'] ?? {};
+      }
+
+      // Final fallback to pricingOverview
+      if (pricingInfo.isEmpty) {
+        pricingInfo = fareComponent['pricingOverview'] ?? {};
+      }
 
       // Create flight data structure
       final flightData = {
         'flightSegment': flightSegment,
-        'flightNumber':flightNumber,
+        'flightNumber': flightNumber,
         'fareInfoList': [{'fareInfoList': [firstFareInfo]}],
         'pricingInfo': pricingInfo,
       };

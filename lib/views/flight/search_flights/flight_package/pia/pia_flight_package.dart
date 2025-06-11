@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../../../utility/colors.dart';
+import '../../review_flight/pia_review_flight.dart';
 import '../../search_flight_utils/widgets/pia_flight_card.dart';
 import 'pia_flight_model.dart';
 import 'pia_flight_controller.dart';
@@ -409,6 +410,7 @@ class PIAPackageSelectionDialog extends StatelessWidget {
       if (piaController.isRoundTrip.value) {
         if (!isReturnFlight) {
           // Store outbound selection and show return flights
+          piaController.selectedOutboundFlight = flight;
           piaController.selectedOutboundFareOption = selectedFareOption;
           Get.back(); // Close package dialog
           piaController.showReturnFlights.value = true;
@@ -419,35 +421,23 @@ class PIAPackageSelectionDialog extends StatelessWidget {
           );
         } else {
           // Store return selection and proceed to booking
+          piaController.selectedReturnFlight = flight;
           piaController.selectedReturnFareOption = selectedFareOption;
           Get.back(); // Close package dialog
-          Get.snackbar(
-            'Success',
-            'Round trip package selected successfully',
-            snackPosition: SnackPosition.TOP,
-            backgroundColor: Colors.green,
-            colorText: Colors.white,
-            icon: const Icon(Icons.check_circle, color: Colors.white),
-            duration: const Duration(seconds: 3),
-          );
-          // TODO: Navigate to booking page
+          Get.to(() => PIAReviewTripPage(
+            flight: flight,
+            isReturn: true,
+          ));
         }
       } else {
         // For one-way or multi-city
+        piaController.selectedOutboundFlight = flight;
         piaController.selectedOutboundFareOption = selectedFareOption;
         Get.back(); // Close package dialog
-        Get.snackbar(
-          'Success',
-          piaController.isMultiCity.value
-              ? 'Multi-city package selected successfully'
-              : 'One-way package selected successfully',
-          snackPosition: SnackPosition.TOP,
-          backgroundColor: Colors.green,
-          colorText: Colors.white,
-          icon: const Icon(Icons.check_circle, color: Colors.white),
-          duration: const Duration(seconds: 3),
-        );
-        // TODO: Navigate to booking page
+        Get.to(() => PIAReviewTripPage(
+          flight: flight,
+          isReturn: false,
+        ));
       }
     } catch (e) {
       Get.snackbar(

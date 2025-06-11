@@ -532,65 +532,106 @@ class PIABaggageAllowance {
 
   factory PIABaggageAllowance.fromFareInfo(Map<String, dynamic> fareInfo) {
     try {
-      // First try to get baggage from fareInfo directly
-      dynamic baggage = fareInfo['passengerFareInfoList']['fareInfoList']['fareBaggageAllowance'];
+      // Get the passenger fare info list
+      dynamic passengerFareInfoList = fareInfo['passengerFareInfoList'];
 
-      // If not found, try looking in passengerFareInfoList
-      if (baggage == null && fareInfo['passengerFareInfoList'] is Map) {
-        baggage = fareInfo['passengerFareInfoList']['fareInfoList']['fareBaggageAllowance'];
+      // Handle case where passengerFareInfoList might be a Map (single passenger) or List (multiple passengers)
+      List<dynamic> fareInfoList;
+      if (passengerFareInfoList is Map) {
+        // Single passenger case
+        fareInfoList = [passengerFareInfoList];
+      } else if (passengerFareInfoList is List) {
+        // Multiple passengers case
+        fareInfoList = passengerFareInfoList;
+      } else {
+        return _defaultBaggage();
       }
 
-      // If still not found, try looking in fareInfoList
-      if (baggage == null && fareInfo['passengerFareInfoList']['fareInfoList'] is List && fareInfo['passengerFareInfoList']['fareInfoList'].isNotEmpty) {
-        baggage = fareInfo['passengerFareInfoList']['fareInfoList'][0]['fareBaggageAllowance'];
+      // Find the first valid baggage allowance (prefer ADLT if available)
+      Map<String, dynamic>? baggage;
+      for (var fareInfo in fareInfoList) {
+        // Check if this is an adult fare first
+        final passengerType = fareInfo['passengerTypeQuantity']?['passengerType']?['code'] ??
+            fareInfo['passengerTypeCode'] ??
+            'ADLT';
+
+        if (passengerType == 'ADLT') {
+          baggage = _extractBaggageFromFareInfo(fareInfo);
+          if (baggage != null) break;
+        }
+      }
+
+      // If no adult baggage found, try any passenger type
+      if (baggage == null) {
+        for (var fareInfo in fareInfoList) {
+          baggage = _extractBaggageFromFareInfo(fareInfo);
+          if (baggage != null) break;
+        }
       }
 
       if (baggage == null) {
-        return PIABaggageAllowance(
-          pieces: 0,
-          weight: 0,
-          unit: 'KG',
-          type: '0 KG',
-        );
+        return _defaultBaggage();
       }
 
-      final allowanceType = PIAFlight._extractStringValue(baggage['allowanceType']);
-
-      if (allowanceType == 'WEIGHT') {
-        final weightValue = PIAFlight._extractNestedValue(
-            baggage, ['maxAllowedWeight', 'weight']) ?? '0';
-        final unitCode = PIAFlight._extractNestedValue(
-            baggage, ['maxAllowedWeight', 'unitOfMeasureCode']) ?? 'KG';
-
-        final double parsedWeight = double.tryParse(weightValue) ?? 0.0;
-
-        return PIABaggageAllowance(
-          pieces: 0,
-          weight: parsedWeight,
-          unit: unitCode,
-          type: '$weightValue $unitCode',
-        );
-      } else {
-        final piecesValue = PIAFlight._extractStringValue(
-            baggage['maxAllowedPieces'] ?? '0');
-        final int parsedPieces = int.tryParse(piecesValue) ?? 0;
-
-        return PIABaggageAllowance(
-          pieces: parsedPieces,
-          weight: 0,
-          unit: 'PC',
-          type: '$piecesValue PC',
-        );
-      }
+      return _parseBaggageAllowance(baggage);
     } catch (e) {
       print('Error in PIABaggageAllowance.fromFareInfo: $e');
+      return _defaultBaggage();
+    }
+  }
+
+  static Map<String, dynamic>? _extractBaggageFromFareInfo(Map<String, dynamic> fareInfo) {
+    try {
+      // Try different possible paths to find baggage allowance
+      if (fareInfo['fareInfoList'] is Map) {
+        return fareInfo['fareInfoList']['fareBaggageAllowance'];
+      } else if (fareInfo['fareInfoList'] is List && fareInfo['fareInfoList'].isNotEmpty) {
+        return fareInfo['fareInfoList'][0]['fareBaggageAllowance'];
+      } else if (fareInfo['pricingInfo'] != null && fareInfo['pricingInfo']['fareBaggageAllowance'] != null) {
+        return fareInfo['pricingInfo']['fareBaggageAllowance'];
+      }
+      return null;
+    } catch (e) {
+      print('Error extracting baggage: $e');
+      return null;
+    }
+  }
+
+  static PIABaggageAllowance _parseBaggageAllowance(Map<String, dynamic> baggage) {
+    final allowanceType = baggage['allowanceType']?.toString() ?? 'WEIGHT';
+
+    if (allowanceType == 'WEIGHT') {
+      final weightValue = baggage['maxAllowedWeight']?['weight']?.toString() ?? '0';
+      final unitCode = baggage['maxAllowedWeight']?['unitOfMeasureCode']?.toString() ?? 'KG';
+
+      final double parsedWeight = double.tryParse(weightValue) ?? 0.0;
+
       return PIABaggageAllowance(
         pieces: 0,
+        weight: parsedWeight,
+        unit: unitCode,
+        type: '$weightValue $unitCode',
+      );
+    } else {
+      final piecesValue = baggage['maxAllowedPieces']?.toString() ?? '0';
+      final int parsedPieces = int.tryParse(piecesValue) ?? 0;
+
+      return PIABaggageAllowance(
+        pieces: parsedPieces,
         weight: 0,
-        unit: 'KG',
-        type: '0 KG',
+        unit: 'PC',
+        type: '$piecesValue PC',
       );
     }
+  }
+
+  static PIABaggageAllowance _defaultBaggage() {
+    return PIABaggageAllowance(
+      pieces: 0,
+      weight: 0,
+      unit: 'KG',
+      type: '0 KG',
+    );
   }
 }
 

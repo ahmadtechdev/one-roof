@@ -49,18 +49,15 @@ class AirBlueFlightApiService {
       // print(depDateArray);
 
       String originDestination = "";
-      String cabins = 'Y'; // Default to Economy
+// Default to Economy
 
       // Cabin type mapping
       switch (cabin) {
         case 'Economy':
-          cabins = 'Y';
           break;
         case 'Business':
-          cabins = 'C';
           break;
         case 'First-Class':
-          cabins = 'F';
           break;
       }
 
@@ -142,7 +139,7 @@ class AirBlueFlightApiService {
 
       // print("request");
       final xmlRequest = request.toString();
-      final jsonRequest = _convertXmlToJson(xmlRequest);
+      _convertXmlToJson(xmlRequest);
       // _printJsonPretty(jsonRequest);
 
       // Log the request (matching PHP format)
@@ -199,7 +196,7 @@ class AirBlueFlightApiService {
       );
       // Convert XML to JSON using xml2json package
       final xmlResponse = response.data.toString();
-      final jsonResponse = _convertXmlToJson(xmlResponse);
+      _convertXmlToJson(xmlResponse);
 
       // print("response");
       // _printJsonPretty(jsonResponse);
@@ -239,18 +236,6 @@ class AirBlueFlightApiService {
     );
   }
 
-  void _printJsonPretty(dynamic jsonData) {
-    const int chunkSize = 1000;
-    final jsonString = const JsonEncoder.withIndent('  ').convert(jsonData);
-    for (int i = 0; i < jsonString.length; i += chunkSize) {
-      print(
-        jsonString.substring(
-          i,
-          i + chunkSize > jsonString.length ? jsonString.length : i + chunkSize,
-        ),
-      );
-    }
-  }
 
   // Add this to api_service_airblue.dart
 
@@ -910,103 +895,6 @@ class AirBlueFlightApiService {
     }
   }
 
-  Map<String, dynamic> _prepareBookingClass(AirBlueFlight flight) {
-    // This should return the raw flight data that was used to create the AirBlueFlight object
-    // You might need to store this in the AirBlueFlight model or get it from somewhere else
-    // For now, I'll create a simplified version based on the structure we have
-
-    return {
-      "OriginDestinationRefNumber":
-          flight.rph.startsWith('return_') ? "2" : "1",
-      "AirItinerary": {
-        "OriginDestinationOptions": {
-          "OriginDestinationOption": {
-            "RPH": flight.rph,
-            "FlightSegment": {
-              "DepartureDateTime":
-                  flight.legSchedules.first['departure']['dateTime'],
-              "ArrivalDateTime":
-                  flight.legSchedules.first['arrival']['dateTime'],
-              "StopQuantity": "0",
-              "RPH": flight.rph,
-              "FlightNumber": flight.id.split('-').first,
-              "ResBookDesigCode": flight.segmentInfo.first.bookingCode,
-              "Status": "ONTIME",
-              "DepartureAirport": {
-                "LocationCode":
-                    flight.legSchedules.first['departure']['airport'],
-              },
-              "ArrivalAirport": {
-                "LocationCode": flight.legSchedules.first['arrival']['airport'],
-              },
-              "OperatingAirline": {"Code": flight.airlineCode},
-              "Equipment": {
-                "AirEquipType":
-                    "A320", // Default - you might want to store this in the model
-              },
-              "MarketingAirline": {"Code": flight.airlineCode},
-            },
-          },
-        },
-      },
-      "AirItineraryPricingInfo": {
-        // Simplified pricing info - you'll need to include the actual data from the original response
-        "ItinTotalFare": {
-          "BaseFare": {
-            "CurrencyCode": flight.currency,
-            "Amount": flight.price.toString(),
-          },
-          "TotalFare": {
-            "CurrencyCode": flight.currency,
-            "Amount": flight.price.toString(),
-          },
-        },
-        "PTC_FareBreakdowns": {
-          "PTC_FareBreakdown": [
-            {
-              "PassengerTypeQuantity": {"Code": "ADT", "Quantity": "1"},
-              "PassengerFare": {
-                "BaseFare": {
-                  "CurrencyCode": flight.currency,
-                  "Amount": flight.price.toString(),
-                },
-                "TotalFare": {
-                  "CurrencyCode": flight.currency,
-                  "Amount": flight.price.toString(),
-                },
-              },
-              "FareInfo": {
-                "DepartureDate":
-                    flight.legSchedules.first['departure']['dateTime'],
-                "DepartureAirport": {
-                  "LocationCode":
-                      flight.legSchedules.first['departure']['airport'],
-                },
-                "ArrivalAirport": {
-                  "LocationCode":
-                      flight.legSchedules.first['arrival']['airport'],
-                },
-                "FareInfo": {
-                  "FareBasisCode": flight.segmentInfo.first.bookingCode,
-                  "FareType": "EX",
-                },
-                "PassengerFare": {
-                  "BaseFare": {
-                    "CurrencyCode": flight.currency,
-                    "Amount": flight.price.toString(),
-                  },
-                  "TotalFare": {
-                    "CurrencyCode": flight.currency,
-                    "Amount": flight.price.toString(),
-                  },
-                },
-              },
-            },
-          ],
-        },
-      },
-    };
-  }
 
   Map<String, dynamic> _prepareTravelerData(
     TravelerInfo traveler,
