@@ -5,7 +5,6 @@ import 'package:get/get.dart';
 import 'package:oneroof/utility/colors.dart';
 import 'package:oneroof/widgets/travelers_selection_bottom_sheet.dart';
 
-import '../../form/travelers/traveler_controller.dart';
 import '../booking_flight/pia_booking_flight.dart';
 import '../flight_package/pia/pia_flight_model.dart';
 import '../flight_package/pia/pia_flight_controller.dart';
@@ -59,34 +58,117 @@ class PIAReviewTripPageState extends State<PIAReviewTripPage> {
   }
 
   void _calculatePrices() {
-    // Calculate outbound flight prices
+    // Reset all prices
     adultPrice = 0.0;
     childPrice = 0.0;
     infantPrice = 0.0;
     totalPrice = 0.0;
     currency = 'PKR';
 
+    returnAdultPrice = 0.0;
+    returnChildPrice = 0.0;
+    returnInfantPrice = 0.0;
+    returnTotalPrice = 0.0;
+    returnCurrency = 'PKR';
+
+    // Calculate outbound flight prices
     if (piaController.selectedOutboundFareOption != null) {
       final fareOption = piaController.selectedOutboundFareOption!;
-      adultPrice = fareOption.price;
       currency = fareOption.currency;
-      totalPrice = fareOption.price;
+
+      // Extract prices for each passenger type from rawData
+      final passengerFareInfoList = fareOption.rawData['passengerFareInfoList'];
+      if (passengerFareInfoList != null) {
+        final List<dynamic> fareInfos = passengerFareInfoList is List
+            ? passengerFareInfoList
+            : [passengerFareInfoList];
+
+        for (var fareInfo in fareInfos) {
+          final passengerType = _extractPassengerType(fareInfo);
+          final pricingInfo = fareInfo['pricingInfo'] ?? {};
+          final totalFare = pricingInfo['totalFare']?['amount'] ?? {};
+          final priceValue = totalFare['value']?.toString() ?? '0';
+          final price = double.tryParse(priceValue) ?? 0.0;
+
+          switch (passengerType) {
+            case 'ADLT':
+              adultPrice = price;
+              break;
+            case 'CHLD':
+              childPrice = price;
+              break;
+            case 'INFT':
+              infantPrice = price;
+              break;
+          }
+        }
+      }
+
+      // If no specific prices found, use the main price for adults
+      if (adultPrice == 0.0) {
+        adultPrice = fareOption.price;
+      }
     }
 
     // Calculate return flight prices if available
     if (widget.isReturn && piaController.selectedReturnFareOption != null) {
-      returnAdultPrice = 0.0;
-      returnChildPrice = 0.0;
-      returnInfantPrice = 0.0;
-      returnTotalPrice = 0.0;
-      returnCurrency = 'PKR';
-
       final returnFareOption = piaController.selectedReturnFareOption!;
-      returnAdultPrice = returnFareOption.price;
       returnCurrency = returnFareOption.currency;
-      returnTotalPrice = returnFareOption.price;
+
+      // Extract prices for each passenger type from rawData
+      final passengerFareInfoList = returnFareOption.rawData['passengerFareInfoList'];
+      if (passengerFareInfoList != null) {
+        final List<dynamic> fareInfos = passengerFareInfoList is List
+            ? passengerFareInfoList
+            : [passengerFareInfoList];
+
+        for (var fareInfo in fareInfos) {
+          final passengerType = _extractPassengerType(fareInfo);
+          final pricingInfo = fareInfo['pricingInfo'] ?? {};
+          final totalFare = pricingInfo['totalFare']?['amount'] ?? {};
+          final priceValue = totalFare['value']?.toString() ?? '0';
+          final price = double.tryParse(priceValue) ?? 0.0;
+
+          switch (passengerType) {
+            case 'ADLT':
+              returnAdultPrice = price;
+              break;
+            case 'CHLD':
+              returnChildPrice = price;
+              break;
+            case 'INF':
+              returnInfantPrice = price;
+              break;
+          }
+        }
+      }
+
+      // If no specific prices found, use the main price for adults
+      if (returnAdultPrice == 0.0) {
+        returnAdultPrice = returnFareOption.price;
+      }
     }
   }
+
+// Helper method to extract passenger type
+  String _extractPassengerType(Map<String, dynamic> fareInfo) {
+    try {
+      // Try different paths to get passenger type
+      if (fareInfo['passengerTypeQuantity'] != null) {
+        return fareInfo['passengerTypeQuantity']?['passengerType']?['code'] ?? 'ADLT';
+      }
+      if (fareInfo['passengerTypeCode'] != null) {
+        return fareInfo['passengerTypeCode'] ?? 'ADLT';
+      }
+      if (fareInfo['pricingInfo']?['passengerTypeCode'] != null) {
+        return fareInfo['pricingInfo']?['passengerTypeCode'] ?? 'ADLT';
+      }
+    } catch (e) {
+      return 'ADLT';
+    }
+    return 'ADLT';
+  }
+
 
   void _startShadowAnimation() {
     _shadowTimer = Timer.periodic(const Duration(milliseconds: 1500), (_) {
@@ -134,8 +216,8 @@ class PIAReviewTripPageState extends State<PIAReviewTripPage> {
   @override
   Widget build(BuildContext context) {
     final double combinedTotalPrice = widget.isReturn
-        ? totalPrice + returnTotalPrice
-        : totalPrice;
+        ? _calculateOutboundSubtotal() + _calculateInboundSubtotal()
+        : _calculateOutboundSubtotal();
 
     return Scaffold(
       backgroundColor: TColors.background,
@@ -232,38 +314,25 @@ class PIAReviewTripPageState extends State<PIAReviewTripPage> {
                       ),
                     ),
                     const SizedBox(height: 8),
-                    if (travelersController.adultCount.value > 0)
+                    if (travelersController.adultCount.value > 0 && adultPrice > 0)
                       _buildPriceRow(
                         'Adult Price x ${travelersController.adultCount.value}',
                         '$currency ${_formatPrice(adultPrice * travelersController.adultCount.value)}',
                       ),
-
-                    if (travelersController.childrenCount.value > 0)
-                      Column(
-                        children: [
-                          const SizedBox(height: 8),
-                          _buildPriceRow(
-                            'Child Price x ${travelersController.childrenCount.value}',
-                            '$currency ${_formatPrice(childPrice * travelersController.childrenCount.value)}',
-                          ),
-                        ],
+                    if (travelersController.childrenCount.value > 0 && childPrice > 0)
+                      _buildPriceRow(
+                        'Child Price x ${travelersController.childrenCount.value}',
+                        '$currency ${_formatPrice(childPrice * travelersController.childrenCount.value)}',
                       ),
-
-                    if (travelersController.infantCount.value > 0)
-                      Column(
-                        children: [
-                          const SizedBox(height: 8),
-                          _buildPriceRow(
-                            'Infant Price x ${travelersController.infantCount.value}',
-                            '$currency ${_formatPrice(infantPrice * travelersController.infantCount.value)}',
-                          ),
-                        ],
+                    if (travelersController.infantCount.value > 0 && infantPrice > 0)
+                      _buildPriceRow(
+                        'Infant Price x ${travelersController.infantCount.value}',
+                        '$currency ${_formatPrice(infantPrice * travelersController.infantCount.value)}',
                       ),
-
                     const SizedBox(height: 8),
                     _buildPriceRow(
                       'Subtotal',
-                      '$currency ${_formatPrice(totalPrice)}',
+                      '$currency ${_formatPrice(_calculateOutboundSubtotal())}',
                       isSubtotal: true,
                     ),
                   ],
@@ -327,7 +396,7 @@ class PIAReviewTripPageState extends State<PIAReviewTripPage> {
                       const SizedBox(height: 8),
                       _buildPriceRow(
                         'Subtotal',
-                        '$returnCurrency ${_formatPrice(returnTotalPrice)}',
+                        '$returnCurrency ${_formatPrice(_calculateInboundSubtotal())}',
                         isSubtotal: true,
                       ),
                     ],
@@ -370,9 +439,9 @@ class PIAReviewTripPageState extends State<PIAReviewTripPage> {
                 children: [
                   Column(
                     children: [
-                      Text(
-                        widget.isReturn ? 'Round Trip Total' : 'One Way Total',
-                        style: const TextStyle(
+                      const Text(
+                        'Review Details',
+                        style: TextStyle(
                             fontWeight: FontWeight.bold, color: TColors.grey),
                       ),
                       const SizedBox(height: 2),
@@ -389,7 +458,7 @@ class PIAReviewTripPageState extends State<PIAReviewTripPage> {
                     width: 200,
                     child: ElevatedButton(
                       onPressed: () {
-                        Get.to(() => PIABookingFlight(
+                        Get.to(() => PIAFlightBookingForm(
                           flight: piaController.selectedOutboundFlight ?? widget.flight,
                           returnFlight: widget.isReturn ? piaController.selectedReturnFlight : null,
                           totalPrice: combinedTotalPrice,
@@ -405,7 +474,8 @@ class PIAReviewTripPageState extends State<PIAReviewTripPage> {
                       ),
                       child: const Text(
                         'Book',
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                        style:
+                        TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                       ),
                     ),
                   ),
@@ -419,6 +489,33 @@ class PIAReviewTripPageState extends State<PIAReviewTripPage> {
     );
   }
 
+  // Add this helper method to calculate outbound subtotal
+  double _calculateOutboundSubtotal() {
+    double subtotal = 0.0;
+    if (travelersController.adultCount.value > 0 && adultPrice > 0) {
+      subtotal += adultPrice * travelersController.adultCount.value;
+    }
+    if (travelersController.childrenCount.value > 0 && childPrice > 0) {
+      subtotal += childPrice * travelersController.childrenCount.value;
+    }
+    if (travelersController.infantCount.value > 0 && infantPrice > 0) {
+      subtotal += infantPrice * travelersController.infantCount.value;
+    }
+    return subtotal;
+  }
+  double _calculateInboundSubtotal() {
+    double returnedSubTotal = 0.0;
+    if (travelersController.adultCount.value > 0 && returnAdultPrice > 0) {
+      returnedSubTotal += returnAdultPrice * travelersController.adultCount.value;
+    }
+    if (travelersController.childrenCount.value > 0 && returnChildPrice > 0) {
+      returnedSubTotal += returnChildPrice * travelersController.childrenCount.value;
+    }
+    if (travelersController.infantCount.value > 0 && returnInfantPrice > 0) {
+      returnedSubTotal += returnInfantPrice * travelersController.infantCount.value;
+    }
+    return returnedSubTotal;
+  }
   Widget _buildPriceRow(String label, String amount, {bool isTotal = false, bool isSubtotal = false}) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,

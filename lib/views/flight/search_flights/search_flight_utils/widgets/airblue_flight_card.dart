@@ -1,6 +1,5 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../../utility/colors.dart';
@@ -103,10 +102,6 @@ class _AirBlueFlightCardState extends State<AirBlueFlightCard>
 
   @override
   Widget build(BuildContext context) {
-    String formatTime(String time) {
-      if (time.isEmpty) return 'N/A';
-      return time.split(':').sublist(0, 2).join(':');
-    }
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),

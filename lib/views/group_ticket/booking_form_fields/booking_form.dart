@@ -109,66 +109,6 @@ class PassengerDetailsScreen extends StatelessWidget {
     return passengers;
   }
 
-  Widget _buildBottomButton() {
-    return Obx(() {
-      return Container(
-        padding: EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.grey.withOpacity(0.3),
-              spreadRadius: 2,
-              blurRadius: 5,
-              offset: Offset(0, -2),
-            ),
-          ],
-        ),
-        child: SizedBox(
-          width: double.infinity,
-          child: ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor:
-                  controller.isFormValid.value
-                      ? TColors.secondary
-                      : Colors.grey[300],
-              padding: EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              elevation: 2,
-            ),
-            onPressed:
-                controller.isFormValid.value ? controller.submitBooking : null,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  'Continue to Payment',
-                  style: TextStyle(
-                    color:
-                        controller.isFormValid.value
-                            ? TColors.white
-                            : TColors.grey,
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                SizedBox(width: 8),
-                Icon(
-                  Icons.arrow_forward,
-                  color:
-                      controller.isFormValid.value
-                          ? TColors.white
-                          : TColors.grey,
-                ),
-              ],
-            ),
-          ),
-        ),
-      );
-    });
-  }
 
   Widget _buildTripSummaryCard() {
     return Obx(() {
@@ -629,8 +569,7 @@ class PassengerDetailsScreen extends StatelessWidget {
                       onPrimary: TColors.white,
                       surface: TColors.white,
                       onSurface: TColors.primary,
-                    ),
-                    dialogBackgroundColor: TColors.white,
+                    ), dialogTheme: DialogThemeData(backgroundColor: TColors.white),
                   ),
                   child: child!,
                 );

@@ -7,10 +7,10 @@ class ClassSelectionBottomSheet extends StatefulWidget {
   final Function(String selectedClass) onClassSelected;
 
   const ClassSelectionBottomSheet({
-    Key? key,
+    super.key,
     required this.initialClass,
     required this.onClassSelected,
-  }) : super(key: key);
+  });
 
   @override
   State<ClassSelectionBottomSheet> createState() => _ClassSelectionBottomSheetState();
@@ -61,7 +61,7 @@ class _ClassSelectionBottomSheetState extends State<ClassSelectionBottomSheet> {
           _buildClassOption('Business'),
           _buildClassOption('First Class'),
           SizedBox(height: 20),
-          Container(
+          SizedBox(
             width: double.infinity,
             height: 50,
             child: ElevatedButton(

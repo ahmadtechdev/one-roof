@@ -116,7 +116,7 @@ class HotelForm extends StatelessWidget {
   Widget build(BuildContext context) {
     final cityController = TextEditingController();
     final hotelDateController = Get.find<HotelDateController>();
-    final searchHotelController = Get.find<SearchHotelController>();
+    Get.find<SearchHotelController>();
 
     return Padding(
       padding: const EdgeInsets.only(top: 10, bottom: 30),
@@ -152,9 +152,6 @@ class HotelForm extends StatelessWidget {
                   onCitySelected: (cityData) {
                     // Store the selected city data
                     selectedCity.value = cityData;
-                    print(
-                      'Selected city: ${cityData.value}, ${cityData.countryCode}',
-                    );
                   },
                 ),
               )

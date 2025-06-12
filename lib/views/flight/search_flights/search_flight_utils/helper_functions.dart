@@ -38,7 +38,6 @@ List<TaxDesc> parseTaxes(List<dynamic> taxes) {
             ))
         .toList();
   } catch (e) {
-    print('Error parsing taxes: $e');
     return [];
   }
 }
@@ -73,7 +72,6 @@ BaggageAllowance parseBaggageAllowance(List<dynamic> baggageInfo) {
     return BaggageAllowance(
         pieces: 0, weight: 0, unit: '', type: 'Check airline policy');
   } catch (e) {
-    print('Error parsing baggage allowance: $e');
     return BaggageAllowance(
         pieces: 0, weight: 0, unit: '', type: 'Check airline policy');
   }

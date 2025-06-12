@@ -6,7 +6,7 @@ import 'package:oneroof/views/group_ticket/booking_form_fields/booking_form.dart
 class BookingSummaryScreen extends StatelessWidget {
   final GroupTicketBookingController controller = Get.put(GroupTicketBookingController());
 
-  BookingSummaryScreen({Key? key}) : super(key: key);
+  BookingSummaryScreen({super.key});
 
   @override
   Widget build(BuildContext context) {

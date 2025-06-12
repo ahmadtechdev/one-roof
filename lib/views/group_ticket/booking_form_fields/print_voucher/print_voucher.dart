@@ -1,3 +1,5 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'dart:typed_data';
 import 'dart:convert';
 import 'package:flutter/material.dart';
@@ -9,7 +11,7 @@ import 'package:intl/intl.dart';
 class PDFPrintScreen extends StatelessWidget {
   final Map<String, dynamic> bookingData;
 
-  const PDFPrintScreen({Key? key, required this.bookingData}) : super(key: key);
+  const PDFPrintScreen({super.key, required this.bookingData});
 
   @override
   Widget build(BuildContext context) {
@@ -193,7 +195,7 @@ class PDFPrintScreen extends StatelessWidget {
                   ),
 
                   // Flight Table
-                  Container(
+                  SizedBox(
                     width: double.infinity,
                     child: Column(
                       children: [
@@ -315,99 +317,97 @@ class PDFPrintScreen extends StatelessWidget {
                               // Flight Info
                               Expanded(
                                 flex: 4,
-                                child: Container(
-                                  child: Column(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      // Route with arrow
-                                      Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          // Departure city
-                                          Flexible(
-                                            child: Text(
-                                              _getDepartureCity(),
-                                              style: TextStyle(
-                                                fontSize: 9,
-                                                fontWeight: FontWeight.bold,
-                                                color: Colors.orange.shade300,
-                                              ),
-                                              overflow: TextOverflow.ellipsis,
-                                              maxLines: 1,
-                                            ),
-                                          ),
-
-                                          // Arrow with minimal spacing
-                                          Container(
-                                            margin: const EdgeInsets.symmetric(
-                                              horizontal: 2,
-                                            ),
-                                            child: Icon(
-                                              Icons.arrow_forward,
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    // Route with arrow
+                                    Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        // Departure city
+                                        Flexible(
+                                          child: Text(
+                                            _getDepartureCity(),
+                                            style: TextStyle(
+                                              fontSize: 9,
+                                              fontWeight: FontWeight.bold,
                                               color: Colors.orange.shade300,
-                                              size: 8,
                                             ),
+                                            overflow: TextOverflow.ellipsis,
+                                            maxLines: 1,
                                           ),
+                                        ),
 
-                                          // Arrival city
-                                          Flexible(
-                                            child: Text(
-                                              _getArrivalCity(),
-                                              style: TextStyle(
-                                                fontSize: 9,
-                                                fontWeight: FontWeight.bold,
-                                                color: Colors.orange.shade300,
-                                              ),
-                                              overflow: TextOverflow.ellipsis,
-                                              maxLines: 1,
+                                        // Arrow with minimal spacing
+                                        Container(
+                                          margin: const EdgeInsets.symmetric(
+                                            horizontal: 2,
+                                          ),
+                                          child: Icon(
+                                            Icons.arrow_forward,
+                                            color: Colors.orange.shade300,
+                                            size: 8,
+                                          ),
+                                        ),
+
+                                        // Arrival city
+                                        Flexible(
+                                          child: Text(
+                                            _getArrivalCity(),
+                                            style: TextStyle(
+                                              fontSize: 9,
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.orange.shade300,
                                             ),
+                                            overflow: TextOverflow.ellipsis,
+                                            maxLines: 1,
                                           ),
-                                        ],
-                                      ),
+                                        ),
+                                      ],
+                                    ),
 
-                                      const SizedBox(height: 2),
+                                    const SizedBox(height: 2),
 
-                                      // Times
-                                      Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          Flexible(
-                                            child: Text(
-                                              _getDepartureTime(),
-                                              style: TextStyle(
-                                                fontSize: 8,
-                                                color: Colors.white,
-                                              ),
-                                              overflow: TextOverflow.ellipsis,
-                                            ),
-                                          ),
-
-                                          Text(
-                                            ' - ',
+                                    // Times
+                                    Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Flexible(
+                                          child: Text(
+                                            _getDepartureTime(),
                                             style: TextStyle(
                                               fontSize: 8,
-                                              color: Colors.grey.shade400,
+                                              color: Colors.white,
                                             ),
+                                            overflow: TextOverflow.ellipsis,
                                           ),
+                                        ),
 
-                                          Flexible(
-                                            child: Text(
-                                              _getArrivalTime(),
-                                              style: TextStyle(
-                                                fontSize: 8,
-                                                color: Colors.white,
-                                              ),
-                                              overflow: TextOverflow.ellipsis,
-                                            ),
+                                        Text(
+                                          ' - ',
+                                          style: TextStyle(
+                                            fontSize: 8,
+                                            color: Colors.grey.shade400,
                                           ),
-                                        ],
-                                      ),
-                                    ],
-                                  ),
+                                        ),
+
+                                        Flexible(
+                                          child: Text(
+                                            _getArrivalTime(),
+                                            style: TextStyle(
+                                              fontSize: 8,
+                                              color: Colors.white,
+                                            ),
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
                                 ),
                               ),
 
@@ -592,7 +592,7 @@ class PDFPrintScreen extends StatelessWidget {
             const SizedBox(height: 24),
 
             // Print Button
-            Container(
+            SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
                 icon: const Icon(Icons.print, size: 24),
@@ -635,43 +635,17 @@ class PDFPrintScreen extends StatelessWidget {
 
   // Print complete data in console
   void _printCompleteData() {
-    print('=== COMPLETE BOOKING DATA ===');
 
     // Print formatted JSON
     const JsonEncoder encoder = JsonEncoder.withIndent('  ');
     String prettyprint = encoder.convert(bookingData);
-    print(prettyprint);
 
-    print('\n=== PARSED DATA SUMMARY ===');
-    print('Booking ID: ${_getBookingId()}');
-    print('PNR: ${_getPNR()}');
-    print('Mobile: ${_getMobile()}');
-    print('Status: ${_getStatus()}');
-    print('Total Fare: ${_getTotalFare()}');
-    print('Sector: ${_getSector()}');
-    print('Flight Number: ${_getFlightNumber()}');
-    print('Departure Date: ${_getDepartureDate()}');
-    print('Departure Time: ${_getDepartureTime()}');
-    print('Arrival Time: ${_getArrivalTime()}');
-    print('Airline Info: ${_getAirlineInfo()}');
-    print('Passenger Count: ${_getPassengerCount()}');
-    print('Baggage Info: ${_getBaggageInfo()}');
-    print('Meal Info: ${_getMealInfo()}');
 
     // Print passenger details
     final passengers = _getPassengerDetails();
-    print('\n=== PASSENGER DETAILS ===');
     for (int i = 0; i < passengers.length; i++) {
-      print('Passenger ${i + 1}:');
-      print('  Name: ${passengers[i]['name']}');
-      print('  Type: ${passengers[i]['type']}');
-      print('  Passport: ${passengers[i]['passport']}');
-      print('  DOB: ${passengers[i]['dob']}');
-      print('  DOE: ${passengers[i]['doe']}');
-      print('  Fare: ${passengers[i]['fare']}');
     }
 
-    print('=== END OF DATA ===');
   }
 
   List<Widget> _buildPassengersList() {
@@ -828,7 +802,6 @@ class PDFPrintScreen extends StatelessWidget {
       return bookingData['data']?['data']?['group']?['pnr']?.toString() ??
           'N/A';
     } catch (e) {
-      print('Error getting PNR: $e');
       return 'N/A';
     }
   }
@@ -838,7 +811,6 @@ class PDFPrintScreen extends StatelessWidget {
       return bookingData['data']?['data']?['group']?['sector']?.toString() ??
           'N/A';
     } catch (e) {
-      print('Error getting sector: $e');
       return 'N/A';
     }
   }
@@ -846,11 +818,9 @@ class PDFPrintScreen extends StatelessWidget {
   String _getFlightNumber() {
     try {
       final airline = bookingData['data']?['data']?['group']?['airline'];
-      print(airline);
 
       return airline?['short_name']?.toString() ?? 'ER';
     } catch (e) {
-      print('Error getting flight number: $e');
       return 'ER';
     }
   }
@@ -864,7 +834,6 @@ class PDFPrintScreen extends StatelessWidget {
       }
       return DateFormat('dd MMM').format(DateTime.now());
     } catch (e) {
-      print('Error getting short date: $e');
       return DateFormat('dd MMM').format(DateTime.now());
     }
   }
@@ -916,7 +885,6 @@ class PDFPrintScreen extends StatelessWidget {
       final status = bookingData['data']?['data']?['status'] ?? 0;
       return status == 1 ? 'Confirmed' : 'Hold';
     } catch (e) {
-      print('Error getting status: $e');
       return 'Hold';
     }
   }
@@ -926,7 +894,6 @@ class PDFPrintScreen extends StatelessWidget {
       final fares = bookingData['data']?['data']?['fares'] ?? 0;
       return NumberFormat('#,##0').format(fares);
     } catch (e) {
-      print('Error getting total fare: $e');
       return '0';
     }
   }
@@ -940,7 +907,6 @@ class PDFPrintScreen extends StatelessWidget {
       }
       return DateFormat('EEE dd MMM yyyy').format(DateTime.now());
     } catch (e) {
-      print('Error getting departure date: $e');
       return DateFormat('EEE dd MMM yyyy').format(DateTime.now());
     }
   }
@@ -952,7 +918,6 @@ class PDFPrintScreen extends StatelessWidget {
       final shortName = airline?['short_name']?.toString() ?? 'N/A';
       return '$shortName\n$airlineName';
     } catch (e) {
-      print('Error getting airline info: $e');
       return 'N/A';
     }
   }
@@ -964,7 +929,6 @@ class PDFPrintScreen extends StatelessWidget {
           ? 'Yes'
           : 'No';
     } catch (e) {
-      print('Error getting meal info: $e');
       return 'No';
     }
   }
@@ -974,7 +938,6 @@ class PDFPrintScreen extends StatelessWidget {
       final baggage = bookingData['data']?['data']?['group']?['baggage'];
       return baggage?.toString() ?? '20+7 KG';
     } catch (e) {
-      print('Error getting baggage info: $e');
       return '20+7 KG';
     }
   }
@@ -991,13 +954,13 @@ class PDFPrintScreen extends StatelessWidget {
 
       List<String> parts = [];
       if (adults > 0) parts.add('$adults Adult${adults > 1 ? 's' : ''}');
-      if (children > 0)
+      if (children > 0) {
         parts.add('$children Child${children > 1 ? 'ren' : ''}');
+      }
       if (infants > 0) parts.add('$infants Infant${infants > 1 ? 's' : ''}');
 
       return parts.isNotEmpty ? parts.join(', ') : '0';
     } catch (e) {
-      print('Error getting passenger count: $e');
       return '0';
     }
   }
@@ -1006,7 +969,6 @@ class PDFPrintScreen extends StatelessWidget {
     try {
       return bookingData['data']?['data']?['id']?.toString() ?? 'N/A';
     } catch (e) {
-      print('Error getting booking ID: $e');
       return 'N/A';
     }
   }
@@ -1015,7 +977,6 @@ class PDFPrintScreen extends StatelessWidget {
     try {
       return bookingData['data']?['data']?['mobile']?.toString() ?? 'N/A';
     } catch (e) {
-      print('Error getting mobile: $e');
       return 'N/A';
     }
   }
@@ -1037,7 +998,6 @@ class PDFPrintScreen extends StatelessWidget {
         };
       }).toList();
     } catch (e) {
-      print('Error getting passenger details: $e');
       return [];
     }
   }

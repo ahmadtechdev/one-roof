@@ -1,4 +1,6 @@
 // controllers/all_hotel_booking_controller.dart
+// ignore_for_file: prefer_typing_uninitialized_variables
+
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:oneroof/b2b/all_hotel_booking/model.dart';
@@ -244,7 +246,6 @@ class AllHotelBookingController extends GetxController {
         orElse: () {
           // If no exact match found, try to use the first booking data as fallback
           if (responseData.isNotEmpty) {
-            print('No exact match found. Using first booking as fallback.');
             return responseData.first;
           }
           throw Exception('Original booking data not found');
@@ -327,7 +328,6 @@ class AllHotelBookingController extends GetxController {
           bookingData['BookingDetail']['om_choutdate'],
         );
       } catch (e) {
-        print('Date parsing error: $e');
         // Use fallback dates if necessary
       }
 
@@ -353,7 +353,6 @@ class AllHotelBookingController extends GetxController {
         'rawBookingData': bookingData, // For debugging if needed
       };
     } catch (e) {
-      print('PDF generation error details: $e');
       throw Exception('Failed to prepare booking data for PDF: $e');
     }
   }

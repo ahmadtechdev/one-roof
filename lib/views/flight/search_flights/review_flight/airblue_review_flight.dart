@@ -4,9 +4,7 @@ import 'dart:async';
 
 import '../../../../utility/colors.dart';
 import '../../../../widgets/travelers_selection_bottom_sheet.dart';
-import '../../form/travelers/traveler_controller.dart';
 import '../booking_flight/airblue_booking_flight.dart';
-import '../booking_flight/booking_flight.dart';
 import '../flight_package/airblue/airblue_flight_model.dart';
 import '../flight_package/airblue/airblue_flight_controller.dart';
 import '../search_flight_utils/widgets/airblue_flight_card.dart';

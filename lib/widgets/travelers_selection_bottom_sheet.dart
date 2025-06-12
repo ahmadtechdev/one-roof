@@ -1,15 +1,14 @@
 // travelers_selection_bottom_sheet.dart
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../../../utility/colors.dart';
 
 class TravelersSelectionBottomSheet extends StatelessWidget {
   final Function(int adults, int children, int infants) onTravelersSelected;
 
   const TravelersSelectionBottomSheet({
-    Key? key,
+    super.key,
     required this.onTravelersSelected,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

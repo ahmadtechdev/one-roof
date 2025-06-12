@@ -9,7 +9,7 @@ import 'package:oneroof/views/users/login/login_api_service/login_api.dart';
 import '../all_hotel_booking/all_hotel_booking.dart';
 
 class AgentDashboard extends StatefulWidget {
-  const AgentDashboard({Key? key}) : super(key: key);
+  const AgentDashboard({super.key});
 
   @override
   State<AgentDashboard> createState() => _AgentDashboardState();

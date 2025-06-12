@@ -1,9 +1,9 @@
+// ignore_for_file: library_private_types_in_public_api
+
 import 'package:auto_size_text/auto_size_text.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
-import 'package:get/get_core/src/get_main.dart';
 import 'package:oneroof/views/users/rejistration/register.dart';
 
 import '../../../sizes_helpers.dart';
@@ -11,6 +11,8 @@ import '../../../utility/colors.dart';
 import 'ligin_controller.dart';
 
 class Login extends StatefulWidget {
+  const Login({super.key});
+
   @override
   _LoginState createState() => _LoginState();
 }
@@ -232,7 +234,7 @@ class _LoginState extends State<Login> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: <Widget>[
                     // Google login button
-                    Container(
+                    SizedBox(
                       width: displaySize(context).width * 0.45,
                       child: ElevatedButton(
                         style: ElevatedButton.styleFrom(
@@ -273,7 +275,7 @@ class _LoginState extends State<Login> {
                     ),
 
                     // Facebook login button
-                    Container(
+                    SizedBox(
                       width: displaySize(context).width * 0.45,
                       child: ElevatedButton(
                         onPressed: () {},
@@ -322,7 +324,7 @@ class _LoginState extends State<Login> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: <Widget>[
                     Text(
-                      "don\'t have an account?",
+                      "don't have an account?",
                       style: TextStyle(
                         fontSize: 16 * textScaleFactor,
                         color: TColors.grey,

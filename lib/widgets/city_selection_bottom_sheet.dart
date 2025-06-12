@@ -1,3 +1,5 @@
+// ignore_for_file: empty_catches
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -179,7 +181,6 @@ class AirportController extends GetxController {
           .map((json) => AirportData.fromJson(jsonDecode(json)))
           .toList();
     } catch (e) {
-      print('Error loading recent searches: $e');
     }
   }
 
@@ -203,7 +204,6 @@ class AirportController extends GetxController {
           .toList();
       await prefs.setStringList('recentSearches', jsonList);
     } catch (e) {
-      print('Error saving recent searches: $e');
     }
   }
 }
@@ -213,10 +213,10 @@ class CitySelectionBottomSheet extends StatefulWidget {
   final FieldType fieldType;
 
   const CitySelectionBottomSheet({
-    Key? key,
+    super.key,
     required this.onCitySelected,
     required this.fieldType,
-  }) : super(key: key);
+  });
 
   @override
   State<CitySelectionBottomSheet> createState() => _CitySelectionBottomSheetState();

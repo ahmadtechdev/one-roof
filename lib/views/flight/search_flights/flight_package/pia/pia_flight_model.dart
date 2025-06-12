@@ -1,4 +1,5 @@
-import 'package:get/get.dart';
+
+// ignore_for_file: empty_catches
 
 class PIAFlight {
   final String imgPath;
@@ -97,7 +98,6 @@ class PIAFlight {
         bool isMultiCity = false,
       }) {
     try {
-      final firstSegment = legSchedules.first['flightSegment'] ?? legSchedules.first;
       final flightSegment = flightData['flightSegment'];
       final fareInfo = flightData['fareInfoList'][0]['fareInfoList'][0];
       final pricingInfo = flightData['pricingInfo'];
@@ -108,16 +108,11 @@ class PIAFlight {
       final String journeyDuration = _extractStringValue(flightSegment['journeyDuration']);
 
       // Safely extract airport codes
-      final String? fromCity = _extractNestedValue(flightSegment, ['departureAirport', 'locationCode']);
-      final String? toCity = _extractNestedValue(flightSegment, ['arrivalAirport', 'locationCode']);
-
       // Safe extraction of required values
       final String airlineName = _extractNestedValue(flightSegment, ['airline', 'companyShortName'])
           ?? 'Pakistan International Airlines';
       // In PIAFlight.fromApiResponse
-      final String flightNum = _extractStringValue(flightSegment['flightNumber']) ??
-          _extractStringValue(legSchedules.first['flightSegment']?['flightNumber']) ??
-          '';
+      final String flightNum = _extractStringValue(flightSegment['flightNumber']);
 
       // Extract price with fallback
       double flightPrice = 0.0;
@@ -125,7 +120,6 @@ class PIAFlight {
         final priceValue = _extractNestedValue(pricingInfo, ['totalFare', 'amount', 'value']);
         flightPrice = priceValue != null ? double.tryParse(priceValue) ?? 0.0 : 0.0;
       } catch (e) {
-        print('Error parsing price: $e');
       }
 
       // Get fare type safely
@@ -137,7 +131,6 @@ class PIAFlight {
         final endorsement = _extractStringValue(fareInfo['endorsementList']);
         refundable = endorsement != 'NON REFUNDABLE';
       } catch (e) {
-        print('Error determining refundable status: $e');
       }
 
       // Determine if non-stop
@@ -146,7 +139,6 @@ class PIAFlight {
         final stopQuantity = _extractStringValue(flightSegment['stopQuantity']);
         nonStop = stopQuantity == '0';
       } catch (e) {
-        print('Error determining non-stop status: $e');
       }
 
       // Extract terminals with fallbacks
@@ -154,10 +146,6 @@ class PIAFlight {
       final String arrTerminal = _extractNestedValue(flightSegment, ['arrivalAirport', 'terminal']) ?? '';
 
       // Extract city names with fallbacks
-      final String? depCity = _extractNestedValue(
-          flightSegment, ['departureAirport', 'cityInfo', 'city', 'locationName']) ?? fromCity;
-      final String? arrCity = _extractNestedValue(
-          flightSegment, ['arrivalAirport', 'cityInfo', 'city', 'locationName']) ?? toCity;
 
       // Extract aircraft type
       final String aircraft = _extractNestedValue(flightSegment, ['equipment', 'airEquipType']) ?? 'Unknown';
@@ -219,8 +207,6 @@ class PIAFlight {
         isMultiCity: isMultiCity,
       );
     } catch (e, stackTrace) {
-      print('Error in PIAFlight.fromApiResponse: $e');
-      print('Stack trace: $stackTrace');
       rethrow; // Rethrow to be handled by the caller
     }
   }
@@ -282,7 +268,7 @@ class PIAFlight {
       if (!current.containsKey(key)) {
         // Check if key exists with namespace prefix
         final nsKey = current.keys.firstWhere(
-              (k) => k.endsWith(':${key}') || k.endsWith('@${key}'),
+              (k) => k.endsWith(':$key') || k.endsWith('@$key'),
           orElse: () => key,
         );
         if (!current.containsKey(nsKey)) return null;
@@ -500,7 +486,6 @@ class PIATaxDesc {
 
           currency = PIAFlight._extractNestedValue(tax, ['taxAmount', 'currency']) ?? '';
         } catch (e) {
-          print('Error parsing tax: $e');
         }
 
         return PIATaxDesc(
@@ -511,7 +496,6 @@ class PIATaxDesc {
         );
       }).toList();
     } catch (e) {
-      print('Error in fromPricingInfoList: $e');
       return [];
     }
   }
@@ -575,7 +559,6 @@ class PIABaggageAllowance {
 
       return _parseBaggageAllowance(baggage);
     } catch (e) {
-      print('Error in PIABaggageAllowance.fromFareInfo: $e');
       return _defaultBaggage();
     }
   }
@@ -592,7 +575,6 @@ class PIABaggageAllowance {
       }
       return null;
     } catch (e) {
-      print('Error extracting baggage: $e');
       return null;
     }
   }
@@ -669,7 +651,6 @@ class PIAFlightPackageInfo {
           price = double.tryParse(priceValue) ?? 0.0;
         }
       } catch (e) {
-        print('Error parsing package price: $e');
       }
 
       // Determine if refundable
@@ -678,7 +659,6 @@ class PIAFlightPackageInfo {
         final endorsement = PIAFlight._extractStringValue(fareInfo['endorsementList']);
         refundable = endorsement != 'NON REFUNDABLE';
       } catch (e) {
-        print('Error determining package refundable status: $e');
       }
 
       return PIAFlightPackageInfo(
@@ -690,7 +670,6 @@ class PIAFlightPackageInfo {
         isRefundable: refundable,
       );
     } catch (e) {
-      print('Error in PIAFlightPackageInfo.fromFareInfo: $e');
       return PIAFlightPackageInfo(
         name: 'Standard',
         code: '',
@@ -749,7 +728,6 @@ class PIAFlightSegmentInfo {
         fareBasisCode: bookingCode,
       );
     } catch (e) {
-      print('Error in PIAFlightSegmentInfo.fromFlightSegment: $e');
       return PIAFlightSegmentInfo(
         bookingCode: '',
         cabinCode: 'Y',
@@ -801,7 +779,6 @@ class PIASegmentInfo {
         fareBasisCode: bookingCode,
       );
     } catch (e) {
-      print('Error in PIASegmentInfo.fromFlightSegment: $e');
       return PIASegmentInfo(
         bookingCode: '',
         cabinCode: 'Y',
@@ -842,14 +819,12 @@ class PIAFareOption {
 
   factory PIAFareOption.fromFareInfo(Map<String, dynamic> fareInfo) {
     try {
-      print("Raw fareInfo: $fareInfo");
 
       // Extract pricing info - handle both direct and nested structures
       final pricingInfo = fareInfo['passengerFareInfoList'] is Map
           ? fareInfo['passengerFareInfoList']['pricingInfo']
-          : {};
+          : fareInfo['passengerFareInfoList'][0]['pricingInfo'];
 
-      print("Pricing info: $pricingInfo");
 
       // Handle total fare extraction
       dynamic totalFare;
@@ -865,15 +840,21 @@ class PIAFareOption {
 
       if (totalFare is Map && totalFare.isNotEmpty) {
         price = double.tryParse(totalFare['value']?.toString() ?? '0') ?? 0.0;
-        currency = totalFare['currency']?.toString() ?? 'PKR';
+        final currencyData = totalFare['currency'];
+        currency = currencyData is Map
+            ? currencyData['code']?.toString() ?? 'PKR'
+            : currencyData?.toString() ?? 'PKR';
       } else {
-        // Fallback to totalAmount if totalFare not available
         final totalAmount = (pricingInfo is Map)
             ? pricingInfo['totalAmount'] ?? {}
             : {};
         price = double.tryParse(totalAmount['value']?.toString() ?? '0') ?? 0.0;
-        currency = totalAmount['currency']?.toString() ?? 'PKR';
+        final currencyData = totalAmount['currency'];
+        currency = currencyData is Map
+            ? currencyData['code']?.toString() ?? 'PKR'
+            : currencyData?.toString() ?? 'PKR';
       }
+
 
       // Extract baggage allowance with better error handling and multiple fallback paths
       final baggageAllowance = PIABaggageAllowance.fromFareInfo(fareInfo);
@@ -903,7 +884,6 @@ class PIAFareOption {
           cabin = fareInfoList['cabin']?.toString() ?? cabin;
           cabinCode = fareInfoList['cabinClassCode']?.toString() ?? cabinCode;
 
-          print("Found cabin from fareInfoList: $cabin, code: $cabinCode");
         } else if (fareInfoList is List && fareInfoList.isNotEmpty) {
           // Path 2: If fareInfoList is an array, take first element
           final firstFareInfo = fareInfoList[0];
@@ -911,7 +891,6 @@ class PIAFareOption {
             cabin = firstFareInfo['cabin']?.toString() ?? cabin;
             cabinCode = firstFareInfo['cabinClassCode']?.toString() ?? cabinCode;
 
-            print("Found cabin from fareInfoList[0]: $cabin, code: $cabinCode");
           }
         }
 
@@ -920,7 +899,6 @@ class PIAFareOption {
           cabin = passengerFareInfo['cabin']?.toString() ?? cabin;
           cabinCode = passengerFareInfo['cabinClassCode']?.toString() ?? cabinCode;
 
-          print("Found cabin from passengerFareInfo: $cabin, code: $cabinCode");
         }
       }
 
@@ -929,7 +907,6 @@ class PIAFareOption {
         cabin = fareInfo['cabin']?.toString() ?? cabin;
         cabinCode = fareInfo['cabinClassCode']?.toString() ?? cabinCode;
 
-        print("Found cabin from root fareInfo: $cabin, code: $cabinCode");
       }
 
       // Normalize cabin class
@@ -982,9 +959,6 @@ class PIAFareOption {
         }
       }
 
-      print("Final cabin: $cabin, code: $cabinCode");
-      print("Final fare name: $fareName");
-      print("Final fare ref code: $fareRefCode");
 
       return PIAFareOption(
         fareName: fareName,
@@ -1000,9 +974,6 @@ class PIAFareOption {
         rawData: fareInfo,
       );
     } catch (e, stackTrace) {
-      print('Error in PIAFareOption.fromFareInfo: $e');
-      print('Stack trace: $stackTrace');
-      print('FareInfo that caused error: $fareInfo');
 
       return PIAFareOption(
         fareName: 'Standard',

@@ -4,7 +4,6 @@ import 'package:material_design_icons_flutter/material_design_icons_flutter.dart
 
 import '../../../../../widgets/colors.dart';
 import '../../../../widgets/travelers_selection_bottom_sheet.dart';
-import 'traveler_controller.dart';
 
 class TravelersField extends StatefulWidget {
   const TravelersField({

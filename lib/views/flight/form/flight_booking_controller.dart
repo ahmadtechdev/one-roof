@@ -1,3 +1,5 @@
+// ignore_for_file: body_might_complete_normally_catch_error
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
@@ -156,10 +158,6 @@ class FlightBookingController extends GetxController {
     }
   }
 
-  String _getDefaultDepartureDate(int daysToAdd) {
-    final DateTime date = DateTime.now().add(Duration(days: daysToAdd));
-    return _formatDateForUI(date);
-  }
 
   void swapCities() {
     if (tripType.value != TripType.multiCity) {
@@ -470,7 +468,6 @@ class FlightBookingController extends GetxController {
       );
       flightController.loadFlights(result);
     } catch (e) {
-      print('Sabre API error: $e');
       // Optionally show error in UI
     }
   }
@@ -500,7 +497,6 @@ class FlightBookingController extends GetxController {
       );
       airBlueFlightController.loadFlights(result);
     } catch (e) {
-      print('AirBlue API error: $e');
       airBlueFlightController.setErrorMessage('Failed to load AirBlue flights');
     }
   }

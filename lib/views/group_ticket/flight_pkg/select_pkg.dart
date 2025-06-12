@@ -745,8 +745,6 @@ class SelectPkgScreen extends StatelessWidget {
           ElevatedButton(
             onPressed: () {
               final bookingController = Get.put(GroupTicketBookingController());
-              print("check 1");
-              print(flight.id);
               bookingController.initializeFromFlight(flight, flight.id);
               Get.to(() => BookingSummaryScreen());
             },

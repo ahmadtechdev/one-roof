@@ -449,7 +449,6 @@ class AirportSelectionScreen extends StatelessWidget {
               controller: departureController,
               fieldType: FieldType.departure,
               onCitySelected: (cityName, cityCode) {
-                print('Selected departure: $cityName ($cityCode)');
                 // Handle departure selection
               },
             ),
@@ -460,7 +459,6 @@ class AirportSelectionScreen extends StatelessWidget {
               controller: destinationController,
               fieldType: FieldType.destination,
               onCitySelected: (cityName, cityCode) {
-                print('Selected destination: $cityName ($cityCode)');
                 // Handle destination selection
               },
             ),

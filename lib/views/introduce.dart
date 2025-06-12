@@ -1,15 +1,15 @@
+// ignore_for_file: library_private_types_in_public_api
+
 import 'package:flutter/material.dart';
 import 'package:introduction_screen/introduction_screen.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:oneroof/views/users/login/login.dart';
 
 import '../common/bottom_navbar.dart';
 import '../sizes_helpers.dart';
 import '../utility/colors.dart';
-import 'users/login/slash-screen.dart';
 
 class Introduce extends StatefulWidget {
-  const Introduce({Key? key}) : super(key: key);
+  const Introduce({super.key});
 
   @override
   _IntroduceState createState() => _IntroduceState();

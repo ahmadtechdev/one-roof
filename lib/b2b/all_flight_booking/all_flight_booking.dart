@@ -5,7 +5,6 @@ import 'package:intl/intl.dart';
 import 'package:oneroof/b2b/all_flight_booking/all_flight_booking_controler.dart';
 import 'package:oneroof/b2b/all_flight_booking/model.dart';
 import 'package:oneroof/utility/colors.dart';
-import 'dart:typed_data';
 import 'package:flutter/services.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
@@ -16,7 +15,7 @@ class AllFlightBookingScreen extends StatelessWidget {
     AllFlightBookingController(),
   );
 
-  AllFlightBookingScreen({Key? key}) : super(key: key);
+  AllFlightBookingScreen({super.key});
 
   @override
   Widget build(BuildContext context) {

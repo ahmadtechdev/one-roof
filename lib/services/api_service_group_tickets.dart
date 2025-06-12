@@ -1,3 +1,5 @@
+// ignore_for_file: non_constant_identifier_names
+
 import 'dart:convert';
 
 import 'package:dio/dio.dart' as dio;
@@ -29,11 +31,9 @@ class GroupTicketingController extends GetxController {
       if (response.statusCode == 200) {
         return response.data['airlines'] as List<dynamic>;
       } else {
-        print("Error: ${response.statusMessage}");
         return [];
       }
     } catch (e) {
-      print("Exception in fetchAirlines: $e");
       return [];
     }
   }
@@ -49,18 +49,15 @@ class GroupTicketingController extends GetxController {
       if (response.statusCode == 200) {
         return response.data['sectors'] as List<dynamic>;
       } else {
-        print("Error: ${response.statusMessage}");
         return [];
       }
     } catch (e) {
-      print("Exception in fetchSectors: $e");
       return [];
     }
   }
 
   Future<List<dynamic>> fetchGroups(String type) async {
     selectedRegion.value = type;
-    print("Fetching groups for region: $type");
 
     try {
       String url = 'https://travelnetwork.pk/api/available/groups';
@@ -71,7 +68,6 @@ class GroupTicketingController extends GetxController {
         url += '?type=';
       }
 
-      print("Requesting URL: $url");
 
       var response = await dio1.get(
         url,
@@ -80,32 +76,23 @@ class GroupTicketingController extends GetxController {
 
       if (response.statusCode == 200) {
         // Print summary of response
-        print("Groups count: ${(response.data['groups'] as List).length}");
 
         // Print the first 3 groups (or fewer if there aren't 3)
-        print("\n--- Sample of first few groups: ---");
         final groups = response.data['groups'] as List;
         final sampleSize = groups.length > 3 ? 3 : groups.length;
 
         for (int i = 0; i < sampleSize; i++) {
-          print("Group ${i + 1}:");
-          print(groups[i]);
-          print("----------------------");
         }
 
         // Print available keys in the response data
-        print("\nAvailable keys in response data:");
-        (response.data as Map).keys.forEach((key) {
-          print("- $key");
-        });
+        for (var key in (response.data as Map).keys) {
+        }
 
         return response.data['groups'] as List<dynamic>;
       } else {
-        print("Error: ${response.statusMessage}");
         return [];
       }
     } catch (e) {
-      print("Exception in fetchGroups: $e");
       return [];
     }
   }
@@ -181,7 +168,6 @@ class GroupTicketingController extends GetxController {
         "group_price_detail_id": groupPriceDetailId,
       };
 
-      print('Sending booking data: ${jsonEncode(data)}');
 
       // Add timeout to avoid hanging requests
       var response = await dio1.post(
@@ -195,8 +181,6 @@ class GroupTicketingController extends GetxController {
         ),
       );
 
-      print('Response status: ${response.statusCode}');
-      print('Response data: ${response.data}');
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         // Check if the response has the nested data structure
@@ -247,11 +231,6 @@ class GroupTicketingController extends GetxController {
         };
       }
     } on dio.DioException catch (e) {
-      print('DioException details:');
-      print('- Type: ${e.type}');
-      print('- Message: ${e.message}');
-      print('- Response status: ${e.response?.statusCode}');
-      print('- Response data: ${e.response?.data}');
 
       // Check for specific error types
       if (e.type == dio.DioExceptionType.connectionTimeout ||
@@ -289,8 +268,6 @@ class GroupTicketingController extends GetxController {
         'data': null,
       };
     } catch (e, stackTrace) {
-      print('Unexpected error: $e');
-      print('Stack trace: $stackTrace');
 
       return {
         'success': false,
@@ -308,8 +285,6 @@ class GroupTicketingController extends GetxController {
   Future<List<dynamic>> fetchCombinedGroups(String type, String type2) async {
     selectedRegion.value = type;
 
-    print("Fetching combined groups for region: $type");
-    print("Fetching combined groups for region: $type2 ");
 
     try {
       // Fetch groups from both APIs concurrently
@@ -323,10 +298,8 @@ class GroupTicketingController extends GetxController {
       // Combine the results (ensure alhaiderGroups is also a List)
       final combinedGroups = [...travelNetworkGroups, ...alhaiderGroups];
 
-      print("Combined ${combinedGroups.length} groups from both services");
       return combinedGroups;
     } catch (e) {
-      print("Exception in fetchCombinedGroups: $e");
       return [];
     }
   }
@@ -349,31 +322,20 @@ class GroupTicketingController extends GetxController {
       );
 
       if (response.statusCode == 200) {
-        print(
-          "Alhaider groups count: ${(response.data['groups'] as List).length}",
-        );
-        print("\n--- Sample of first few groups: ---");
         final groups = response.data['groups'] as List;
         final sampleSize = groups.length > 3 ? 3 : groups.length;
 
         for (int i = 0; i < sampleSize; i++) {
-          print("Group ${i + 1}:");
-          print(groups[i]);
-          print("----------------------");
         }
 
         // Print available keys in the response data
-        print("\nAvailable keys in response data:");
-        (response.data as Map).keys.forEach((key) {
-          print("- $key");
-        });
+        for (var key in (response.data as Map).keys) {
+        }
         return response.data['groups'] as List<dynamic>;
       } else {
-        print("Error fetching Alhaider groups: ${response.statusMessage}");
         return [];
       }
     } catch (e) {
-      print("Exception in fetchAlhaiderGroups: $e");
       return [];
     }
   }
@@ -392,10 +354,8 @@ class GroupTicketingController extends GetxController {
       // Combine the results
       final combinedAirlines = [...travelNetworkAirlines, ...alhaiderAirlines];
 
-      print("Combined ${combinedAirlines.length} airlines from both services");
       return combinedAirlines;
     } catch (e) {
-      print("Exception in fetchCombinedAirlines: $e");
       return [];
     }
   }
@@ -416,18 +376,11 @@ class GroupTicketingController extends GetxController {
       );
 
       if (response.statusCode == 200) {
-        print(
-          "Alhaider airlines count: ${(response.data['airlines'] as List).length}",
-        );
         return response.data['airlines'] as List<dynamic>;
       } else {
-        print(
-          'Failed to fetch Alhaider airlines. Status: ${response.statusCode}',
-        );
         return [];
       }
     } catch (e) {
-      print('Error occurred in fetchAlhaiderAirlines: $e');
       return [];
     }
   }

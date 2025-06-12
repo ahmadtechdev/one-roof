@@ -1,18 +1,16 @@
+// ignore_for_file: dead_code, empty_catches
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:oneroof/views/flight/search_flights/flight_package/airblue/airblue_return_flight_page.dart';
 
 import '../../../../../services/api_service_flight.dart';
 import '../../../../../utility/colors.dart';
-import '../../../../../widgets/travelers_selection_bottom_sheet.dart';
-import '../../../form/controllers/flight_date_controller.dart';
 import '../../../form/flight_booking_controller.dart';
 import '../../review_flight/airblue_review_flight.dart';
-import '../../review_flight/review_flight.dart';
 import 'airblue_flight_controller.dart';
 import 'airblue_flight_model.dart';
 import '../../search_flight_utils/widgets/airblue_flight_card.dart';
-import '../../search_flights.dart';
 
 class AirBluePackageSelectionDialog extends StatelessWidget {
   final AirBlueFlight flight;
@@ -93,7 +91,6 @@ class AirBluePackageSelectionDialog extends StatelessWidget {
         }
       }
     } catch (e) {
-      print('Error prefetching margin data: $e');
     }
   }
 
@@ -429,10 +426,6 @@ class AirBluePackageSelectionDialog extends StatelessWidget {
           airBlueController.selectedOutboundFareOption = selectedFareOption;
         }
 
-        print("return");
-        print(airBlueController.selectedReturnFareOption);
-        print("outbound");
-        print(airBlueController.selectedOutboundFareOption);
 
         // TODO: Navigate to booking details page
         Get.snackbar(
@@ -461,7 +454,6 @@ class AirBluePackageSelectionDialog extends StatelessWidget {
         _showReturnFlights();
       }
     } catch (e) {
-      print('Error selecting AirBlue flight package: $e');
       Get.snackbar(
         'Error',
         'This flight package is no longer available. Please select another option.',

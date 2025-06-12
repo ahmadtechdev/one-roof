@@ -85,7 +85,6 @@ class _SelectRoomScreenState extends State<SelectRoomScreen>
       _showErrorDialog(
         'An error occurred while processing your booking. Please try again.',
       );
-      print('Booking error: $e');
     } finally {
       setState(() {
         isLoading = false;

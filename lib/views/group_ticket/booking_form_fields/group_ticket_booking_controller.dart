@@ -4,9 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:oneroof/utility/colors.dart';
 import 'package:oneroof/views/group_ticket/booking_form_fields/model.dart';
-import 'package:oneroof/views/group_ticket/booking_form_fields/print-voucher/print-voucher.dart';
 import '../../../services/api_service_group_tickets.dart';
 import '../flight_pkg/pkg_model.dart';
+import 'print_voucher/print_voucher.dart';
 
 class GroupTicketBookingController extends GetxController {
   final Rx<BookingData> bookingData =
@@ -36,8 +36,6 @@ class GroupTicketBookingController extends GetxController {
 
   /// Initializes booking data from flight model
   void initializeFromFlight(GroupFlightModel flight, int groupId) async {
-    print("check 2");
-    print(groupId);
     bookingData.update((val) {
       if (val == null) return;
 
@@ -156,7 +154,7 @@ class GroupTicketBookingController extends GetxController {
   // Update your save button in the UI to show loading state
   Widget buildSaveButton() {
     return Obx(() {
-      return Container(
+      return SizedBox(
         width: double.infinity,
         child: ElevatedButton(
           onPressed: isLoading.value ? null : submitBooking,

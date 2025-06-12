@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:oneroof/utility/colors.dart';
 import 'package:oneroof/views/users/login/login.dart';
-import '../../../b2b/agent_dashboard/agent_dashboard.dart';
 import '../login/login_api_service/login_api.dart';
 
 class RegistrationModel {
@@ -264,7 +263,6 @@ class RegisterController extends GetxController {
         );
 
         // Log error details
-        print('Registration API error: ${response['message']}');
       }
     } catch (e) {
       // Handle exception
@@ -279,7 +277,6 @@ class RegisterController extends GetxController {
         margin: EdgeInsets.all(10),
       );
 
-      print('Registration exception: $e');
     } finally {
       // Hide loading indicator
       isLoading.value = false;

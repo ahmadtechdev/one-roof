@@ -6,7 +6,7 @@ import 'package:oneroof/b2b/all_group_booking/model.dart';
 import 'package:oneroof/utility/colors.dart';
 
 class AllGroupBooking extends StatelessWidget {
-  AllGroupBooking({Key? key}) : super(key: key);
+  AllGroupBooking({super.key});
 
   final AllGroupBookingController controller = Get.put(
     AllGroupBookingController(),

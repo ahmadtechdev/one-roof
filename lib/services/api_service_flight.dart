@@ -1,3 +1,5 @@
+// ignore_for_file: empty_catches
+
 import 'dart:convert';
 import 'package:dio/dio.dart';
 
@@ -139,7 +141,6 @@ class ApiServiceFlight extends GetxService {
       }else if(flight==1){
         // New Air Blue API call with same parameters
         try {
-          print("Calling Air Blue API with same parameters...");
 
 
           final airBlueResponse = await _searchFlightsWithAirBlue(
@@ -154,7 +155,6 @@ class ApiServiceFlight extends GetxService {
             cabin: cabin,
           );
 
-          print("Air Blue API Response received:");
           _printJsonPretty(airBlueResponse);
 
           // Here you would normally process the Air Blue response and merge with Sabre results
@@ -162,7 +162,6 @@ class ApiServiceFlight extends GetxService {
           return airBlueResponse;
         } catch (airBlueError) {
           // If Air Blue API fails, just log the error but continue with Sabre results
-          print('Error in Air Blue API call: $airBlueError');
         }
       }
 
@@ -334,7 +333,6 @@ class ApiServiceFlight extends GetxService {
         throw Exception('Failed to search flights: ${response.statusCode}');
       }
     } catch (e) {
-      print('Error in _searchFlightsWithSabre: $e');
       throw Exception('Error searching flights with Sabre: $e');
     }
   }
@@ -377,7 +375,6 @@ class ApiServiceFlight extends GetxService {
         cabin: cabin,
       );
     } catch (e) {
-      print('Error in _searchFlightsWithAirBlue: $e');
       throw Exception('Error searching flights with Air Blue: $e');
     }
   }
@@ -395,7 +392,6 @@ class ApiServiceFlight extends GetxService {
     try {
       final token = await getValidToken() ?? await generateToken();
 
-      print('Request Body:');
       _printJsonPretty(requestBody);
 
       final response = await dio.post(
@@ -409,8 +405,6 @@ class ApiServiceFlight extends GetxService {
         data: requestBody,
       );
 
-      print('Response Status Code: ${response.statusCode}');
-      print('Response Body:');
       _printJsonPretty(response.data);
 
       if (response.statusCode == 200) {
@@ -420,7 +414,6 @@ class ApiServiceFlight extends GetxService {
             'Failed to check flight availability: ${response.statusCode}');
       }
     } catch (e) {
-      print('Error checking flight availability: $e');
       throw Exception('Error checking flight availability: $e');
     }
   }
@@ -430,11 +423,6 @@ class ApiServiceFlight extends GetxService {
     const int chunkSize = 1000;
     final jsonString = const JsonEncoder.withIndent('  ').convert(jsonData);
     for (int i = 0; i < jsonString.length; i += chunkSize) {
-      print(jsonString.substring(
-          i,
-          i + chunkSize > jsonString.length
-              ? jsonString.length
-              : i + chunkSize));
     }
   }
 
@@ -471,20 +459,15 @@ class ApiServiceFlight extends GetxService {
         }
         // Update the stored airlineMap
         airlineMap.value = tempAirlineMap;
-        print('Airline data fetched successfully. Total airlines: ${tempAirlineMap.length}');
 
         // Log a few URLs for debugging
         if (tempAirlineMap.isNotEmpty) {
-          print('Sample logo URLs:');
           tempAirlineMap.entries.take(3).forEach((entry) {
-            print('${entry.key}: ${entry.value.logoPath}');
           });
         }
       } else {
-        print('Failed to fetch airline data: ${response.statusMessage}');
       }
     } catch (e) {
-      print('Error fetching airline data: $e');
     }
 
     return tempAirlineMap;

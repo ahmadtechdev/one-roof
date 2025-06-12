@@ -1,3 +1,5 @@
+// ignore_for_file: depend_on_referenced_packages, non_constant_identifier_names, empty_catches
+
 import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
@@ -413,8 +415,6 @@ class AirBlueFlightApiService {
         errors: {},
       );
     } catch (e, stackTrace) {
-      print('Error saving AirBlue booking: $e');
-      print('Stack trace: $stackTrace');
       throw ApiException(message: e.toString(), statusCode: null, errors: {});
     }
   }
@@ -885,8 +885,6 @@ class AirBlueFlightApiService {
       printDebugData('PNR RESPONSE (JSON)', jsonResponse);
       return jsonResponse;
     } catch (e, stackTrace) {
-      print('Error creating AirBlue PNR: $e');
-      print('Stack trace: $stackTrace');
       throw ApiException(
         message: 'Failed to create PNR: $e',
         statusCode: null,
@@ -925,46 +923,31 @@ class AirBlueFlightApiService {
       // Print in chunks to avoid truncation in console
       const int chunkSize = 1000;
       for (int i = 0; i < prettyXml.length; i += chunkSize) {
-        print(
-          prettyXml.substring(
-            i,
-            i + chunkSize > prettyXml.length ? prettyXml.length : i + chunkSize,
-          ),
-        );
       }
     } catch (e) {
       // If XML parsing fails, print as is with a warning
-      print('WARNING: Could not parse as valid XML. Printing raw string:');
-      print(xmlString);
     }
   }
 
   /// Prints both XML and corresponding JSON representation
   void printDebugData(String label, dynamic data) {
-    print('\n===== $label =====');
 
     if (data is String && data.trim().startsWith('<')) {
       // Handle XML string
-      print('--- XML FORMAT ---');
       printXmlPretty(data);
 
       try {
         // Try to convert XML to JSON for comparison
         final jsonData = _convertXmlToJson(data);
-        print('\n--- JSON EQUIVALENT ---');
         printJsonPretty(jsonData);
       } catch (e) {
-        print('Could not convert XML to JSON: $e');
       }
     } else if (data is String) {
       // Handle plain string
-      print(data);
     } else {
       // Handle JSON/Map data
-      print('--- JSON FORMAT ---');
       printJsonPretty(data);
     }
-    print('===== END $label =====\n');
   }
 
   /// Prints JSON in a nicely formatted way with chunking to avoid console truncation
@@ -972,12 +955,6 @@ class AirBlueFlightApiService {
     const int chunkSize = 1000;
     final jsonString = const JsonEncoder.withIndent('  ').convert(jsonData);
     for (int i = 0; i < jsonString.length; i += chunkSize) {
-      print(
-        jsonString.substring(
-          i,
-          i + chunkSize > jsonString.length ? jsonString.length : i + chunkSize,
-        ),
-      );
     }
   }
 }

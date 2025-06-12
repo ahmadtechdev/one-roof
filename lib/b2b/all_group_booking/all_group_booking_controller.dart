@@ -1,3 +1,5 @@
+// ignore_for_file: empty_catches
+
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:oneroof/b2b/all_group_booking/model.dart';
@@ -189,7 +191,6 @@ class AllGroupBookingController extends GetxController {
 
           bookings.add(booking);
         } catch (e) {
-          print('Error parsing booking: $e');
         }
       }
 

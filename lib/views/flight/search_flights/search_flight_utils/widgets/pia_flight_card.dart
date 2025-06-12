@@ -3,10 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 
-import '../../../../../services/api_service_pia.dart';
 import '../../../../../utility/colors.dart';
 import '../../flight_package/pia/pia_flight_model.dart';
-import '../helper_functions.dart';
 import '../../flight_package/pia/pia_flight_controller.dart';
 
 class PIAFlightCard extends StatefulWidget {
@@ -54,21 +52,6 @@ class _PIAFlightCardState extends State<PIAFlightCard>
     super.dispose();
   }
 
-  String getCabinClassName(String cabinCode) {
-    switch (cabinCode) {
-      case 'F':
-        return 'First Class';
-      case 'C':
-        return 'Business Class';
-      case 'Y':
-        return 'Economy Class';
-      case 'W':
-        return 'Premium Economy';
-      default:
-        return 'Economy Class';
-    }
-  }
-
   String getMealInfo(String? mealCode) {
     switch (mealCode?.toUpperCase()) {
       case 'HALAL':
@@ -85,12 +68,15 @@ class _PIAFlightCardState extends State<PIAFlightCard>
   }
 
   String formatBaggageInfo() {
-    if (widget.flight.baggageAllowance.pieces > 0) {
-      return '${widget.flight.baggageAllowance.pieces} piece(s) included';
-    } else if (widget.flight.baggageAllowance.weight > 0) {
-      return '${widget.flight.baggageAllowance.weight} ${widget.flight.baggageAllowance.unit} included';
-    }
-    return widget.flight.baggageAllowance.type;
+    final piaController = Get.find<PIAFlightController>();
+    final List<PIAFareOption> fareOptions = piaController
+        .getFareOptionsForFlight(widget.flight);
+
+    final package = fareOptions[0];
+
+    return package.baggageAllowance.weight > 0
+        ? '${package.baggageAllowance.weight} ${package.baggageAllowance.unit}'
+        : '${package.baggageAllowance.pieces} piece(s)';
   }
 
 
@@ -105,13 +91,9 @@ class _PIAFlightCardState extends State<PIAFlightCard>
   }
 
   String formatTimeFromDateTime(String dateTimeString) {
-    print("Time check $i: ");
-    print(dateTimeString);
     i++;
     try {
       final dateTime = DateTime.parse(dateTimeString);
-      print("Time check final $i: ");
-      print(DateFormat('HH:mm').format(dateTime));
       return DateFormat('HH:mm').format(dateTime);
     } catch (e) {
       return 'N/A';
@@ -208,7 +190,7 @@ class _PIAFlightCardState extends State<PIAFlightCard>
     for (var segment in segments) {
       final duration = _extractStringValue(
           segment['flightSegment']?['journeyDuration']
-      ) ?? 'PT0H0M';
+      );
       totalMinutes += _parseDurationToMinutes(duration);
     }
 
@@ -678,6 +660,22 @@ class _PIAFlightCardState extends State<PIAFlightCard>
             ],
           ),
           const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: TColors.primary.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: Text(
+              widget.flight.cabinClass,
+              style: const TextStyle(
+                color: TColors.primary,
+                fontWeight: FontWeight.w500,
+                fontSize: 12,
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
           // Airline Info
           Row(
             children: [
@@ -702,10 +700,18 @@ class _PIAFlightCardState extends State<PIAFlightCard>
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(departureCity ?? 'N/A'),
-                    Text('Terminal ${_extractNestedValue(flightSegment, ['departureAirport', 'terminal']) ?? 'N/A'}'),
-                    Text(formatTime(departureTime)),
-                    Text(formatFullDateTime(departureTime)),
+                    Text(departureCity ?? 'N/A',  style: const TextStyle(fontWeight: FontWeight.w500),),
+                    // Text('Terminal ${_extractNestedValue(flightSegment, ['departureAirport', 'terminal']) ?? 'N/A'}'),
+                    Text(formatTime(departureTime),  style: const TextStyle(
+                      color: Colors.grey,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                    ),),
+                    Text(formatFullDateTime(departureTime),  style: const TextStyle(
+                      color: Colors.grey,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                    ),),
                   ],
                 ),
               ),
@@ -719,10 +725,18 @@ class _PIAFlightCardState extends State<PIAFlightCard>
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
-                    Text(arrivalCity ?? 'N/A'),
-                    Text('Terminal ${_extractNestedValue(flightSegment, ['arrivalAirport', 'terminal']) ?? 'N/A'}'),
-                    Text(formatTime(arrivalTime)),
-                    Text(formatFullDateTime(arrivalTime)),
+                    Text(arrivalCity ?? 'N/A', style: const TextStyle(fontWeight: FontWeight.w500),),
+                    // Text('Terminal ${_extractNestedValue(flightSegment, ['arrivalAirport', 'terminal']) ?? 'N/A'}'),
+                    Text(formatTime(arrivalTime), style: const TextStyle(
+                      color: Colors.grey,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                    ),),
+                    Text(formatFullDateTime(arrivalTime), style: const TextStyle(
+                      color: Colors.grey,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                    ), ),
                   ],
                 ),
               ),
@@ -823,13 +837,6 @@ class _PIAFlightCardState extends State<PIAFlightCard>
     return current;
   }
 
-  /// Alternative version that returns a string with fallback
-  /// Use this when you need a guaranteed string return
-  String _extractNestedValueAsString(dynamic data, List<String> keys, [String fallback = 'N/A']) {
-    final value = _extractNestedValue(data, keys);
-    if (value == null) return fallback;
-    return value.toString();
-  }
 
   String _buildFareRules() {
     return '''

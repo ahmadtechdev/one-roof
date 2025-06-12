@@ -1,3 +1,5 @@
+// ignore_for_file: non_constant_identifier_names
+
 import 'package:intl/intl.dart';
 
 class GroupFlightModel {
@@ -63,7 +65,6 @@ class GroupFlightModel {
         return int.parse(value);
       } catch (e) {
         // If parsing fails, return the default value
-        print('Error parsing value "$value" to int: $e');
         return defaultValue;
       }
     }
@@ -72,7 +73,6 @@ class GroupFlightModel {
     try {
       return int.parse(value.toString());
     } catch (e) {
-      print('Error converting value "$value" to int: $e');
       return defaultValue;
     }
   }
@@ -96,7 +96,6 @@ class GroupFlightModel {
               ? DateTime.parse(json['dept_date'].toString())
               : DateTime.now();
     } catch (e) {
-      print('Error parsing date: ${json['dept_date']}');
       departureDate = DateTime.now();
     }
 

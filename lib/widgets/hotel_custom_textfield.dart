@@ -76,24 +76,21 @@ class CityController extends GetxController {
 
     try {
       final response = await _apiService.fetchCities(query);
-      print("API Response: $response"); // Debug print
+      // Debug print
 
-      if (response != null && response.isNotEmpty) {
+      if (response.isNotEmpty) {
         try {
           final cityList =
               response.map<CityData>((cityJson) {
-                print("Processing city item: $cityJson");
                 if (cityJson is Map<String, dynamic>) {
                   return CityData.fromJson(cityJson);
                 } else {
-                  print("Invalid city item format: $cityJson");
                   throw FormatException("Invalid city data format");
                 }
               }).toList();
 
           cities.value = cityList;
         } catch (parseError) {
-          print("Error parsing city data: $parseError");
           cities.clear();
           Get.snackbar(
             'Error',
@@ -110,7 +107,6 @@ class CityController extends GetxController {
         );
       }
     } catch (e) {
-      print("Error in city search: $e");
       cities.clear();
       Get.snackbar(
         'Error',
@@ -130,14 +126,14 @@ class CustomTextField extends StatelessWidget {
   final String? label;
   final Function(CityData)? onCitySelected;
 
-  CustomTextField({
-    Key? key,
+  const CustomTextField({
+    super.key,
     required this.hintText,
     required this.icon,
     required this.controller,
     this.label,
     this.onCitySelected,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

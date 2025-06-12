@@ -231,6 +231,7 @@ class DestinationCard extends StatelessWidget {
   final String title;
   final VoidCallback onTap;
 
+  // ignore: use_super_parameters
   const DestinationCard({
     Key? key,
     required this.image,

@@ -1,7 +1,7 @@
-import 'dart:ui';
+// ignore_for_file: file_names, camel_case_types
+
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../../sizes_helpers.dart';

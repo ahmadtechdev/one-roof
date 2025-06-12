@@ -1,3 +1,5 @@
+// ignore_for_file: unused_element, depend_on_referenced_packages, deprecated_member_use
+
 import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';

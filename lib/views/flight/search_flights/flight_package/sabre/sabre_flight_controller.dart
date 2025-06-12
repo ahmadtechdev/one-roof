@@ -1,6 +1,6 @@
-import 'package:flutter/material.dart';
+// ignore_for_file: empty_catches
+
 import 'package:get/get.dart';
-import 'dart:math';
 
 import '../../../../../services/api_service_flight.dart';
 import '../../search_flight_utils/filter_flight_model.dart';
@@ -8,7 +8,6 @@ import 'sabre_flight_package.dart';
 import 'sabre_package_modal.dart';
 import '../../search_flights.dart';
 import '../../search_flight_utils/helper_functions.dart';
-import '../airblue/airblue_flight_model.dart';
 import 'sabre_flight_models.dart';
 
 
@@ -173,7 +172,6 @@ extension FlightDateTimeExtension on FlightController {
         }
       }
     } catch (e) {
-      print('Error parsing fareComponentDescs: $e');
     }
 
     return fareComponentDescsMap;
@@ -246,7 +244,7 @@ extension FlightDateTimeExtension on FlightController {
       }
 
       // If we still have no mappings, use a fallback approach
-      if (legFareBasisMap.isEmpty && !segmentInfoList.isEmpty) {
+      if (legFareBasisMap.isEmpty && segmentInfoList.isNotEmpty) {
         // Just repeat the segment info for each leg if we can't map properly
         segmentInfoList = List.generate(legs.length, (index) =>
         index < segmentInfoList.length
@@ -261,7 +259,6 @@ extension FlightDateTimeExtension on FlightController {
         );
       }
     } catch (e) {
-      print('Error parsing segment info: $e');
     }
 
     return segmentInfoList;
@@ -308,7 +305,6 @@ extension FlightDateTimeExtension on FlightController {
       isLoading.value = true;
 
       if (response == null || response['groupedItineraryResponse'] == null) {
-        print('Error: Invalid API response structure');
         if (isAvailabilityCheck) {
           availabilityFlights.value = [];
         } else {
@@ -347,7 +343,6 @@ extension FlightDateTimeExtension on FlightController {
       final List<Flight> parsedFlights = [];
       final itineraryGroups = groupedResponse['itineraryGroups'] as List?;
       if (itineraryGroups == null) {
-        print('Error: No itinerary groups found');
         if (isAvailabilityCheck) {
           availabilityFlights.value = [];
         } else {
@@ -399,7 +394,6 @@ extension FlightDateTimeExtension on FlightController {
                 }
               }
             } catch (e) {
-              print('Error parsing package: $e');
             }
           }
 
@@ -464,7 +458,6 @@ extension FlightDateTimeExtension on FlightController {
               }
             }
           } catch (e) {
-            print('Error mapping legs to fareComponents: $e');
           }
 
           for (var legIndex = 0; legIndex < legs.length; legIndex++) {
@@ -625,7 +618,6 @@ extension FlightDateTimeExtension on FlightController {
             );
             parsedFlights.add(flight);
           } catch (e) {
-            print('Error creating flight: $e');
           }
         }
       }
@@ -639,8 +631,6 @@ extension FlightDateTimeExtension on FlightController {
 
 
     } catch (e, stackTrace) {
-      print('Error parsing API response: $e');
-      print('Stack trace: $stackTrace');
       if (isAvailabilityCheck) {
         availabilityFlights.value = [];
       } else {
@@ -688,7 +678,6 @@ extension FlightDateTimeExtension on FlightController {
         }
       }
     } catch (e) {
-      print('Error parsing baggage allowance: $e');
     }
 
     return BaggageAllowance(
@@ -827,7 +816,6 @@ extension FlightSegmentExtension on FlightController {
         allSegmentInfoLists.add(segmentInfoList);
       }
     } catch (e) {
-      print('Error parsing all segment info: $e');
     }
 
     return allSegmentInfoLists;

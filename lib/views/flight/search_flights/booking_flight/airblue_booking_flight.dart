@@ -651,7 +651,7 @@ class _AirBlueBookingFlightState extends State<AirBlueBookingFlight> {
                     );
 
                     try {
-                      print('Creating PNR for booking...'); // Debug print
+                      // Debug print
 
                       final pnrResponse = await AirBlueFlightApiService().createAirBluePNR(
                         flight: widget.flight,
@@ -661,7 +661,7 @@ class _AirBlueBookingFlightState extends State<AirBlueBookingFlight> {
                         clientPhone: bookingController.phoneController.text,
                       );
 
-                      print('PNR created successfully: $pnrResponse'); // Debug print
+                      // Debug print
                       Get.snackbar(
                         'Success',
                         'PNR created successfully',
@@ -670,7 +670,7 @@ class _AirBlueBookingFlightState extends State<AirBlueBookingFlight> {
                       );
 
                     } catch (e) {
-                      print('Error creating PNR but booking was saved: $e'); // Debug print
+                      // Debug print
                       // Return booking response even if PNR creation failed
                     }
 
@@ -695,10 +695,9 @@ class _AirBlueBookingFlightState extends State<AirBlueBookingFlight> {
                   Get.back();
                   String errorMessage = e.message;
                   if (e.errors.isNotEmpty) {
-                    errorMessage += '\n' +
-                        e.errors.entries.map((e) {
+                    errorMessage += '\n${e.errors.entries.map((e) {
                           return '${e.key}: ${e.value}';
-                        }).join('\n');
+                        }).join('\n')}';
                   }
                   Get.snackbar(
                     'Error (${e.statusCode ?? 'Unknown'})',

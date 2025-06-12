@@ -5,7 +5,6 @@ import 'package:oneroof/views/flight/search_flights/search_flight_utils/widgets/
 
 import '../../../utility/colors.dart';
 import 'flight_package/pia/pia_flight_controller.dart';
-import 'flight_package/pia/pia_flight_model.dart';
 import 'flight_package/sabre/sabre_flight_controller.dart';
 import 'search_flight_utils/filter_flight_model.dart';
 import 'search_flight_utils/widgets/currency_dialog.dart';

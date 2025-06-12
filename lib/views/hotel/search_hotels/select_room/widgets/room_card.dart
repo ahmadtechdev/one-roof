@@ -423,7 +423,6 @@ class RoomCard extends StatelessWidget {
       // Dismiss loading dialog if still showing
       // ignore: use_build_context_synchronously
       Navigator.pop(context);
-      print('Error showing cancellation policy: $e');
     }
   }
 
@@ -458,7 +457,6 @@ class RoomCard extends StatelessWidget {
         final priceBreakdown = response['priceBreakdown'] as List?;
         if (priceBreakdown?.isNotEmpty ?? false) {
           final roomData = priceBreakdown![0];
-          print(roomData['dateRange']);
           final dateRanges =
               roomData['dateRange'] != null
                   ? List<Map<String, dynamic>>.from(roomData['dateRange'])
@@ -556,7 +554,6 @@ class RoomCard extends StatelessWidget {
                                   ),
                                   // Daily Price Breakdown
                                   ...dateRanges.map((dateRange) {
-                                    print(dateRanges);
                                     final fromDate = DateTime.tryParse(
                                       dateRange['fromDate'] ?? '',
                                     );
@@ -653,7 +650,6 @@ class RoomCard extends StatelessWidget {
       // Dismiss loading dialog if still showing
       // ignore: use_build_context_synchronously
       Navigator.pop(context);
-      print('Error showing price breakup: $e');
     }
   }
 

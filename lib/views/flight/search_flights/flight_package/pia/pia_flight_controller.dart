@@ -1,13 +1,9 @@
 import 'package:flutter/cupertino.dart';
 import 'package:get/get.dart';
-import 'package:dio/dio.dart';
-import 'package:xml/xml.dart' as xml;
 
-import '../../../../../services/api_service_pia.dart';
 import '../../search_flight_utils/filter_flight_model.dart';
 import 'pia_flight_model.dart';
 import 'pia_flight_package.dart';
-import 'pia_return_flight_page.dart';
 
 class PIAFlightController extends GetxController {
   final RxList<PIAFlight> outboundFlights = <PIAFlight>[].obs;
@@ -290,9 +286,7 @@ class PIAFlightController extends GetxController {
 
       final firstSegment = legSchedules[0];
       final flightSegment = firstSegment['flightSegment'] ?? firstSegment;
-      final flightNumber = _extractStringValue(flightSegment['flightNumber']) ??
-          _extractStringValue(legSchedules.first['flightSegment']?['flightNumber']) ??
-          '';
+      final flightNumber = _extractStringValue(flightSegment['flightNumber']);
 
       // Get passenger fare info from the fareComponent
       final passengerFareInfoList = fareComponent['passengerFareInfoList'] ?? fareComponent;
@@ -312,7 +306,20 @@ class PIAFlightController extends GetxController {
           orElse: () => passengerFareInfoList.first,
         );
 
+        if (adultFare['fareInfoList'] != null) {
+          if (adultFare['fareInfoList'] is List) {
+            fareInfoItems = adultFare['fareInfoList'];
+          } else {
+            fareInfoItems = [adultFare['fareInfoList']];
+          }
+        } else {
+          fareInfoItems = [adultFare];
+        }
+
         pricingInfo = adultFare['pricingInfo'] ?? {};
+
+        // pricingInfo = adultFare['fareInfoList']['pricingInfo'] ?? {};
+
       }
       else if (passengerFareInfoList is Map) {
         // Case 2: Single passenger type

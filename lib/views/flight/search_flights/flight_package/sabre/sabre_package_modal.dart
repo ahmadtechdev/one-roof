@@ -93,7 +93,6 @@ class FlightPackageInfo {
         brandDescription: brandDescription,
       );
     } catch (e) {
-      print('Error parsing flight package: $e');
       return FlightPackageInfo(
         cabinCode: 'Y',
         mealCode: 'N',

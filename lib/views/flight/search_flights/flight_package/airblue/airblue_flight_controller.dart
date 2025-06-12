@@ -1,3 +1,5 @@
+// ignore_for_file: empty_catches
+
 import 'package:get/get.dart';
 
 import '../../../../../services/api_service_flight.dart';
@@ -12,11 +14,6 @@ class AirBlueFlightController extends GetxController {
   // List of AirBlue flights (now with unique RPH)
   final RxList<AirBlueFlight> flights = <AirBlueFlight>[].obs;
 
-  @override
-  void onInit() {
-    super.onInit();
-
-  }
 
 
   // Map to store all fare options for each RPH
@@ -104,7 +101,6 @@ class AirBlueFlightController extends GetxController {
               returnFlightsByRPH[rph]!.add(itinerary);
             }
           } catch (e) {
-            print('Error grouping AirBlue flight by RPH: $e');
           }
         }
       } else if (pricedItineraries is Map) {
@@ -121,7 +117,6 @@ class AirBlueFlightController extends GetxController {
             returnFlightsByRPH[rph] = [Map<String, dynamic>.from(pricedItineraries)];
           }
         } catch (e) {
-          print('Error processing single AirBlue flight: $e');
         }
       }
 
@@ -138,7 +133,6 @@ class AirBlueFlightController extends GetxController {
               );
               fareOptions.add(AirBlueFareOption.fromFlight(flight, itinerary));
             } catch (e) {
-              print('Error creating fare option: $e');
             }
           }
 
@@ -155,7 +149,6 @@ class AirBlueFlightController extends GetxController {
             flights.add(representativeFlight);
           }
         } catch (e) {
-          print('Error processing RPH group: $e');
         }
       });
 
@@ -172,7 +165,6 @@ class AirBlueFlightController extends GetxController {
               );
               fareOptions.add(AirBlueFareOption.fromFlight(flight, itinerary));
             } catch (e) {
-              print('Error creating fare option: $e');
             }
           }
 
@@ -182,7 +174,6 @@ class AirBlueFlightController extends GetxController {
             fareOptionsByRPH['return_$rph'] = fareOptions;
           }
         } catch (e) {
-          print('Error processing return RPH group: $e');
         }
       });
 
@@ -190,7 +181,6 @@ class AirBlueFlightController extends GetxController {
       flights.sort((a, b) => a.price.compareTo(b.price));
     } catch (e) {
       errorMessage.value = 'Failed to load AirBlue flights: $e';
-      print('Error searching AirBlue flights: $e');
     } finally {
       isLoading.value = false;
     }

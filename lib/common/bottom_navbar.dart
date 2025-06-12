@@ -4,7 +4,7 @@ import 'package:persistent_bottom_nav_bar/persistent_bottom_nav_bar.dart';
 import '../views/home/home_screen.dart';
 
 class BottomNavbar extends StatefulWidget {
-  const BottomNavbar({Key? key}) : super(key: key);
+  const BottomNavbar({super.key});
 
   @override
   State<BottomNavbar> createState() => _BottomNavbarState();
@@ -101,7 +101,7 @@ class _BottomNavbarState extends State<BottomNavbar> {
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({Key? key}) : super(key: key);
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {

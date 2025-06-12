@@ -1,5 +1,6 @@
 // models/airblue_flight_model.dart
-import 'dart:convert';
+
+// ignore_for_file: empty_catches
 
 import 'package:flutter/foundation.dart';
 import '../sabre/sabre_flight_models.dart';
@@ -507,7 +508,6 @@ class AirBlueFareOption {
         }
       }
     } catch (e) {
-      print('Error extracting fees: $e');
     }
 
     return fees;
@@ -545,7 +545,6 @@ class AirBlueFareOption {
         }
       }
     } catch (e) {
-      print('Error extracting baggage allowance: $e');
     }
 
     return '20 KGS'; // Default as per web
@@ -573,11 +572,9 @@ class AirBlueFareOption {
         } else if (fareInfos != null) {
           return fareInfos['FareBasisCode'] ?? '';
         }
-        print(fareInfos['FareBasisCode']);
 
       return '';
     } catch (e) {
-      print('Error extracting fare basis code: $e');
       return '';
     }
   }
@@ -592,7 +589,6 @@ class AirBlueFareOption {
         return flightSegment['ResBookDesigCode'] ?? '';
 
     } catch (e) {
-      print('Error extracting cabin code: $e');
       return '';
     }
   }

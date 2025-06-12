@@ -1,3 +1,5 @@
+// ignore_for_file: non_constant_identifier_names, empty_catches
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
@@ -102,7 +104,6 @@ class BookingController extends GetxController {
         emailController.text = userData['cs_email'];
       }
     } catch (e) {
-      print('Error loading user email: $e');
     }
   }
 
@@ -307,7 +308,6 @@ class BookingController extends GetxController {
           }
 
           // Print a debug message
-          print("Policy data extracted - Date: $pEndDate, Time: $pEndTime");
         }
         // Create room object with null safety
         Map<String, dynamic> roomObject = {
@@ -394,7 +394,6 @@ class BookingController extends GetxController {
 
       return rateKeys.isEmpty ? "" : "start${rateKeys.join('za,in')}";
     } catch (e) {
-      print('Error building rate key: $e');
       return "";
     }
   }

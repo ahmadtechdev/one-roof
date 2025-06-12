@@ -1,3 +1,5 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -13,7 +15,6 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:printing/printing.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
-import 'dart:typed_data';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 
@@ -25,7 +26,7 @@ class HotelVoucherScreen extends StatelessWidget {
   final GuestsController guestsController = Get.find<GuestsController>();
   final BookingController bookingController = Get.put(BookingController());
 
-  HotelVoucherScreen({Key? key}) : super(key: key);
+  HotelVoucherScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -82,11 +83,9 @@ class HotelVoucherScreen extends StatelessWidget {
       if (response.statusCode == 200) {
         return response.bodyBytes;
       } else {
-        print('Error fetching map: Status ${response.statusCode}');
         return null;
       }
     } catch (e) {
-      print('Exception fetching map image: $e');
       return null;
     }
   }
@@ -160,7 +159,6 @@ class HotelVoucherScreen extends StatelessWidget {
         );
       }
     } catch (e) {
-      print('Error in buildMapWidgetWithFallback: $e');
       // Last resort text-only fallback
       return pw.Container(
         height: 120,
@@ -237,7 +235,6 @@ class HotelVoucherScreen extends StatelessWidget {
       final Uint8List bytes = data.buffer.asUint8List();
       return pw.MemoryImage(bytes);
     } catch (e) {
-      print('Error loading logo: $e');
       return null; // Return null if there's an error
     }
   }
@@ -324,7 +321,7 @@ class HotelVoucherScreen extends StatelessWidget {
                         ),
                       ),
                       pw.Text(
-                        '${bookingController.booking_num.value.toString()}',
+                        bookingController.booking_num.value.toString(),
                         style: const pw.TextStyle(fontSize: 12),
                       ),
                       pw.SizedBox(height: 5),
@@ -906,7 +903,7 @@ class HotelVoucherScreen extends StatelessWidget {
                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
               ),
               Text(
-                '${bookingController.booking_num.value.toString()}',
+                bookingController.booking_num.value.toString(),
                 style: TextStyle(fontSize: 12),
               ),
               const SizedBox(height: 5),
@@ -1439,64 +1436,7 @@ class HotelVoucherScreen extends StatelessWidget {
     return const Divider(height: 1, thickness: 1);
   }
 
-  Widget _buildActionButtons(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-      children: [
-        _buildActionButton(
-          context,
-          icon: Icons.email_outlined,
-          label: 'Email Voucher',
-          onTap: () {
-            ScaffoldMessenger.of(
-              context,
-            ).showSnackBar(const SnackBar(content: Text('Sending email...')));
-          },
-        ),
-        _buildActionButton(
-          context,
-          icon: Icons.print,
-          label: 'Print Voucher',
-          onTap: () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Preparing to print...')),
-            );
-          },
-        ),
-        _buildActionButton(
-          context,
-          icon: Icons.support_agent,
-          label: 'Contact Support',
-          onTap: () => _makePhoneCall('+8227889769'),
-        ),
-      ],
-    );
-  }
 
-  Widget _buildActionButton(
-    BuildContext context, {
-    required IconData icon,
-    required String label,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Column(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: const Color(0xFFFFAB00),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(icon, color: Colors.white, size: 24),
-          ),
-          const SizedBox(height: 8),
-          Text(label, style: const TextStyle(fontSize: 12)),
-        ],
-      ),
-    );
-  }
 
   Future<void> _makePhoneCall(String phoneNumber) async {
     final Uri launchUri = Uri(scheme: 'tel', path: phoneNumber);

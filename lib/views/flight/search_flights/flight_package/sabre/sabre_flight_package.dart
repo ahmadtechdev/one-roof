@@ -185,30 +185,25 @@ class PackageSelectionDialog extends StatelessWidget {
     final RxDouble finalPrice = 0.0.obs;
 
     // Add this method to fetch margin data
-    Future<void> _fetchMarginData() async {
+    Future<void> fetchMarginData() async {
       try {
         final apiService = Get.find<ApiServiceFlight>();
         final data = await apiService.getMargin();
         marginData.value = data;
 
 
-        print("flight package price: ");
-        print(package.totalPrice);
         // Calculate final price with margin
         finalPrice.value = apiService.calculatePriceWithMargin(
           package.totalPrice,
           data,
         );
 
-        print("flight package price after margin: ");
-        print(finalPrice.value);
       } catch (e) {
-        print('Error fetching margin data: $e');
         // If margin fetch fails, use original price
         finalPrice.value = package.totalPrice;
       }
     }
-    _fetchMarginData();
+    fetchMarginData();
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
@@ -322,7 +317,7 @@ class PackageSelectionDialog extends StatelessWidget {
                       'Baggage',
                       package.isSoldOut
                           ? 'Not available'
-                          : '${package.baggageAllowance.type}',
+                          : package.baggageAllowance.type,
                     ),
                     const SizedBox(height: 12),
                     _buildPackageDetail(
@@ -616,9 +611,6 @@ class PackageSelectionDialog extends StatelessWidget {
                 .first['fareBasisCode'];
         final basicCode = flight.legSchedules.first['fareBasisCode'];
 
-        print("Ahmad");
-        print(validateBasicCode);
-        print(basicCode);
         if (validateBasicCode == basicCode) {
           Get.to(
             () => ReviewTripPage(
@@ -638,7 +630,6 @@ class PackageSelectionDialog extends StatelessWidget {
         throw Exception('Invalid response format');
       }
     } catch (e) {
-      print('Error checking flight package availability: $e');
       Get.snackbar(
         'Error',
         'This flight package is no longer available. Please select another option.',

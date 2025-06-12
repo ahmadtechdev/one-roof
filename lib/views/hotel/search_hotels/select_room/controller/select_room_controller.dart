@@ -1,3 +1,5 @@
+// ignore_for_file: empty_catches
+
 import 'package:get/get.dart';
 import 'package:oneroof/views/hotel/hotel/hotel_date_controller.dart';
 
@@ -74,7 +76,6 @@ class SelectRoomController extends GetxController {
           try {
             roomPrice = double.parse(room['price']['net'].toString());
           } catch (e) {
-            print('Error parsing room price: $e');
           }
           updateRoomPrice(i, roomPrice);
         }
@@ -113,7 +114,6 @@ class SelectRoomController extends GetxController {
       try {
         roomPrice = double.parse(roomData['price']['net'].toString());
       } catch (e) {
-        print('Error parsing room price: $e');
       }
     }
 

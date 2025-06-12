@@ -74,23 +74,4 @@ class PIAReturnFlightsPage extends StatelessWidget {
   // In pia_return_flight_page.dart
 
   // Update the _buildBottomBar method
-  Widget _buildBottomBar() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border(top: BorderSide(color: Colors.grey.shade300)),
-      ),
-      child: ElevatedButton(
-        onPressed: () {
-          piaController.handlePIAFlightSelection(
-            piaController.selectedReturnFlight!,
-            isReturnFlight: true,
-          );
-        },
-
-        child: const Text('Select Return Flight'),
-      ),
-    );
-  }
 }

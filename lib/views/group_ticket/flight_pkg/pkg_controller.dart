@@ -1,6 +1,5 @@
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
-import 'package:oneroof/views/group_ticket/airline/airline_model.dart';
 import 'package:oneroof/views/group_ticket/airline/data_controller.dart';
 import 'package:oneroof/views/group_ticket/flight_pkg/pkg_model.dart';
 
@@ -79,16 +78,13 @@ class FlightPKGController extends GetxController {
       final region = apiController.selectedRegion.value;
       final region2 = apiController.selectedRegion2.value;
 
-      print("FlightPKGController fetching flights for region: $region");
 
       // Use the combined method instead of just fetchGroups
       final response = await apiController.fetchCombinedGroups(region, region2);
 
-      print("Got ${response.length} combined flights for region: $region");
       groupFlights.assignAll(response);
     } catch (e) {
       errorMessage.value = 'Failed to load flights: ${e.toString()}';
-      print("Error in fetchGroupFlights: $e");
       groupFlights.clear();
     } finally {
       isLoading.value = false;

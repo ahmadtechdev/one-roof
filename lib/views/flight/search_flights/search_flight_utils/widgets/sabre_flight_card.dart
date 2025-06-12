@@ -63,7 +63,6 @@ class _FlightCardState extends State<FlightCard>
         data,
       );
     } catch (e) {
-      print('Error fetching margin data: $e');
       // If margin fetch fails, use original price
       finalPrice.value = widget.flight.price;
     }

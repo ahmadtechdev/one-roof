@@ -4,7 +4,6 @@ import 'package:intl/intl.dart';
 import 'package:oneroof/b2b/all_hotel_booking/all_hotel_booking_controller.dart';
 import 'package:oneroof/b2b/all_hotel_booking/model.dart';
 import 'package:oneroof/utility/colors.dart';
-import 'dart:typed_data';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:flutter/services.dart';
@@ -14,6 +13,8 @@ class AllHotelBooking extends StatelessWidget {
   final AllHotelBookingController bookingController = Get.put(
     AllHotelBookingController(),
   );
+
+  AllHotelBooking({super.key});
   void _handlePrintAction(HotelBookingModel booking) async {
     try {
       final bookingData = await bookingController.getBookingDataForPdf(
@@ -96,11 +97,11 @@ class AllHotelBooking extends StatelessWidget {
               SizedBox(height: 16),
               ElevatedButton(
                 onPressed: () => bookingController.fetchHotelBookings(),
-                child: Text('Retry'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: TColors.primary,
                   foregroundColor: Colors.white,
                 ),
+                child: Text('Retry'),
               ),
             ],
           ),
@@ -755,7 +756,7 @@ class HotelBookingPdfGenerator {
                     _buildTableCell(childCount.toString()),
                   ],
                 );
-              }).toList(),
+              }),
             ],
           ),
         ],

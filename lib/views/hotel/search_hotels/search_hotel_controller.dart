@@ -1,3 +1,5 @@
+// ignore_for_file: empty_catches
+
 import 'package:dio/dio.dart';
 import 'package:get/get.dart';
 
@@ -34,7 +36,6 @@ class SearchHotelController extends GetxController {
     }
 
     // Debugging: Print the selected ratings
-    print("Selected ratings: $selectedStars");
 
     if (selectedStars.isEmpty) {
       // Show all hotels if no filter is selected
@@ -47,7 +48,6 @@ class SearchHotelController extends GetxController {
       hotels.value = filteredHotels;
 
       // Debugging: Print the filtered list
-      print("Filtered hotels: $filteredHotels");
     }
   }
 
@@ -66,7 +66,6 @@ class SearchHotelController extends GetxController {
       filteredHotels.value = filtered;
       hotels.value = filtered;
     } catch (e) {
-      print('Error filtering hotels: $e');
     }
   }
 
@@ -104,7 +103,6 @@ class SearchHotelController extends GetxController {
 
       hotels.value = sortedList;
     } catch (e) {
-      print('Error sorting hotels: $e');
     }
   }
 
@@ -128,7 +126,6 @@ class SearchHotelController extends GetxController {
             .toList();
       }
     } catch (e) {
-      print('Error searching hotels by name: $e');
     }
   }
 

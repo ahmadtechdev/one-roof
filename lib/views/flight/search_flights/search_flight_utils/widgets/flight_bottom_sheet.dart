@@ -13,7 +13,7 @@ class FilterBottomSheet extends StatelessWidget {
   final AirBlueFlightController airBlueController;
   final PIAFlightController piaController;
 
-  FilterBottomSheet({
+  const FilterBottomSheet({
     super.key,
     required this.controller,
     required this.airBlueController,
@@ -31,8 +31,6 @@ class FilterBottomSheet extends StatelessWidget {
       'PK', // PIA
     }.toList()..sort();
 
-    print("Check");
-    print(allAirlines);
 
     return Container(
       padding: const EdgeInsets.all(16),
