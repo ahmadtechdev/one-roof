@@ -212,7 +212,7 @@ class _ImportantBookingDetailsCardState
             child: _buildBadge("Refundable"),
           ),
           const Divider(height: 16),
-          _buildPriceRow('Price', '\$ $price', isTotal: true),
+          _buildPriceRow('Price', 'PKR $price', isTotal: true),
         ],
       ),
     );

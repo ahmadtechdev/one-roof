@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../../../../services/api_service_pia.dart';
 import '../../../../utility/colors.dart';
 import '../../../../widgets/travelers_selection_bottom_sheet.dart';
 import '../flight_package/pia/pia_flight_model.dart';
 import '../search_flight_utils/widgets/pia_flight_card.dart';
+import 'booking_flight_controller.dart';
+import 'flight_print_voucher.dart';
 
 class PIAFlightBookingForm extends StatefulWidget {
   final PIAFlight flight;
@@ -25,6 +28,7 @@ class PIAFlightBookingForm extends StatefulWidget {
 
 class _PIAFlightBookingFormState extends State<PIAFlightBookingForm> {
   final _formKey = GlobalKey<FormState>();
+  final BookingFlightController bookingController = Get.put(BookingFlightController());
   final TravelersController travelersController = Get.find();
   bool termsAccepted = false;
 
@@ -70,6 +74,12 @@ class _PIAFlightBookingFormState extends State<PIAFlightBookingForm> {
       ),
       bottomNavigationBar: _buildBottomBar(),
     );
+  }
+
+  @override
+  void dispose() {
+    bookingController.dispose();
+    super.dispose();
   }
 
   Widget _buildTermsAndConditions() {
@@ -130,7 +140,6 @@ class _PIAFlightBookingFormState extends State<PIAFlightBookingForm> {
           ),
           PIAFlightCard(
             flight: widget.returnFlight!,
-
           ),
         ] else ...[
           PIAFlightCard(flight: widget.flight),
@@ -181,6 +190,15 @@ class _PIAFlightBookingFormState extends State<PIAFlightBookingForm> {
     required String type,
     required int index,
   }) {
+    TravelerInfo travelerInfo;
+    if (type == 'adult') {
+      travelerInfo = bookingController.adults[index];
+    } else if (type == 'child') {
+      travelerInfo = bookingController.children[index];
+    } else {
+      travelerInfo = bookingController.infants[index];
+    }
+
     return Card(
       color: TColors.background,
       elevation: 3,
@@ -227,7 +245,7 @@ class _PIAFlightBookingFormState extends State<PIAFlightBookingForm> {
                         child: _buildDropdown(
                           hint: 'Gender',
                           items: ['Male', 'Female'],
-                          onChanged: (value) {},
+                          controller: travelerInfo.genderController,
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -235,7 +253,7 @@ class _PIAFlightBookingFormState extends State<PIAFlightBookingForm> {
                         child: _buildDropdown(
                           hint: 'Title',
                           items: ['Mr', 'Mrs', 'Ms'],
-                          onChanged: (value) {},
+                          controller: travelerInfo.titleController,
                         ),
                       ),
                     ],
@@ -244,41 +262,49 @@ class _PIAFlightBookingFormState extends State<PIAFlightBookingForm> {
                   _buildTextField(
                     hint: 'Given Name',
                     prefixIcon: Icons.person_outline,
+                    controller: travelerInfo.firstNameController,
                   ),
                   const SizedBox(height: 16),
                   _buildTextField(
                     hint: 'Surname',
                     prefixIcon: Icons.person_outline,
+                    controller: travelerInfo.lastNameController,
                   ),
                   const SizedBox(height: 16),
                   _buildDateField(
                     hint: 'Date of Birth',
+                    controller: travelerInfo.dateOfBirthController,
                   ),
                   const SizedBox(height: 16),
                   _buildTextField(
                     hint: 'Phone',
                     prefixIcon: Icons.phone_outlined,
                     keyboardType: TextInputType.phone,
+                    controller: travelerInfo.phoneController,
                   ),
                   const SizedBox(height: 16),
                   _buildTextField(
                     hint: 'Email',
                     prefixIcon: Icons.email_outlined,
                     keyboardType: TextInputType.emailAddress,
+                    controller: travelerInfo.emailController,
                   ),
                   const SizedBox(height: 16),
                   _buildTextField(
                     hint: 'Nationality',
                     prefixIcon: Icons.flag_outlined,
+                    controller: travelerInfo.nationalityController,
                   ),
                   const SizedBox(height: 16),
                   _buildTextField(
                     hint: 'Passport Number',
                     prefixIcon: Icons.document_scanner_outlined,
+                    controller: travelerInfo.passportController,
                   ),
                   const SizedBox(height: 16),
                   _buildDateField(
                     hint: 'Passport Expiry',
+                    controller: travelerInfo.passportExpiryController,
                   ),
                 ],
                 if (type == 'child') ...[
@@ -288,7 +314,7 @@ class _PIAFlightBookingFormState extends State<PIAFlightBookingForm> {
                         child: _buildDropdown(
                           hint: 'Gender',
                           items: ['Male', 'Female'],
-                          onChanged: (value) {},
+                          controller: travelerInfo.genderController,
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -296,7 +322,7 @@ class _PIAFlightBookingFormState extends State<PIAFlightBookingForm> {
                         child: _buildDropdown(
                           hint: 'Title',
                           items: ['Mstr', 'Miss'],
-                          onChanged: (value) {},
+                          controller: travelerInfo.titleController,
                         ),
                       ),
                     ],
@@ -305,29 +331,35 @@ class _PIAFlightBookingFormState extends State<PIAFlightBookingForm> {
                   _buildTextField(
                     hint: 'Given Name',
                     prefixIcon: Icons.person_outline,
+                    controller: travelerInfo.firstNameController,
                   ),
                   const SizedBox(height: 16),
                   _buildTextField(
                     hint: 'Surname',
                     prefixIcon: Icons.person_outline,
+                    controller: travelerInfo.lastNameController,
                   ),
                   const SizedBox(height: 16),
                   _buildDateField(
                     hint: 'Date of Birth',
+                    controller: travelerInfo.dateOfBirthController,
                   ),
                   const SizedBox(height: 16),
                   _buildTextField(
                     hint: 'Nationality',
                     prefixIcon: Icons.flag_outlined,
+                    controller: travelerInfo.nationalityController,
                   ),
                   const SizedBox(height: 16),
                   _buildTextField(
                     hint: 'Passport Number',
                     prefixIcon: Icons.document_scanner_outlined,
+                    controller: travelerInfo.passportController,
                   ),
                   const SizedBox(height: 16),
                   _buildDateField(
                     hint: 'Passport Expiry',
+                    controller: travelerInfo.passportExpiryController,
                   ),
                 ],
                 if (type == 'infant') ...[
@@ -337,7 +369,7 @@ class _PIAFlightBookingFormState extends State<PIAFlightBookingForm> {
                         child: _buildDropdown(
                           hint: 'Gender',
                           items: ['Male', 'Female'],
-                          onChanged: (value) {},
+                          controller: travelerInfo.genderController,
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -345,7 +377,7 @@ class _PIAFlightBookingFormState extends State<PIAFlightBookingForm> {
                         child: _buildDropdown(
                           hint: 'Title',
                           items: ['Inf'],
-                          onChanged: (value) {},
+                          controller: travelerInfo.titleController,
                         ),
                       ),
                     ],
@@ -354,29 +386,35 @@ class _PIAFlightBookingFormState extends State<PIAFlightBookingForm> {
                   _buildTextField(
                     hint: 'Given Name',
                     prefixIcon: Icons.person_outline,
+                    controller: travelerInfo.firstNameController,
                   ),
                   const SizedBox(height: 16),
                   _buildTextField(
                     hint: 'Surname',
                     prefixIcon: Icons.person_outline,
+                    controller: travelerInfo.lastNameController,
                   ),
                   const SizedBox(height: 16),
                   _buildDateField(
                     hint: 'Date of Birth',
+                    controller: travelerInfo.dateOfBirthController,
                   ),
                   const SizedBox(height: 16),
                   _buildTextField(
                     hint: 'Nationality',
                     prefixIcon: Icons.flag_outlined,
+                    controller: travelerInfo.nationalityController,
                   ),
                   const SizedBox(height: 16),
                   _buildTextField(
                     hint: 'Passport Number',
                     prefixIcon: Icons.document_scanner_outlined,
+                    controller: travelerInfo.passportController,
                   ),
                   const SizedBox(height: 16),
                   _buildDateField(
                     hint: 'Passport Expiry',
+                    controller: travelerInfo.passportExpiryController,
                   ),
                 ],
               ],
@@ -389,6 +427,7 @@ class _PIAFlightBookingFormState extends State<PIAFlightBookingForm> {
 
   Widget _buildDateField({
     required String hint,
+    required TextEditingController controller,
   }) {
     return Container(
       decoration: BoxDecoration(
@@ -397,6 +436,7 @@ class _PIAFlightBookingFormState extends State<PIAFlightBookingForm> {
         border: Border.all(color: Colors.grey[300]!),
       ),
       child: TextField(
+        controller: controller,
         decoration: InputDecoration(
           hintText: hint,
           prefixIcon: const Icon(Icons.calendar_today, color: TColors.primary),
@@ -415,7 +455,7 @@ class _PIAFlightBookingFormState extends State<PIAFlightBookingForm> {
             lastDate: DateTime(2100),
           );
           if (pickedDate != null) {
-            // Handle date selection
+            controller.text = "${pickedDate.toLocal()}".split(' ')[0];
           }
         },
       ),
@@ -451,33 +491,39 @@ class _PIAFlightBookingFormState extends State<PIAFlightBookingForm> {
             _buildTextField(
               hint: 'First Name',
               prefixIcon: Icons.person_outline,
+              controller: bookingController.firstNameController,
             ),
             const SizedBox(height: 12),
             _buildTextField(
               hint: 'Last Name',
               prefixIcon: Icons.person_outline,
+              controller: bookingController.lastNameController,
             ),
             const SizedBox(height: 12),
             _buildTextField(
               hint: 'Email',
               prefixIcon: Icons.email_outlined,
               keyboardType: TextInputType.emailAddress,
+              controller: bookingController.emailController,
             ),
             const SizedBox(height: 12),
             _buildTextField(
               hint: 'Phone',
               prefixIcon: Icons.phone_outlined,
               keyboardType: TextInputType.phone,
+              controller: bookingController.phoneController,
             ),
             const SizedBox(height: 12),
             _buildTextField(
               hint: 'Address',
               prefixIcon: Icons.location_on_outlined,
+              controller: bookingController.addressController,
             ),
             const SizedBox(height: 12),
             _buildTextField(
               hint: 'City',
               prefixIcon: Icons.location_city_outlined,
+              controller: bookingController.cityController,
             ),
           ],
         ),
@@ -488,7 +534,7 @@ class _PIAFlightBookingFormState extends State<PIAFlightBookingForm> {
   Widget _buildDropdown({
     required String hint,
     required List<String> items,
-    required Function(String?) onChanged,
+    required TextEditingController controller,
   }) {
     return Container(
       decoration: BoxDecoration(
@@ -505,7 +551,9 @@ class _PIAFlightBookingFormState extends State<PIAFlightBookingForm> {
         items: items.map((String value) {
           return DropdownMenuItem<String>(value: value, child: Text(value));
         }).toList(),
-        onChanged: onChanged,
+        onChanged: (value) {
+          controller.text = value ?? '';
+        },
       ),
     );
   }
@@ -513,6 +561,7 @@ class _PIAFlightBookingFormState extends State<PIAFlightBookingForm> {
   Widget _buildTextField({
     required String hint,
     required IconData prefixIcon,
+    required TextEditingController controller,
     TextInputType keyboardType = TextInputType.text,
   }) {
     return Container(
@@ -522,6 +571,7 @@ class _PIAFlightBookingFormState extends State<PIAFlightBookingForm> {
         border: Border.all(color: Colors.grey[300]!),
       ),
       child: TextField(
+        controller: controller,
         keyboardType: keyboardType,
         decoration: InputDecoration(
           hintText: hint,
@@ -566,36 +616,62 @@ class _PIAFlightBookingFormState extends State<PIAFlightBookingForm> {
               ),
             ],
           ),
+          // In pia_booking_flight.dart
           ElevatedButton(
-            onPressed: () {
+            onPressed: () async {
+
               if (_formKey.currentState!.validate() && termsAccepted) {
-                Get.snackbar(
-                  'Success',
-                  'Booking would be created here',
-                  backgroundColor: Colors.green,
-                  colorText: Colors.white,
-                );
-              } else if (!termsAccepted) {
-                Get.snackbar(
-                  'Error',
-                  'Please accept terms and conditions',
-                  backgroundColor: Colors.red,
-                  colorText: Colors.white,
-                );
+
+                if (true) {
+                  try {
+                    print("check");
+                    // First save the booking
+                    final response = await PIAFlightApiService().savePIABooking(
+                      bookingController: bookingController,
+                      flight: widget.flight,
+                      returnFlight: widget.returnFlight,
+                      token: "Your_AuTh_Token",
+                    );
+
+                    // If booking is successful, create PNR
+                    if (response['status'] == 200) {
+                      final pnrResponse = await PIAFlightApiService().createPIAPNR(
+                        bookingController: bookingController,
+                        flight: widget.flight,
+                        returnFlight: widget.returnFlight,
+                      );
+
+                      if (pnrResponse['S:Envelope']?['S:Body']?['ns2:CreateBookingResponse'] != null ||
+                          pnrResponse['soapenv:Envelope']?['soapenv:Body']?['impl:CreateBookingResponse'] != null) {
+                        Get.snackbar(
+                          'Success',
+                          'Booking and PNR created successfully',
+                          backgroundColor: Colors.green,
+                          colorText: Colors.white,
+                        );
+                        Get.to(() => const FlightBookingDetailsScreen());
+                      } else {
+                        Get.snackbar(
+                          'Partial Success',
+                          'Booking saved but PNR creation failed',
+                          backgroundColor: Colors.orange,
+                          colorText: Colors.white,
+                        );
+                      }
+                    }
+                  } catch (e) {
+                    Get.snackbar(
+                      'Error',
+                      'An error occurred: $e',
+                      backgroundColor: Colors.red,
+                      colorText: Colors.white,
+                    );
+                  }
+                }
               }
             },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: TColors.primary,
-              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(24),
-              ),
-            ),
-            child: const Text(
-              'Create Booking',
-              style: TextStyle(color: Colors.white),
-            ),
-          ),
+            child: const Text('Create Booking'),
+          )
         ],
       ),
     );

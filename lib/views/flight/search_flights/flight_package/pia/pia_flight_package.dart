@@ -400,7 +400,7 @@ class PIAPackageSelectionDialog extends StatelessWidget {
         return 'No Meal';
     }
   }
-
+  // In pia_flight_package.dart
   void onSelectPackage(int selectedPackageIndex) async {
     try {
       isLoading.value = true;
@@ -409,12 +409,16 @@ class PIAPackageSelectionDialog extends StatelessWidget {
           .getFareOptionsForFlight(flight);
       final selectedFareOption = fareOptions[selectedPackageIndex];
 
-      if (piaController.isRoundTrip.value) {
+      // Create a copy of the flight with the selected fare option
+      final updatedFlight = flight.copyWith(
+        selectedFareOption: selectedFareOption,
+      );
+
+       if (piaController.isRoundTrip.value) {
         if (!isReturnFlight) {
-          // Store outbound selection and show return flights
-          piaController.selectedOutboundFlight = flight;
-          piaController.selectedOutboundFareOption = selectedFareOption;
-          Get.back(); // Close package dialog
+          piaController.selectedOutboundFlight = updatedFlight;
+          piaController.selectedOutboundFareOption =selectedFareOption;
+          Get.back();
           piaController.showReturnFlights.value = true;
           Get.to(
                 () => PIAReturnFlightsPage(
@@ -422,37 +426,85 @@ class PIAPackageSelectionDialog extends StatelessWidget {
             ),
           );
         } else {
-          // Store return selection and proceed to booking
-          piaController.selectedReturnFlight = flight;
-          piaController.selectedReturnFareOption = selectedFareOption;
-          Get.back(); // Close package dialog
+          piaController.selectedReturnFlight = updatedFlight;
+          piaController.selectedReturnFareOption =selectedFareOption;
+          Get.back();
           Get.to(() => PIAReviewTripPage(
-            flight: flight,
+            flight: updatedFlight,
             isReturn: true,
           ));
         }
       } else {
-        // For one-way or multi-city
-        piaController.selectedOutboundFlight = flight;
-        piaController.selectedOutboundFareOption = selectedFareOption;
-        Get.back(); // Close package dialog
+        piaController.selectedOutboundFlight = updatedFlight;
+        piaController.selectedOutboundFareOption =selectedFareOption;
+        Get.back();
         Get.to(() => PIAReviewTripPage(
-          flight: flight,
+          flight: updatedFlight,
           isReturn: false,
         ));
       }
-    } catch (e) {
-      Get.snackbar(
-        'Error',
-        'Failed to select package. Please try again.',
-        snackPosition: SnackPosition.TOP,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-        icon: const Icon(Icons.error_outline, color: Colors.white),
-        duration: const Duration(seconds: 3),
-      );
     } finally {
       isLoading.value = false;
     }
   }
+  //
+  // void onSelectPackage(int selectedPackageIndex) async {
+  //   try {
+  //     isLoading.value = true;
+  //
+  //     final List<PIAFareOption> fareOptions = piaController
+  //         .getFareOptionsForFlight(flight);
+  //     final selectedFareOption = fareOptions[selectedPackageIndex];
+  //
+  //     // Create a copy of the flight with the selected fare option
+  //     final updatedFlight = flight.copyWith(
+  //       selectedFareOption: selectedFareOption,
+  //     );
+  //
+  //     if (piaController.isRoundTrip.value) {
+  //       if (!isReturnFlight) {
+  //         // Store outbound selection and show return flights
+  //         piaController.selectedOutboundFlight = updatedFlight;
+  //         piaController.selectedOutboundFareOption = selectedFareOption;
+  //         Get.back(); // Close package dialog
+  //         piaController.showReturnFlights.value = true;
+  //         Get.to(
+  //               () => PIAReturnFlightsPage(
+  //             returnFlights: piaController.inboundFlights,
+  //           ),
+  //         );
+  //       } else {
+  //         // Store return selection and proceed to booking
+  //         piaController.selectedReturnFlight = updatedFlight;
+  //         piaController.selectedReturnFareOption = selectedFareOption;
+  //         Get.back(); // Close package dialog
+  //         Get.to(() => PIAReviewTripPage(
+  //           flight: updatedFlight,
+  //           isReturn: true,
+  //         ));
+  //       }
+  //     } else {
+  //       // For one-way or multi-city
+  //       piaController.selectedOutboundFlight = flight;
+  //       piaController.selectedOutboundFareOption = selectedFareOption;
+  //       Get.back(); // Close package dialog
+  //       Get.to(() => PIAReviewTripPage(
+  //         flight: updatedFlight,
+  //         isReturn: false,
+  //       ));
+  //     }
+  //   } catch (e) {
+  //     Get.snackbar(
+  //       'Error',
+  //       'Failed to select package. Please try again.',
+  //       snackPosition: SnackPosition.TOP,
+  //       backgroundColor: Colors.red,
+  //       colorText: Colors.white,
+  //       icon: const Icon(Icons.error_outline, color: Colors.white),
+  //       duration: const Duration(seconds: 3),
+  //     );
+  //   } finally {
+  //     isLoading.value = false;
+  //   }
+  // }
 }

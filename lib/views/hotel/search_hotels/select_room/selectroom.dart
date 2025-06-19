@@ -85,6 +85,7 @@ class _SelectRoomScreenState extends State<SelectRoomScreen>
       _showErrorDialog(
         'An error occurred while processing your booking. Please try again.',
       );
+      print('Booking error: $e');
     } finally {
       setState(() {
         isLoading = false;
@@ -322,12 +323,12 @@ class _SelectRoomScreenState extends State<SelectRoomScreen>
             style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 8),
-          const Row(
+          Row(
             children: [
               Icon(Icons.star, color: TColors.primary, size: 18),
               SizedBox(width: 4),
               Text(
-                '4 Star Hotel',
+                '${controller.ratingstar.value.toString()} Star Hotel',
                 style: TextStyle(color: TColors.grey, fontSize: 14),
               ),
             ],

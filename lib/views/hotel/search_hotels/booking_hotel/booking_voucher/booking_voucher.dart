@@ -1,4 +1,4 @@
-// ignore_for_file: use_build_context_synchronously
+// ignore_for_file: unused_element, unnecessary_import, use_super_parameters, use_build_context_synchronously
 
 import 'dart:async';
 
@@ -15,6 +15,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:printing/printing.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
+import 'dart:typed_data';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 
@@ -26,7 +27,7 @@ class HotelVoucherScreen extends StatelessWidget {
   final GuestsController guestsController = Get.find<GuestsController>();
   final BookingController bookingController = Get.put(BookingController());
 
-  HotelVoucherScreen({super.key});
+  HotelVoucherScreen({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -1436,7 +1437,64 @@ class HotelVoucherScreen extends StatelessWidget {
     return const Divider(height: 1, thickness: 1);
   }
 
+  Widget _buildActionButtons(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      children: [
+        _buildActionButton(
+          context,
+          icon: Icons.email_outlined,
+          label: 'Email Voucher',
+          onTap: () {
+            ScaffoldMessenger.of(
+              context,
+            ).showSnackBar(const SnackBar(content: Text('Sending email...')));
+          },
+        ),
+        _buildActionButton(
+          context,
+          icon: Icons.print,
+          label: 'Print Voucher',
+          onTap: () {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Preparing to print...')),
+            );
+          },
+        ),
+        _buildActionButton(
+          context,
+          icon: Icons.support_agent,
+          label: 'Contact Support',
+          onTap: () => _makePhoneCall('+8227889769'),
+        ),
+      ],
+    );
+  }
 
+  Widget _buildActionButton(
+    BuildContext context, {
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFFAB00),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(icon, color: Colors.white, size: 24),
+          ),
+          const SizedBox(height: 8),
+          Text(label, style: const TextStyle(fontSize: 12)),
+        ],
+      ),
+    );
+  }
 
   Future<void> _makePhoneCall(String phoneNumber) async {
     final Uri launchUri = Uri(scheme: 'tel', path: phoneNumber);

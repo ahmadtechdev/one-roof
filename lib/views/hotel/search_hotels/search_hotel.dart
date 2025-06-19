@@ -4,6 +4,7 @@ import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:get/get.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:oneroof/utility/colors.dart' show TColors;
+import 'package:oneroof/views/hotel/hotel/hotel_date_controller.dart';
 
 import '../../../services/api_service_hotel.dart';
 import 'search_hotel_controller.dart';
@@ -18,8 +19,20 @@ class HotelScreen extends StatefulWidget {
 
 class _HotelScreenState extends State<HotelScreen> {
   @override
+  void initState() {
+    super.initState();
+    // Initialize the filter data when screen loads
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final SearchHotelController controller =
+          Get.find<SearchHotelController>();
+      controller.filterhotler();
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     final SearchHotelController controller = Get.find<SearchHotelController>();
+
     Widget buildRatingBar(double rating) {
       return RatingBarIndicator(
         rating: rating,
@@ -72,6 +85,7 @@ class _HotelScreenState extends State<HotelScreen> {
                             ],
                           );
                         }
+                        int starRating = 5 - index;
                         return Row(
                           children: [
                             Checkbox(
@@ -81,10 +95,10 @@ class _HotelScreenState extends State<HotelScreen> {
                               },
                               activeColor: TColors.primary,
                             ),
-                            buildRatingBar((5 - index).toDouble()),
+                            buildRatingBar(starRating.toDouble()),
                             const SizedBox(width: 8),
                             Text(
-                              '(${controller.hotels.where((hotel) => hotel['rating'] == 5 - index).length})',
+                              '(${controller.getHotelCountByRating(starRating)})',
                               style: const TextStyle(color: Colors.grey),
                             ),
                           ],
@@ -97,12 +111,8 @@ class _HotelScreenState extends State<HotelScreen> {
                       children: [
                         ElevatedButton(
                           onPressed: () {
-                            Get.back();
-
-                            // setState(() {
-                            //   selectedOption = 'Recommended';
-                            // });
                             controller.resetFilters();
+                            Get.back();
                           },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.grey[200],
@@ -172,7 +182,6 @@ class _HotelScreenState extends State<HotelScreen> {
                     ),
                   ),
                 ),
-
                 const SizedBox(height: 16),
                 // Buttons: Filter, Sort, Price
                 Row(
@@ -183,7 +192,6 @@ class _HotelScreenState extends State<HotelScreen> {
                     }),
                     _buildButton(context, Icons.sort, 'Sort', () {
                       _showSortOptionsBottomSheet(context, controller);
-                      // Implement Sort Action
                     }),
                     _buildButton(context, Icons.attach_money, 'Price', () {
                       _showPriceRangeBottomSheet(context, controller);
@@ -303,10 +311,8 @@ class _HotelScreenState extends State<HotelScreen> {
                     children: [
                       ElevatedButton(
                         onPressed: () {
-                          Get.back();
-
-                          //
                           controller.resetFilters();
+                          Get.back();
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.grey[200],
@@ -340,13 +346,15 @@ class _HotelScreenState extends State<HotelScreen> {
     BuildContext context,
     SearchHotelController controller,
   ) {
-    // Calculate min and max prices dynamically from the hotels list
+    // Calculate min and max prices dynamically from the original hotels list
     final prices =
-        controller.hotels
+        controller.originalHotels
             .map(
-              (hotel) => double.parse(
-                hotel['price'].toString().replaceAll(',', '').trim(),
-              ),
+              (hotel) =>
+                  double.tryParse(
+                    hotel['price'].toString().replaceAll(',', '').trim(),
+                  ) ??
+                  0.0,
             )
             .toList();
 
@@ -416,9 +424,9 @@ class _HotelScreenState extends State<HotelScreen> {
                           setState(() {
                             lowerValue = minPrice;
                             upperValue = maxPrice;
-                            controller.resetFilters();
-                            Get.back();
                           });
+                          controller.resetFilters();
+                          Get.back();
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.grey[200],
@@ -455,6 +463,7 @@ class HotelCard extends StatelessWidget {
   HotelCard({super.key, required this.hotel});
 
   final SearchHotelController controller = Get.find<SearchHotelController>();
+  final HotelDateController dateController = Get.find<HotelDateController>();
 
   @override
   Widget build(BuildContext context) {
@@ -546,7 +555,7 @@ class HotelCard extends StatelessWidget {
                     ),
                     const Spacer(),
                     Text(
-                      'USD ${(hotel['price'] ?? 0.0)}',
+                      'PKR ${(((hotel['price'] ?? 0.0) / dateController.nights.value).round())}',
                       style: const TextStyle(
                         fontSize: 18,
                         color: TColors.text,
@@ -566,6 +575,8 @@ class HotelCard extends StatelessWidget {
             ),
             child: ElevatedButton(
               onPressed: () {
+                controller.ratingstar.value =
+                    (hotel['rating'] as double).toInt();
                 controller.hotelCode.value = hotel['hotelCode'];
                 controller.hotelCity.value = hotel['hotelCity'];
                 controller.lat.value = hotel['latitude'];

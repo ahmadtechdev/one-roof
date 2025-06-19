@@ -14,15 +14,19 @@ import '../views/flight/search_flights/flight_package/airblue/airblue_flight_mod
 import '../views/flight/search_flights/flight_package/sabre/sabre_flight_models.dart';
 
 class AirBlueFlightApiService {
-  final String link = 'https://otatest2.zapways.com/v2.0/OTAAPI.asmx';
-  final String sslCert = 'https://agent1.pk/flight/classes/toc/cert.pem';
-  final String sslKey = 'https://agent1.pk/flight/classes/toc/key.pem';
-  final String airsslCert = 'https://agent1.pk/flight/classes/toc/cert.pem';
-  final String airsslKey = 'https://agent1.pk/flight/classes/toc/key.pem';
-  final String ERSP_UserID = '2012/86B5EFDFF02E2966CBB6EECFF6FC339222';
-  final String ID = 'travelocityota';
-  final String MessagePassword = 'nRve2!EzPrc4cdvt';
-  final String Target = 'Test';
+  // final String link = 'https://otatest2.zapways.com/v2.0/OTAAPI.asmx';
+  final String link = 'https://ota2.zapways.com/v2.0/OTAAPI.asmx';
+  final String sslCert = 'https://onerooftravel.net/flights/classes/airBlue/oneroof/cert.pem';
+  final String sslKey = 'https://onerooftravel.net/flights/classes/airBlue/oneroof/key.pem';
+
+  // final String ERSP_UserID = '2012/86B5EFDFF02E2966CBB6EECFF6FC339222';
+  // final String ID = 'travelocityota';
+  // final String MessagePassword = 'nRve2!EzPrc4cdvt';
+  // final String Target = 'Test';
+  final String ERSP_UserID = '1995/5EE590B47346FDCCDBC589A53398F9AF25';
+  final String ID = 'OneRoofTravelsOTA';
+  final String MessagePassword = 'Jpn3nZnkd9@fR';
+  final String Target = 'Production';
   final String Version = '1.04';
   final String Type = '29';
 
@@ -142,6 +146,9 @@ class AirBlueFlightApiService {
       // print("request");
       final xmlRequest = request.toString();
       _convertXmlToJson(xmlRequest);
+      printDebugData('Air Blue Request', xmlRequest);
+
+
       // _printJsonPretty(jsonRequest);
 
       // Log the request (matching PHP format)
@@ -159,6 +166,7 @@ class AirBlueFlightApiService {
       await certFile.writeAsBytes(certData.buffer.asUint8List());
       await keyFile.writeAsBytes(keyData.buffer.asUint8List());
 
+
       // Configure Dio with SSL certificates
       final dio = Dio(
         BaseOptions(
@@ -166,7 +174,6 @@ class AirBlueFlightApiService {
           headers: {'Content-Type': 'text/xml; charset=utf-8'},
         ),
       );
-
       // Create SecurityContext with certificates
       final SecurityContext securityContext = SecurityContext();
       securityContext.useCertificateChain(certFile.path);
@@ -186,7 +193,6 @@ class AirBlueFlightApiService {
       dio.httpClientAdapter = IOHttpClientAdapter(
         createHttpClient: () => httpClient,
       );
-
       // Make the API call
       final response = await dio.post(
         link,
@@ -196,20 +202,22 @@ class AirBlueFlightApiService {
           responseType: ResponseType.plain,
         ),
       );
+
       // Convert XML to JSON using xml2json package
       final xmlResponse = response.data.toString();
       _convertXmlToJson(xmlResponse);
 
-      // print("response");
-      // _printJsonPretty(jsonResponse);
+      printDebugData('Air Blue Response', xmlResponse);
 
-      // Log the response (matching PHP format)
+      // printJsonPretty(jsonResponse);
+
+      // // Log the response (matching PHP format)
       // await _logResponse(response.data.toString(), 'Shopping_response');
 
       // Convert XML to JSON
       return _convertXmlToJson(response.data.toString());
     } catch (e) {
-      // print('Error in shoppingFlight: $e');
+      print('Error in shoppingFlight: $e');
       rethrow;
     }
   }
@@ -929,32 +937,44 @@ class AirBlueFlightApiService {
     }
   }
 
-  /// Prints both XML and corresponding JSON representation
   void printDebugData(String label, dynamic data) {
+    print('--- DEBUG: $label ---');
 
     if (data is String && data.trim().startsWith('<')) {
       // Handle XML string
-      printXmlPretty(data);
+      print('Raw XML:\n$data');
 
       try {
-        // Try to convert XML to JSON for comparison
+        // Convert XML to JSON
         final jsonData = _convertXmlToJson(data);
         printJsonPretty(jsonData);
       } catch (e) {
+        print('Error converting XML to JSON: $e');
       }
     } else if (data is String) {
-      // Handle plain string
+      // Plain string
+      print('Plain String:\n$data');
     } else {
-      // Handle JSON/Map data
+      // JSON/Map or other object
       printJsonPretty(data);
     }
+
+    print('--- END DEBUG: $label ---\n');
   }
 
-  /// Prints JSON in a nicely formatted way with chunking to avoid console truncation
+  /// Converts XML string to JSON (Map)
+
+
+  /// Prints JSON nicely with chunking
   void printJsonPretty(dynamic jsonData) {
     const int chunkSize = 1000;
     final jsonString = const JsonEncoder.withIndent('  ').convert(jsonData);
     for (int i = 0; i < jsonString.length; i += chunkSize) {
+      final chunk = jsonString.substring(
+        i,
+        i + chunkSize < jsonString.length ? i + chunkSize : jsonString.length,
+      );
+      print(chunk);
     }
   }
 }

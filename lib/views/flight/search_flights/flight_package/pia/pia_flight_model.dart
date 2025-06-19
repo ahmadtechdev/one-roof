@@ -42,6 +42,7 @@ class PIAFlight {
   final String? boundCode;
   final String? date; // Add date to help with grouping
   final bool isMultiCity;
+  PIAFareOption? selectedFareOption;
 
   PIAFlight({
     required this.imgPath,
@@ -86,6 +87,7 @@ class PIAFlight {
     required this.segmentInfo,
     required this.pricingInforArray,
     this.isMultiCity = false,
+    this.selectedFareOption,
   });
 
   factory PIAFlight.fromApiResponse(
@@ -343,6 +345,7 @@ class PIAFlight {
     bool? isOutbound,
     String? boundCode,
     String? date,
+    PIAFareOption? selectedFareOption,
   }) {
     return PIAFlight(
       imgPath: imgPath,
@@ -387,6 +390,7 @@ class PIAFlight {
       boundCode: boundCode ?? this.boundCode,
       date: date ?? this.date,
       isMultiCity: isMultiCity ?? this.isMultiCity,
+      selectedFareOption: selectedFareOption ?? this.selectedFareOption,
     );
   }
 

@@ -8,6 +8,9 @@ import '../sabre/sabre_flight_models.dart';
 class AirBlueFlight {
   final String id;
   final double price;
+  final double basePrice;
+  final double taxAmount;
+  final double feeAmount;
   final String currency;
   final bool isRefundable;
   final BaggageAllowance baggageAllowance;
@@ -24,6 +27,9 @@ class AirBlueFlight {
   AirBlueFlight({
     required this.id,
     required this.price,
+    required this.basePrice,
+    required this.taxAmount,
+    required this.feeAmount,
     required this.currency,
     required this.isRefundable,
     required this.baggageAllowance,
@@ -58,6 +64,9 @@ class AirBlueFlight {
       // Extract pricing info
       final pricingInfo = json['AirItineraryPricingInfo'];
       final totalFare = pricingInfo['ItinTotalFare']['TotalFare'];
+      final basePrice = pricingInfo['ItinTotalFare']['BaseFare'];
+      final taxAmount = pricingInfo['ItinTotalFare']['Taxes'];
+      final feeAmount = pricingInfo['ItinTotalFare']['Fees'];
 
       // Generate a unique ID
       final flightId = '${flightSegment['FlightNumber'] ?? 'UNKNOWN'}-${DateTime.now().millisecondsSinceEpoch}';
@@ -71,6 +80,9 @@ class AirBlueFlight {
       return AirBlueFlight(
         id: flightId,
         price: double.tryParse(totalFare['Amount']?.toString() ?? '0') ?? 0,
+        basePrice: double.tryParse(basePrice['Amount']?.toString() ?? '0') ?? 0,
+        taxAmount: double.tryParse(taxAmount['Amount']?.toString() ?? '0') ?? 0,
+        feeAmount: double.tryParse(feeAmount['Amount']?.toString() ?? '0') ?? 0,
         currency: totalFare['CurrencyCode'] ?? 'PKR',
         isRefundable: _determineRefundable(json),
         baggageAllowance: baggageInfo,
@@ -99,6 +111,9 @@ class AirBlueFlight {
     return AirBlueFlight(
       id: id,
       price: price,
+      basePrice: basePrice,
+      taxAmount: taxAmount,
+      feeAmount: feeAmount,
       currency: currency,
       isRefundable: isRefundable,
       baggageAllowance: baggageAllowance,
@@ -397,6 +412,9 @@ class AirBlueFareOption {
   final String cabinName;
   final String brandName;
   final double price;
+  final double basePrice;
+  final double taxAmount;
+  final double feeAmount;
   final String currency;
   final bool isRefundable;
   final String mealCode;
@@ -412,6 +430,9 @@ class AirBlueFareOption {
     required this.cabinName,
     required this.brandName,
     required this.price,
+    required this.basePrice,
+    required this.taxAmount,
+    required this.feeAmount,
     required this.currency,
     required this.isRefundable,
     required this.mealCode,
@@ -445,6 +466,9 @@ class AirBlueFareOption {
       cabinName: cabinName,
       brandName: fareName, // Using fareName as brandName
       price: flight.price,
+      basePrice: flight.basePrice,
+      taxAmount: flight.taxAmount,
+      feeAmount: flight.feeAmount,
       currency: flight.currency,
       isRefundable: isRefundable,
       mealCode: 'M', // Default to meal available
