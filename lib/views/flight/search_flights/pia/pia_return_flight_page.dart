@@ -2,8 +2,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../../../../../utility/colors.dart';
-import '../../search_flight_utils/widgets/pia_flight_card.dart';
+import '../../../../utility/colors.dart';
+import '../search_flight_utils/widgets/pia_flight_card.dart';
 import 'pia_flight_model.dart';
 import 'pia_flight_controller.dart';
 

@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../../../../../services/api_service_flight.dart';
-import '../../flight_package/airblue/airblue_flight_controller.dart';
-import '../../flight_package/pia/pia_flight_controller.dart';
-import '../../flight_package/sabre/sabre_flight_controller.dart';
+import '../../../../../services/api_service_sabre.dart';
+import '../../airblue/airblue_flight_controller.dart';
+import '../../pia/pia_flight_controller.dart';
+import '../../sabre/sabre_flight_controller.dart';
 import '../filter_flight_model.dart';
 import '../helper_functions.dart';
 
@@ -49,7 +49,7 @@ class FilterBottomSheet extends StatelessWidget {
           Obx(() => Wrap(
             spacing: 8,
             children: allAirlines.map((code) {
-              final airlineMap = Get.find<ApiServiceFlight>().getAirlineMap();
+              final airlineMap = Get.find<ApiServiceSabre>().getAirlineMap();
               final airlineInfo = getAirlineInfo(code, airlineMap);
               return FilterChip(
                 label: Text(airlineInfo.name),

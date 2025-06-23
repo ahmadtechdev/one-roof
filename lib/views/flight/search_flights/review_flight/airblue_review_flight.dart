@@ -4,9 +4,9 @@ import 'dart:async';
 
 import '../../../../utility/colors.dart';
 import '../../../../widgets/travelers_selection_bottom_sheet.dart';
+import '../airblue/airblue_flight_model.dart';
 import '../booking_flight/airblue_booking_flight.dart';
-import '../flight_package/airblue/airblue_flight_model.dart';
-import '../flight_package/airblue/airblue_flight_controller.dart';
+import '../airblue/airblue_flight_controller.dart';
 import '../search_flight_utils/widgets/airblue_flight_card.dart';
 
 class AirBlueReviewTripPage extends StatefulWidget {
@@ -458,9 +458,10 @@ class AirBlueReviewTripPageState extends State<AirBlueReviewTripPage> {
                           returnFlight: widget.isReturn ? airBlueController.selectedReturnFlight : null,
                           totalPrice: combinedTotalPrice,
                           currency: currency,
+                          outboundFareOption: airBlueController.selectedOutboundFareOption,
+                          returnFareOption: airBlueController.selectedReturnFareOption,
                         ));
 
-                        Get.snackbar("Its working ","you are amazing ");
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: TColors.primary,

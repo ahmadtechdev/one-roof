@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:oneroof/views/flight/search_flights/flight_package/airblue/airblue_flight_controller.dart';
+import 'package:oneroof/views/flight/search_flights/airblue/airblue_flight_controller.dart';
 import 'package:oneroof/views/flight/search_flights/search_flight_utils/widgets/airblue_flight_card.dart';
 
 import '../../../utility/colors.dart';
-import 'flight_package/pia/pia_flight_controller.dart';
-import 'flight_package/sabre/sabre_flight_controller.dart';
+import 'pia/pia_flight_controller.dart';
+import 'sabre/sabre_flight_controller.dart';
 import 'search_flight_utils/filter_flight_model.dart';
 import 'search_flight_utils/widgets/currency_dialog.dart';
 import 'search_flight_utils/widgets/flight_bottom_sheet.dart';
@@ -19,7 +19,8 @@ enum FlightScenario { oneWay, returnFlight, multiCity }
 class FlightBookingPage extends StatelessWidget {
   final FlightScenario scenario;
   final FlightController controller = Get.put(FlightController());
-  final AirBlueFlightController airBlueController = Get.put(AirBlueFlightController());
+  final AirBlueFlightController airBlueController = Get.find<AirBlueFlightController>();
+
   final PIAFlightController piaController = Get.put(PIAFlightController());
 
   FlightBookingPage({super.key, required this.scenario}) {
@@ -164,65 +165,8 @@ class FlightBookingPage extends StatelessWidget {
     );
   }
 
-  // Update the _buildFlightList method in FlightBookingPage
-// Update the _buildFlightList method
-  // In search_flights.dart, update the _buildFlightList method:
-  // Widget _buildFlightList() {
-  //   final airBlueController = Get.put(AirBlueFlightController());
-  //
-  //   return Expanded(
-  //     child: Obx(() {
-  //       if (controller.filteredFlights.isEmpty && airBlueController.flights.isEmpty) {
-  //         return Center(
-  //           child: Column(
-  //             mainAxisAlignment: MainAxisAlignment.center,
-  //             children: [
-  //               const Text(
-  //                 'No flights match your criteria.',
-  //                 style: TextStyle(color: TColors.grey),
-  //               ),
-  //               if (airBlueController.errorMessage.isNotEmpty)
-  //                 Padding(
-  //                   padding: const EdgeInsets.only(top: 8.0),
-  //                   child: Text(
-  //                     airBlueController.errorMessage.value,
-  //                     style: const TextStyle(color: Colors.red),
-  //                   ),
-  //                 ),
-  //             ],
-  //           ),
-  //         );
-  //       }
-  //
-  //       return ListView.builder(
-  //         itemCount: controller.filteredFlights.length + airBlueController.flights.length,
-  //         itemBuilder: (context, index) {
-  //           if (index < controller.filteredFlights.length) {
-  //             // Sabre flight
-  //             final flight = controller.filteredFlights[index];
-  //             return GestureDetector(
-  //               onTap: () => controller.handleFlightSelection(flight),
-  //               child: FlightCard(flight: flight),
-  //             );
-  //           } else {
-  //             // AirBlue flight
-  //             final airBlueIndex = index - controller.filteredFlights.length;
-  //             final airBlueFlight = airBlueController.flights[airBlueIndex];
-  //             return GestureDetector(
-  //               onTap: () => airBlueController.handleAirBlueFlightSelection(airBlueFlight),
-  //               child: AirBlueFlightCard(flight: airBlueFlight),
-  //             );
-  //           }
-  //         },
-  //       );
-  //     }),
-  //   );
-  // }
-
-  // In the _buildFlightList method
-// In search_flights.dart, update the _buildFlightList method:
   Widget _buildFlightList() {
-    final airBlueController = Get.put(AirBlueFlightController());
+    final airBlueController = Get.find<AirBlueFlightController>();
     final piaController = Get.put(PIAFlightController());
     final flightController = Get.find<FlightController>();
 

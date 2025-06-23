@@ -34,7 +34,7 @@ class GroupTicketingController extends GetxController {
       'Accept': 'application/json',
       'Authorization': 'Bearer $alhaiderAuthToken',
       'Cookie':
-          'XSRF-TOKEN=your_xsrf_token_here; al_haider_international_travels_tours_session=your_session_token_here',
+      'XSRF-TOKEN=your_xsrf_token_here; al_haider_international_travels_tours_session=your_session_token_here',
     };
   }
 
@@ -188,18 +188,18 @@ class GroupTicketingController extends GetxController {
           "agent_notes": agentNotes ?? "",
         },
         "booking_details":
-            passengers
-                .map(
-                  (passenger) => {
-                    "surname": passenger['lastName'],
-                    "given_name": passenger['firstName'],
-                    "title": passenger['title'],
-                    "passport_no": passenger['passportNumber'] ?? "",
-                    "dob": passenger['dateOfBirth'] ?? "",
-                    "doe": passenger['passportExpiry'] ?? "",
-                  },
-                )
-                .toList(),
+        passengers
+            .map(
+              (passenger) => {
+            "surname": passenger['lastName'],
+            "given_name": passenger['firstName'],
+            "title": passenger['title'],
+            "passport_no": passenger['passportNumber'] ?? "",
+            "dob": passenger['dateOfBirth'] ?? "",
+            "doe": passenger['passportExpiry'] ?? "",
+          },
+        )
+            .toList(),
         "group_price_detail_id": groupPriceDetailId,
       };
 
@@ -246,7 +246,7 @@ class GroupTicketingController extends GetxController {
               return {
                 'success': false,
                 'message':
-                    innerData['message'] ??
+                innerData['message'] ??
                     'Booking could not be created - no data returned',
                 'data': null,
               };
@@ -282,7 +282,7 @@ class GroupTicketingController extends GetxController {
         return {
           'success': false,
           'message':
-              'Request timed out. Please check your internet connection and try again.',
+          'Request timed out. Please check your internet connection and try again.',
           'error_details': e.message,
           'data': null,
         };
@@ -438,6 +438,184 @@ class GroupTicketingController extends GetxController {
     } catch (e) {
       print("Exception in fetchCombinedAirlines: $e");
       return [];
+    }
+  }
+
+  // savebooking into database
+  // Updated saveBooking_into_database function
+  Future<Map<String, dynamic>> saveBooking_into_database({
+    required String bookername,
+    required String bookername_num,
+    required String booker_email,
+    required int groupId,
+    required String agentName,
+    required String agencyName,
+    required String email,
+    required String mobile,
+    required int adults,
+    int? children,
+    int? infants,
+    String? agentNotes,
+    required List<Map<String, dynamic>> passengers,
+    required int groupPriceDetailId,
+    // Additional parameters for the accurate API
+    int? noOfSeats,
+    double? fares,
+    String? airlineName,
+  }) async {
+    try {
+      // Validate passengers data before creating the request
+      for (var passenger in passengers) {
+        if (passenger['firstName'] == null ||
+            passenger['lastName'] == null ||
+            passenger['title'] == null) {
+          return {
+            'success': false,
+            'message': 'Missing required passenger information (name or title)',
+            'data': null,
+          };
+        }
+
+        // Handle potential null dates safely
+        String? dob = passenger['dateOfBirth'];
+        String? doe = passenger['passportExpiry'];
+
+        // Format dates only if they exist
+        if (dob != null && dob.length >= 10) {
+          passenger['dateOfBirth'] = dob.substring(0, 10);
+        }
+
+        if (doe != null && doe.length >= 10) {
+          passenger['passportExpiry'] = doe.substring(0, 10);
+        }
+      }
+
+      // Get current timestamp for created_at
+      final currentDate = DateTime.now().toIso8601String().substring(0, 10);
+
+      final data = {
+        "group_id": groupId,
+        "booker_data": {
+          "name": bookername.isNotEmpty ? bookername : "OneRoofTravel",
+          "email":
+          booker_email.isNotEmpty ? booker_email : "resOneroof@gmail.com",
+          "mobile": bookername_num.isNotEmpty ? bookername_num : "03001232412",
+        },
+        "agency_info": {
+          "group_id": groupId,
+
+          "agent_name": agentName,
+          "agency_name": agencyName,
+          "created_at": currentDate, // Current timestamp
+          "no_of_seats":
+          (noOfSeats ?? (adults + (children ?? 0) + (infants ?? 0)))
+              .toString(),
+          "fares": fares ?? 642.0, // Default fare or calculated
+          "airline_name":
+          airlineName ?? "Default Airline", // Default airline name
+          "adults": adults,
+          "child": children ?? 0,
+          "infant": infants ?? 0,
+          "agent_notes": agentNotes,
+        },
+        "booking_details":
+        passengers
+            .map(
+              (passenger) => {
+            "surname": passenger['lastName'],
+            "given_name": passenger['firstName'],
+            "title":
+            passenger['title']?.toUpperCase() ??
+                "MR", // Ensure uppercase
+            "passport_no": passenger['passportNumber'] ?? "",
+            "dob": passenger['dateOfBirth'] ?? "",
+            "doe": passenger['passportExpiry'] ?? "",
+          },
+        )
+            .toList(),
+        "group_price_detail_id": groupPriceDetailId,
+      };
+
+      print('Sending booking data to database: ${jsonEncode(data)}');
+
+      // Updated endpoint URL based on the accurate API
+      var response = await dio1.post(
+        'https://onerooftravel.net/api/save-group-ticketing',
+        data: data,
+        options: dio.Options(
+          headers: {'Content-Type': 'application/json'},
+          receiveTimeout: const Duration(seconds: 30),
+          sendTimeout: const Duration(seconds: 30),
+        ),
+      );
+
+      print('Database Response status: ${response.statusCode}');
+      print('Database Response data: ${response.data}');
+
+      if (response.statusCode == 200) {
+        return {
+          'success': true,
+          'message': 'Booking saved to database successfully',
+          'data': response.data,
+        };
+      } else {
+        return {
+          'success': false,
+          'message':
+          'Failed to save booking to database. Status: ${response.statusCode}',
+          'error_details': response.data?.toString() ?? 'No error details',
+          'data': null,
+        };
+      }
+    } on dio.DioException catch (e) {
+      print('DioException in saveBooking_into_database:');
+      print('- Type: ${e.type}');
+      print('- Message: ${e.message}');
+      print('- Response status: ${e.response?.statusCode}');
+      print('- Response data: ${e.response?.data}');
+
+      if (e.type == dio.DioExceptionType.connectionTimeout ||
+          e.type == dio.DioExceptionType.sendTimeout ||
+          e.type == dio.DioExceptionType.receiveTimeout) {
+        return {
+          'success': false,
+          'message': 'Database request timed out. Please try again.',
+          'error_details': e.message,
+          'data': null,
+        };
+      } else if (e.type == dio.DioExceptionType.badResponse) {
+        final errorData = e.response?.data;
+        String errorMessage = 'Database server returned an error';
+
+        if (errorData is Map<String, dynamic>) {
+          errorMessage = errorData['message'] ?? errorMessage;
+        }
+
+        return {
+          'success': false,
+          'message': errorMessage,
+          'error_details': errorData?.toString(),
+          'status_code': e.response?.statusCode,
+          'data': null,
+        };
+      }
+
+      return {
+        'success': false,
+        'message': 'Database network error occurred: ${e.message}',
+        'error_details': e.response?.data?.toString() ?? 'No error details',
+        'data': null,
+      };
+    } catch (e, stackTrace) {
+      print('Unexpected error in saveBooking_into_database: $e');
+      print('Stack trace: $stackTrace');
+
+      return {
+        'success': false,
+        'message': 'An unexpected database error occurred',
+        'error_details': e.toString(),
+        'data': null,
+      };
     }
   }
 }

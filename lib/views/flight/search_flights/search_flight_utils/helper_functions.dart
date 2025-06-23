@@ -2,10 +2,7 @@
 
 import '../../../../widgets/colors.dart';
 import '../../../../widgets/snackbar.dart';
-
-import '../flight_package/sabre/sabre_flight_models.dart';
-
-
+import '../sabre/sabre_flight_models.dart';
 
 String getFareType(Map<String, dynamic> fareInfo) {
   try {

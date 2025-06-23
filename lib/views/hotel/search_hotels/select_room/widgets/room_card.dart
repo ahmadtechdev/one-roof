@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
@@ -424,7 +425,9 @@ class RoomCard extends StatelessWidget {
       // Dismiss loading dialog if still showing
       // ignore: use_build_context_synchronously
       Navigator.pop(context);
-      print('Error showing cancellation policy: $e');
+      if (kDebugMode) {
+        print('Error showing cancellation policy: $e');
+      }
     }
   }
 
@@ -459,7 +462,9 @@ class RoomCard extends StatelessWidget {
         final priceBreakdown = response['priceBreakdown'] as List?;
         if (priceBreakdown?.isNotEmpty ?? false) {
           final roomData = priceBreakdown![0];
-          print(roomData['dateRange']);
+          if (kDebugMode) {
+            print(roomData['dateRange']);
+          }
           final dateRanges =
               roomData['dateRange'] != null
                   ? List<Map<String, dynamic>>.from(roomData['dateRange'])
@@ -557,7 +562,9 @@ class RoomCard extends StatelessWidget {
                                   ),
                                   // Daily Price Breakdown
                                   ...dateRanges.map((dateRange) {
-                                    print(dateRanges);
+                                    if (kDebugMode) {
+                                      print(dateRanges);
+                                    }
                                     final fromDate = DateTime.tryParse(
                                       dateRange['fromDate'] ?? '',
                                     );
@@ -654,7 +661,9 @@ class RoomCard extends StatelessWidget {
       // Dismiss loading dialog if still showing
       // ignore: use_build_context_synchronously
       Navigator.pop(context);
-      print('Error showing price breakup: $e');
+      if (kDebugMode) {
+        print('Error showing price breakup: $e');
+      }
     }
   }
 
@@ -831,7 +840,7 @@ class RoomCard extends StatelessWidget {
             ),
             const SizedBox(height: 4),
             Text(
-              '\PKR ${pricePerNight.round()}',
+              'PKR ${pricePerNight.round()}',
               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
             ),
           ],
@@ -851,7 +860,7 @@ class RoomCard extends StatelessWidget {
             ),
             const SizedBox(height: 4),
             Text(
-              '\PKR ${totalPrice.round()}',
+              'PKR ${totalPrice.round()}',
               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
             ),
           ],

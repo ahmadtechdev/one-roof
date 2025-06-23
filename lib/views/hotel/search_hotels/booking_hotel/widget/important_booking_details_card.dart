@@ -144,7 +144,7 @@ class _ImportantBookingDetailsCardState
               '${guestsController.roomCount.toString()} Room',
             ),
             const Divider(height: 24),
-            _buildPriceSection(slectroomcontroller.totalPrice.value.toString()),
+            _buildPriceSection(slectroomcontroller.totalPrice.value.toStringAsFixed(0)),
           ],
         ),
       ),

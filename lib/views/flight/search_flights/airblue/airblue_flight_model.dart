@@ -4,6 +4,7 @@
 
 import 'package:flutter/foundation.dart';
 import '../sabre/sabre_flight_models.dart';
+import 'airblue_pnr_pricing.dart';
 
 class AirBlueFlight {
   final String id;
@@ -23,6 +24,7 @@ class AirBlueFlight {
   final String rph; // Added RPH field
   final List<AirBlueFareOption>? fareOptions;
   final Map<String, dynamic> rawData;// Added for storing different fare options
+  final List<AirBluePNRPricing>? pnrPricing;
 
   AirBlueFlight({
     required this.id,
@@ -42,6 +44,7 @@ class AirBlueFlight {
     required this.rph, // Required RPH parameter
     this.fareOptions,
     required this.rawData,
+    this.pnrPricing,
   });
 
   factory AirBlueFlight.fromJson(Map<String, dynamic> json, Map<String, AirlineInfo> airlineMap) {
@@ -94,6 +97,7 @@ class AirBlueFlight {
         airlineImg: airlineInfo.logoPath,
         rph: rph,
         rawData: json,// Set the RPH value
+
       );
     } catch (e, stackTrace) {
       if (kDebugMode) {
@@ -104,10 +108,7 @@ class AirBlueFlight {
     }
   }
 
-  // Create a new instance with fare options
   AirBlueFlight copyWithFareOptions(List<AirBlueFareOption> options) {
-
-
     return AirBlueFlight(
       id: id,
       price: price,
@@ -125,11 +126,35 @@ class AirBlueFlight {
       airlineImg: airlineImg,
       rph: rph,
       fareOptions: options,
-      rawData: rawData
+      rawData: rawData,
+      pnrPricing: pnrPricing, // Keep existing pnrPricing if any
     );
   }
 
 
+  // Separate method for PNR pricing
+  AirBlueFlight copyWithPNRPricing(List<AirBluePNRPricing> pricing) {
+    return AirBlueFlight(
+      id: id,
+      price: price,
+      basePrice: basePrice,
+      taxAmount: taxAmount,
+      feeAmount: feeAmount,
+      currency: currency,
+      isRefundable: isRefundable,
+      baggageAllowance: baggageAllowance,
+      legSchedules: legSchedules,
+      stopSchedules: stopSchedules,
+      segmentInfo: segmentInfo,
+      airlineCode: airlineCode,
+      airlineName: airlineName,
+      airlineImg: airlineImg,
+      rph: rph,
+      fareOptions: fareOptions,
+      rawData: rawData,
+      pnrPricing: pricing,
+    );
+  }
   static BaggageAllowance _getBaggageAllowance(Map<String, dynamic> pricingInfo) {
     try {
       final fareBreakdown = pricingInfo['PTC_FareBreakdowns']['PTC_FareBreakdown'];

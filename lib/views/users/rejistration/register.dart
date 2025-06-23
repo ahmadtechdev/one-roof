@@ -7,6 +7,8 @@ import 'rejistration_controller.dart';
 class RegisterAccount extends StatelessWidget {
   final RegisterController controller = Get.put(RegisterController());
 
+  RegisterAccount({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(

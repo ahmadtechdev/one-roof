@@ -2,21 +2,21 @@
 
 import 'package:get/get.dart';
 
-import '../../../../../services/api_service_flight.dart';
-import '../../search_flight_utils/filter_flight_model.dart';
-import 'sabre_flight_package.dart';
-import 'sabre_package_modal.dart';
-import '../../search_flights.dart';
-import '../../search_flight_utils/helper_functions.dart';
+import '../../../../../services/api_service_sabre.dart';
+import '../flight_package/sabre/sabre_flight_package.dart';
+import '../search_flight_utils/filter_flight_model.dart';
+import '../search_flight_utils/helper_functions.dart';
+import '../search_flights.dart';
 import 'sabre_flight_models.dart';
+import 'sabre_package_modal.dart';
 
 
 class FlightController extends GetxController {
   var selectedCurrency = 'PKR'.obs;
-  var flights = <Flight>[].obs;
+  var flights = <SabreFlight>[].obs;
   final isLoading = true.obs;
-  var availabilityFlights = <Flight>[].obs; // Separate list for availability check
-  var filteredFlights = <Flight>[].obs;
+  var availabilityFlights = <SabreFlight>[].obs; // Separate list for availability check
+  var filteredFlights = <SabreFlight>[].obs;
 
   // Error message
   final RxString errorMessage = ''.obs;
@@ -40,8 +40,8 @@ class FlightController extends GetxController {
 
   // Flight selection tracking
   final Rx<bool> isSelectingFirstFlight = true.obs;
-  final Rx<Flight?> selectedFirstFlight = Rx<Flight?>(null);
-  final Rx<Flight?> selectedSecondFlight = Rx<Flight?>(null);
+  final Rx<SabreFlight?> selectedFirstFlight = Rx<SabreFlight?>(null);
+  final Rx<SabreFlight?> selectedSecondFlight = Rx<SabreFlight?>(null);
 
   void resetFlightSelection() {
     isSelectingFirstFlight.value = true;
@@ -54,10 +54,10 @@ class FlightController extends GetxController {
     resetFlightSelection();
   }
 
-  void handleFlightSelection(Flight flight) {
+  void handleFlightSelection(SabreFlight flight) {
     if (currentScenario.value == FlightScenario.oneWay) {
       // Directly proceed to package selection for one-way trips
-      Get.to(() => PackageSelectionDialog(
+      Get.to(() => SabrePackageSelectionDialog(
         flight: flight,
         isAnyFlightRemaining: false,
         // pricingInformation: flight.pricingInforArray, // Pass pricing information
@@ -68,7 +68,7 @@ class FlightController extends GetxController {
         // Select the first flight
         selectedFirstFlight.value = flight;
         isSelectingFirstFlight.value = false;
-        Get.to(() => PackageSelectionDialog(
+        Get.to(() => SabrePackageSelectionDialog(
           flight: flight,
           isAnyFlightRemaining: true,
           // pricingInformation: flight.pricingInforArray, // Pass pricing information
@@ -76,7 +76,7 @@ class FlightController extends GetxController {
       } else {
         // Select the second flight and move to the review page
         selectedSecondFlight.value = flight;
-        Get.to(() => PackageSelectionDialog(
+        Get.to(() => SabrePackageSelectionDialog(
           flight: flight,
           isAnyFlightRemaining: false,
           // pricingInformation: flight.pricingInforArray, // Pass pricing information
@@ -340,7 +340,7 @@ extension FlightDateTimeExtension on FlightController {
         }
       }
 
-      final List<Flight> parsedFlights = [];
+      final List<SabreFlight> parsedFlights = [];
       final itineraryGroups = groupedResponse['itineraryGroups'] as List?;
       if (itineraryGroups == null) {
         if (isAvailabilityCheck) {
@@ -509,7 +509,7 @@ extension FlightDateTimeExtension on FlightController {
               // Extract airline information
               final carrier = schedule['carrier'];
               final airlineCode = carrier['marketing'] as String? ?? 'Unknown';
-              final ApiServiceFlight apiService = Get.put(ApiServiceFlight());
+              final ApiServiceSabre apiService = Get.put(ApiServiceSabre());
               final airlineMap = apiService.getAirlineMap();
               final airlineInfo = getAirlineInfo(airlineCode, airlineMap);
 
@@ -555,11 +555,11 @@ extension FlightDateTimeExtension on FlightController {
             final lastSchedule = allStopSchedules.last;
             final carrier = firstSchedule['carrier'];
             final airlineCode = carrier['marketing'] as String? ?? 'Unknown';
-            final ApiServiceFlight apiService = Get.put(ApiServiceFlight());
+            final ApiServiceSabre apiService = Get.put(ApiServiceSabre());
             final airlineMap = apiService.getAirlineMap();
             final airlineInfo = getAirlineInfo(airlineCode, airlineMap);
 
-            final flight = Flight(
+            final flight = SabreFlight(
               imgPath: airlineInfo.logoPath,
               airline: airlineInfo.name,
               flightNumber:
@@ -630,7 +630,7 @@ extension FlightDateTimeExtension on FlightController {
       }
 
 
-    } catch (e, stackTrace) {
+    } catch (e) {
       if (isAvailabilityCheck) {
         availabilityFlights.value = [];
       } else {
@@ -830,19 +830,19 @@ extension FlightSegmentExtension on FlightController {
 extension FlightFiltering on FlightController {
   void applyFilters(FlightFilter filter) {
     // Filter by airlines
-    List<Flight> airlineFiltered = flights.where((flight) {
+    List<SabreFlight> airlineFiltered = flights.where((flight) {
       if (filter.selectedAirlines.isEmpty) return true;
       return filter.selectedAirlines.contains(flight.airline);
     }).toList();
 
     // Filter by stops
-    List<Flight> stopsFiltered = airlineFiltered.where((flight) {
+    List<SabreFlight> stopsFiltered = airlineFiltered.where((flight) {
       if (filter.maxStops == null) return true;
       return flight.stops.length <= filter.maxStops!;
     }).toList();
 
     // Sort
-    List<Flight> sorted = [...stopsFiltered];
+    List<SabreFlight> sorted = [...stopsFiltered];
     switch (filter.sortType) {
       case 'Cheapest':
         sorted.sort((a, b) => a.price.compareTo(b.price));

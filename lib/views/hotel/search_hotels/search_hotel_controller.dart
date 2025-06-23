@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 
 class SearchHotelController extends GetxController {
@@ -31,20 +32,25 @@ class SearchHotelController extends GetxController {
     }
 
     // Debugging: Print the selected ratings
-    print("Selected ratings: $selectedStars");
-    print("Original hotels count: ${originalHotels.length}");
+    if (kDebugMode) {
+      print("Selected ratings: $selectedStars");
+      print("Original hotels count: ${originalHotels.length}");
+    }
+
 
     // Print sample hotel ratings for debugging
     if (originalHotels.isNotEmpty) {
-      print("Sample hotel ratings:");
+
       for (
         int i = 0;
         i < (originalHotels.length > 3 ? 3 : originalHotels.length);
         i++
       ) {
-        print(
-          "Hotel ${i}: rating = ${originalHotels[i]['rating']} (type: ${originalHotels[i]['rating'].runtimeType})",
+        if (kDebugMode) {
+          print(
+          "Hotel $i: rating = ${originalHotels[i]['rating']} (type: ${originalHotels[i]['rating'].runtimeType})",
         );
+        }
       }
     }
 
@@ -59,9 +65,11 @@ class SearchHotelController extends GetxController {
             // Convert rating to int for comparison (round to nearest integer)
             int hotelRating = (hotel['rating'] as double).round();
             bool matches = selectedStars.contains(hotelRating);
-            print(
+            if (kDebugMode) {
+              print(
               "Hotel: ${hotel['name']}, Rating: $hotelRating, Matches: $matches",
             );
+            }
             return matches;
           }).toList();
 
@@ -69,14 +77,19 @@ class SearchHotelController extends GetxController {
     }
 
     // Debugging: Print the filtered list
-    print("Filtered hotels count: ${filteredHotels.length}");
+    if (kDebugMode) {
+      print("Filtered hotels count: ${filteredHotels.length}");
+    }
   }
 
   // Method to filter hotels by price range
   void filterByPriceRange(double minPrice, double maxPrice) {
     try {
-      print("Filtering by price range: $minPrice - $maxPrice");
-      print("Original hotels count: ${originalHotels.length}");
+      if (kDebugMode) {
+        print("Filtering by price range: $minPrice - $maxPrice");
+        print("Original hotels count: ${originalHotels.length}");
+      }
+
 
       // Create a new list with filtered hotels
       List<Map<String, dynamic>> filtered =
@@ -87,7 +100,9 @@ class SearchHotelController extends GetxController {
             double price = double.tryParse(priceStr) ?? 0.0;
             bool inRange = price >= minPrice && price <= maxPrice;
 
-            print("Hotel: ${hotel['name']}, Price: $price, In Range: $inRange");
+            if (kDebugMode) {
+              print("Hotel: ${hotel['name']}, Price: $price, In Range: $inRange");
+            }
             return inRange;
           }).toList();
 
@@ -95,9 +110,13 @@ class SearchHotelController extends GetxController {
       filteredHotels.value = filtered;
       hotels.value = List<Map<String, dynamic>>.from(filtered);
 
-      print("Price filtered hotels count: ${filtered.length}");
+      if (kDebugMode) {
+        print("Price filtered hotels count: ${filtered.length}");
+      }
     } catch (e) {
-      print('Error filtering hotels: $e');
+      if (kDebugMode) {
+        print('Error filtering hotels: $e');
+      }
     }
   }
 
@@ -148,7 +167,9 @@ class SearchHotelController extends GetxController {
 
       hotels.value = sortedList;
     } catch (e) {
-      print('Error sorting hotels: $e');
+      if (kDebugMode) {
+        print('Error sorting hotels: $e');
+      }
     }
   }
 
@@ -163,7 +184,9 @@ class SearchHotelController extends GetxController {
     hotels.value = List<Map<String, dynamic>>.from(originalHotels);
     filteredHotels.value = List<Map<String, dynamic>>.from(originalHotels);
 
-    print("Filters reset. Hotels count: ${hotels.length}");
+    if (kDebugMode) {
+      print("Filters reset. Hotels count: ${hotels.length}");
+    }
   }
 
   void searchHotelsByName(String query) {
@@ -183,7 +206,9 @@ class SearchHotelController extends GetxController {
                 .toList();
       }
     } catch (e) {
-      print('Error searching hotels by name: $e');
+      if (kDebugMode) {
+        print('Error searching hotels by name: $e');
+      }
     }
   }
 

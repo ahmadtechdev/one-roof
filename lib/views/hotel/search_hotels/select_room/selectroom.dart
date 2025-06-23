@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:oneroof/services/api_service_hotel.dart';
@@ -85,7 +86,9 @@ class _SelectRoomScreenState extends State<SelectRoomScreen>
       _showErrorDialog(
         'An error occurred while processing your booking. Please try again.',
       );
-      print('Booking error: $e');
+      if (kDebugMode) {
+        print('Booking error: $e');
+      }
     } finally {
       setState(() {
         isLoading = false;

@@ -3,9 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../../utility/colors.dart';
-import '../../flight_package/airblue/airblue_flight_model.dart';
-import '../../flight_package/sabre/sabre_flight_models.dart';
-
+import '../../airblue/airblue_flight_model.dart';
+import '../../sabre/sabre_flight_models.dart';
 class AirBlueFlightCard extends StatefulWidget {
   final AirBlueFlight flight;
   final bool showReturnFlight;

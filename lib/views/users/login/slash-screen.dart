@@ -9,11 +9,13 @@ import '../../../utility/colors.dart';
 import 'login.dart';
 
 class Slash_Screen extends StatefulWidget {
+  const Slash_Screen({super.key});
+
   @override
-  _Slash_ScreenState createState() => _Slash_ScreenState();
+  Slash_ScreenState createState() => Slash_ScreenState();
 }
 
-class _Slash_ScreenState extends State<Slash_Screen> {
+class Slash_ScreenState extends State<Slash_Screen> {
   @override
   Widget build(BuildContext context) {
     // Get screen size for responsive calculations

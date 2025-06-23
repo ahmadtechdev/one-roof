@@ -2,15 +2,15 @@
 
 import 'dart:convert';
 import 'package:dio/dio.dart';
-import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:xml/xml.dart' as xml;
 import 'package:xml2json/xml2json.dart';
 
 import '../views/flight/search_flights/booking_flight/booking_flight_controller.dart';
-import '../views/flight/search_flights/flight_package/pia/pia_flight_controller.dart';
-import '../views/flight/search_flights/flight_package/pia/pia_flight_model.dart';
+import '../views/flight/search_flights/pia/pia_flight_controller.dart';
+import '../views/flight/search_flights/pia/pia_flight_model.dart';
 
 class PIAFlightApiService {
   final Dio _dio = Dio();
@@ -292,7 +292,9 @@ class PIAFlightApiService {
 
       // Print the request in pretty format
       debugPrint('=== PIA FLIGHT DB SAVE REQUEST ===');
-      print(requestBody);
+      if (kDebugMode) {
+        print(requestBody);
+      }
       debugPrint('=== PIA FLIGHT DB SAVE REQUEST END ===');
       // Configure Dio
       final dio = Dio(
@@ -310,20 +312,22 @@ class PIAFlightApiService {
       final response = await dio.post('flight-booking', data: requestBody);
 
       debugPrint('=== PIA FLIGHT DB SAVE Response ===');
-      print(response.data);
+      if (kDebugMode) {
+        print(response.data);
+      }
       debugPrint('=== PIA FLIGHT DB SAVE Response END ===');
 
       // Handle response
       if (response.statusCode == 200 || response.data['status']== 200) {
-        print("1233");
+
         if (response.data is Map<String, dynamic>) {
-          print("12334");
+
           return response.data;
         } else if (response.data is String) {
-          print("12335");
+
           return jsonDecode(response.data) as Map<String, dynamic>;
         }
-        print("123");
+
         return {'status': 'success'};
       } else {
         // Handle error responses
@@ -380,7 +384,7 @@ class PIAFlightApiService {
         statusCode: e.response?.statusCode,
         errors: {},
       );
-    } catch (e, stackTrace) {
+    } catch (e) {
       throw ApiException(message: e.toString(), statusCode: null, errors: {});
     }
   }
@@ -695,13 +699,6 @@ class PIAFlightApiService {
       // Use the selected fare option from the flight
       final fareInfo = flight.selectedFareOption?.rawData ?? {};
 
-      print("check 1");
-      print(flightSegment);
-      print("check 2");
-      print(bookingClass);
-      print("check 3");
-      print(fareInfo);
-
       bookingSegments.add({
         "flightSegment": flightSegment,
         "bookingClass": bookingClass,
@@ -715,7 +712,7 @@ class PIAFlightApiService {
     try {
       // Try to find matching fare info from flight's pricing info
       final flightSegment = segment['flightSegment'] ?? segment;
-      final segmentSequence = _extractStringValue(flightSegment['flightSegmentSequence']);
+      _extractStringValue(flightSegment['flightSegmentSequence']);
 
       for (var pricingInfo in flight.pricingInforArray) {
         final fareComponentList = pricingInfo['fareComponentList'] ?? [];
@@ -726,7 +723,7 @@ class PIAFlightApiService {
           if (fareInfoList is! List) continue;
 
           for (var fareInfo in fareInfoList) {
-            print("check -1");
+
             return fareInfo;
             // final infoSequence = _extractStringValue(fareInfo['flightSegmentSequence']);
             // if (infoSequence == segmentSequence) {
@@ -766,9 +763,6 @@ class PIAFlightApiService {
       final fareInfo = segment['fareInfo'];
       final bookingClassList = segment['bookingClass'];
 
-
-      print("check fareinfo");
-      print(fareInfo);
       // Find the matching booking class from the selected fare option
       String? resBookDesigQuantity;
       if (bookingClassList is List) {

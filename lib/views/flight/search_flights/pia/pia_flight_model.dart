@@ -208,7 +208,7 @@ class PIAFlight {
         date: date,
         isMultiCity: isMultiCity,
       );
-    } catch (e, stackTrace) {
+    } catch (e) {
       rethrow; // Rethrow to be handled by the caller
     }
   }
@@ -977,7 +977,7 @@ class PIAFareOption {
         refundFee: isRefundable ? 'PKR 2000' : 'Non-Refundable',
         rawData: fareInfo,
       );
-    } catch (e, stackTrace) {
+    } catch (e) {
 
       return PIAFareOption(
         fareName: 'Standard',

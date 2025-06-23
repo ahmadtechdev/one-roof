@@ -601,7 +601,7 @@ class HotelCard extends StatelessWidget {
               ),
               child: const Text(
                 'Select Room',
-                style: TextStyle(color: TColors.secondary),
+                style: TextStyle(fontSize: 18,color: TColors.white, fontWeight: FontWeight.bold),
               ),
             ),
           ),
@@ -638,10 +638,10 @@ class HotelCard extends StatelessWidget {
     } else {
       // If not a URL, assume it's a local asset path
       return Image.asset(
-        imageUrl.isEmpty ? 'assets/images/hotel.jpg' : imageUrl,
+        imageUrl.isEmpty ? 'assets/images/hotel1.jpg' : imageUrl,
         height: 200,
         width: double.infinity,
-        fit: BoxFit.cover,
+        fit: BoxFit.contain,
       );
     }
   }

@@ -6,9 +6,9 @@ import 'package:get/get.dart';
 import '../../../../../utility/colors.dart';
 import '../../review_flight/pia_review_flight.dart';
 import '../../search_flight_utils/widgets/pia_flight_card.dart';
-import 'pia_flight_model.dart';
-import 'pia_flight_controller.dart';
-import 'pia_return_flight_page.dart';
+import '../../pia/pia_flight_model.dart';
+import '../../pia/pia_flight_controller.dart';
+import '../../pia/pia_return_flight_page.dart';
 
 class PIAPackageSelectionDialog extends StatelessWidget {
   final PIAFlight flight;

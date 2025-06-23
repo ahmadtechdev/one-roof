@@ -3,15 +3,14 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
-import 'package:oneroof/views/flight/search_flights/flight_package/pia/pia_flight_controller.dart';
-
-import '../../../services/api_service_flight.dart';
+import '../../../services/api_service_sabre.dart';
 import '../../../services/api_service_pia.dart';
 import '../../../widgets/city_selection_bottom_sheet.dart';
 import '../../../widgets/class_selection_bottom_sheet.dart';
 import '../../../widgets/travelers_selection_bottom_sheet.dart';
-import '../search_flights/flight_package/airblue/airblue_flight_controller.dart';
-import '../search_flights/flight_package/sabre/sabre_flight_controller.dart';
+import '../search_flights/airblue/airblue_flight_controller.dart';
+import '../search_flights/pia/pia_flight_controller.dart';
+import '../search_flights/sabre/sabre_flight_controller.dart';
 import '../search_flights/search_flights.dart';
 
 enum TripType { oneWay, roundTrip, multiCity }
@@ -83,7 +82,7 @@ class FlightBookingController extends GetxController {
   final RxInt infantCount = 0.obs;
 
   // API Service and Flight Controller
-  final ApiServiceFlight apiServiceFlight = Get.put(ApiServiceFlight());
+  final ApiServiceSabre apiServiceFlight = Get.put(ApiServiceSabre());
   final FlightController flightController = Get.put(FlightController());
   final PIAFlightApiService piaFlightApiService = Get.put(PIAFlightApiService());
 
@@ -259,9 +258,7 @@ class FlightBookingController extends GetxController {
   }
 
   // Add to FlightBookingController class
-  final AirBlueFlightController airBlueFlightController = Get.put(
-    AirBlueFlightController(),
-  );
+  final AirBlueFlightController airBlueFlightController = Get.find<AirBlueFlightController>();
   final PIAFlightController piaFlightController = Get.put(
     PIAFlightController(),
   );

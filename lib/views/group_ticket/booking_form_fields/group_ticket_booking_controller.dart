@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:oneroof/utility/colors.dart';
 import 'package:oneroof/views/group_ticket/booking_form_fields/model.dart';
+import 'package:oneroof/views/users/login/login_api_service/login_api.dart';
 import '../../../services/api_service_group_tickets.dart';
 import '../flight_pkg/pkg_model.dart';
 import 'print_voucher/print_voucher.dart';
@@ -23,6 +24,34 @@ class GroupTicketBookingController extends GetxController {
         infantPrice: 0,
         groupPriceDetailId: 0,
       ).obs;
+  @override
+  void onInit() {
+    super.onInit();
+    // Initialize with existing GuestsController data
+    loadUserEmail();
+  }
+
+  Future<void> loadUserEmail() async {
+    try {
+      // Import the AuthController to access user data
+      final authController = Get.find<AuthController>();
+      final userData = await authController.getUserData();
+
+      if (userData != null && userData['cs_email'] != null) {
+        // Set the email controller with the user's email
+        booker_email.value = userData['cs_email'];
+      }
+    } catch (e) {
+      print('Error loading user email: $e');
+    }
+  }
+
+  var totelfare = 0.obs;
+  // bookerdata
+  var booker_name = "".obs;
+  var booker_email = "".obs;
+
+  var booker_num = "".obs;
 
   final GroupTicketingController apiController = Get.put(
     GroupTicketingController(),
@@ -36,12 +65,14 @@ class GroupTicketBookingController extends GetxController {
 
   /// Initializes booking data from flight model
   void initializeFromFlight(GroupFlightModel flight, int groupId) async {
+    print("check 2");
+    print(groupId);
     bookingData.update((val) {
       if (val == null) return;
 
       val.groupId = flight.group_id;
       val.groupName =
-          '${flight.airline}-${flight.origin}-${flight.destination}';
+      '${flight.airline}-${flight.origin}-${flight.destination}';
       val.sector = '${flight.origin}-${flight.destination}';
       val.adultPrice = flight.price.toDouble();
       val.childPrice = flight.price.toDouble();
@@ -93,18 +124,18 @@ class GroupTicketBookingController extends GetxController {
       isLoading.value = true;
 
       final passengers =
-          bookingData.value.passengers
-              .map(
-                (passenger) => {
-                  'firstName': passenger.firstName,
-                  'lastName': passenger.lastName,
-                  'title': passenger.title,
-                  'passportNumber': passenger.passportNumber,
-                  'dateOfBirth': passenger.dateOfBirth?.toIso8601String(),
-                  'passportExpiry': passenger.passportExpiry?.toIso8601String(),
-                },
-              )
-              .toList();
+      bookingData.value.passengers
+          .map(
+            (passenger) => {
+          'firstName': passenger.firstName,
+          'lastName': passenger.lastName,
+          'title': passenger.title,
+          'passportNumber': passenger.passportNumber,
+          'dateOfBirth': passenger.dateOfBirth?.toIso8601String(),
+          'passportExpiry': passenger.passportExpiry?.toIso8601String(),
+        },
+      )
+          .toList();
 
       final result = await apiController.saveBooking(
         groupId: bookingData.value.groupId,
@@ -114,15 +145,46 @@ class GroupTicketBookingController extends GetxController {
         mobile: '03137358881',
         adults: bookingData.value.adults,
         children:
-            bookingData.value.children > 0 ? bookingData.value.children : null,
+        bookingData.value.children > 0 ? bookingData.value.children : null,
         infants:
-            bookingData.value.infants > 0 ? bookingData.value.infants : null,
+        bookingData.value.infants > 0 ? bookingData.value.infants : null,
         passengers: passengers,
         groupPriceDetailId: bookingData.value.groupPriceDetailId,
       );
 
+      final result2 = await apiController.saveBooking_into_database(
+        groupId: bookingData.value.groupId,
+        agentName: 'ONE ROOF TRAVEL',
+        agencyName: 'ONE ROOF TRAVEL',
+        email: 'usama@travelnetwork.com',
+        mobile: '03137358881',
+        adults: bookingData.value.adults,
+        children:
+        bookingData.value.children > 0 ? bookingData.value.children : null,
+        infants:
+        bookingData.value.infants > 0 ? bookingData.value.infants : null,
+        passengers: passengers,
+        groupPriceDetailId: bookingData.value.groupPriceDetailId,
+        bookername:
+        booker_name.value.isNotEmpty ? booker_name.value : "OneRoofTravel",
+        bookername_num:
+        booker_num.value.isNotEmpty ? booker_num.value : "03001232412",
+        booker_email:
+        booker_email.value.isNotEmpty
+            ? booker_email.value
+            : "resOneroof@gmail.com",
+        // Additional parameters with dummy data if not available
+        noOfSeats: bookingData.value.totalPassengers,
+        fares:
+        bookingData.value.totalPrice, // Using adult price as default fare
+        airlineName:
+        bookingData.value.groupName.split(
+          '-',
+        )[0], // Extract airline from group name
+      );
       // Hide loading
       isLoading.value = false;
+      print(result2);
 
       if (result['success'] == true) {
         showSuccessSnackbar(result['message']);
@@ -154,7 +216,7 @@ class GroupTicketBookingController extends GetxController {
   // Update your save button in the UI to show loading state
   Widget buildSaveButton() {
     return Obx(() {
-      return SizedBox(
+      return Container(
         width: double.infinity,
         child: ElevatedButton(
           onPressed: isLoading.value ? null : submitBooking,
@@ -167,28 +229,28 @@ class GroupTicketBookingController extends GetxController {
             ),
           ),
           child:
-              isLoading.value
-                  ? Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      SizedBox(
-                        height: 20,
-                        width: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation<Color>(
-                            Colors.white,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      const Text('Processing...'),
-                    ],
-                  )
-                  : const Text(
-                    'Save Booking',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+          isLoading.value
+              ? Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              SizedBox(
+                height: 20,
+                width: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation<Color>(
+                    Colors.white,
                   ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              const Text('Processing...'),
+            ],
+          )
+              : const Text(
+            'Save Booking',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+          ),
         ),
       );
     });

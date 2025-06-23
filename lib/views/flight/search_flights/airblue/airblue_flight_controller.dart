@@ -2,14 +2,14 @@
 
 import 'package:get/get.dart';
 
-import '../../../../../services/api_service_flight.dart';
+import '../../../../services/api_service_sabre.dart';
 
-import '../../search_flight_utils/filter_flight_model.dart';
-import 'airblue_flight_package.dart';
+import '../search_flight_utils/filter_flight_model.dart';
+import '../flight_package/airblue/airblue_flight_package.dart';
 import 'airblue_flight_model.dart';
 
 class AirBlueFlightController extends GetxController {
-  final ApiServiceFlight apiService = Get.find<ApiServiceFlight>();
+  final ApiServiceSabre apiService = Get.find<ApiServiceSabre>();
 
   // List of AirBlue flights (now with unique RPH)
   final RxList<AirBlueFlight> flights = <AirBlueFlight>[].obs;
@@ -32,6 +32,8 @@ class AirBlueFlightController extends GetxController {
   final RxString errorMessage = ''.obs;
 
   void clearFlights() {
+
+    print('Clearing flights data');
     flights.clear();
     fareOptionsByRPH.clear();
     errorMessage.value = '';

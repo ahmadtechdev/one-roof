@@ -2,15 +2,13 @@
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:oneroof/services/margin_service_flight.dart';
-import 'package:oneroof/views/flight/search_flights/flight_package/airblue/airblue_return_flight_page.dart';
-
-import '../../../../../services/api_service_flight.dart';
+import '../../../../../services/api_service_sabre.dart';
 import '../../../../../utility/colors.dart';
 import '../../../form/flight_booking_controller.dart';
+import '../../airblue/airblue_flight_model.dart';
+import '../../airblue/airblue_return_flight_page.dart';
 import '../../review_flight/airblue_review_flight.dart';
-import 'airblue_flight_controller.dart';
-import 'airblue_flight_model.dart';
+import '../../airblue/airblue_flight_controller.dart';
 import '../../search_flight_utils/widgets/airblue_flight_card.dart';
 
 class AirBluePackageSelectionDialog extends StatelessWidget {
@@ -73,40 +71,32 @@ class AirBluePackageSelectionDialog extends StatelessWidget {
 
   Future<void> _prefetchMarginData() async {
     try {
-      print("abc");
+
       if (marginData.value.isEmpty) {
-        print("abcd");
-        final apiService = Get.find<ApiServiceFlight>();
+
+        final apiService = Get.find<ApiServiceSabre>();
         marginData.value = await apiService.getMargin();
-        print("abc 1");
-        print(marginData.value);
+
       }
 
       // Pre-calculate prices for all fare options
       final fareOptions = airBlueController.getFareOptionsForFlight(flight);
       for (var option in fareOptions) {
         final String packageKey = '${option.cabinCode}-${option.brandName}';
-        print("abc 2");
-        print(packageKey);
+
         if (!finalPrices.containsKey(packageKey)) {
-          print("abc 3");
-          final apiService = Get.find<ApiServiceFlight>();
-          print("abc 4");
-          print(option.basePrice);
+
+          final apiService = Get.find<ApiServiceSabre>();
+
           final marginedBasePrice = apiService.calculatePriceWithMargin(
             option.basePrice,
             marginData.value,
           );
-          print("abc 5");
-          print(marginedBasePrice);
-          print("abc 6");
-          print(option.taxAmount );
-          print("abc 7");
-          print(option.feeAmount);
+
           final totalPrice = marginedBasePrice + option.taxAmount + option.feeAmount;
-          print("abc 8");
-          print(totalPrice);
-          finalPrices[packageKey] = marginedBasePrice.obs;
+
+          finalPrices[packageKey] =totalPrice.obs;
+
         }
       }
     } catch (e) {
@@ -502,7 +492,7 @@ class AirBluePackageSelectionDialog extends StatelessWidget {
 
     // Navigate to a new screen showing return flights
     Get.to(
-          () => ReturnFlightsPage(returnFlights: returnFlights),
+          () => AirblueReturnFlightsPage(returnFlights: returnFlights),
       transition: Transition.rightToLeft,
     );
   }

@@ -4,15 +4,15 @@ import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:oneroof/views/flight/form/flight_booking_controller.dart';
 
-import '../../../../../services/api_service_flight.dart';
+import '../../../../../services/api_service_sabre.dart';
 
 import '../../../../../utility/colors.dart';
+import '../../sabre/sabre_flight_controller.dart';
+import '../../sabre/sabre_flight_models.dart';
 import '../helper_functions.dart';
-import '../../flight_package/sabre/sabre_flight_controller.dart';
-import '../../flight_package/sabre/sabre_flight_models.dart';
 
 class FlightCard extends StatefulWidget {
-  final Flight flight;
+  final SabreFlight flight;
   final bool showReturnFlight;
 
   const FlightCard({
@@ -53,7 +53,7 @@ class _FlightCardState extends State<FlightCard>
   // Add this method to fetch margin data
   Future<void> _fetchMarginData() async {
     try {
-      final apiService = Get.find<ApiServiceFlight>();
+      final apiService = Get.find<ApiServiceSabre>();
       final data = await apiService.getMargin();
       marginData.value = data;
 
@@ -612,7 +612,7 @@ class _FlightCardState extends State<FlightCard>
         '${carrier['marketing'] ?? 'XX'}-${carrier['marketingFlightNumber'] ?? '000'}';
     final marketingCarrier = carrier['marketing'] ?? 'Unknown';
     // final airlineInfo = getAirlineInfo(marketingCarrier);
-    final ApiServiceFlight apiService = Get.find<ApiServiceFlight>();
+    final ApiServiceSabre apiService = Get.find<ApiServiceSabre>();
     final airlineMap = apiService.getAirlineMap();
     final airlineInfo = getAirlineInfo(marketingCarrier, airlineMap);
     FlightSegmentInfo? segmentInfo;

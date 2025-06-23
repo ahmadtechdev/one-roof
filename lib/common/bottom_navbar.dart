@@ -50,7 +50,7 @@ class _BottomNavbarState extends State<BottomNavbar> {
         inactiveColorPrimary: Colors.grey,
       ),
       PersistentBottomNavBarItem(
-        icon: const Icon(Icons.mic_rounded),
+        icon: const Icon(Icons.add, color: Colors.white,),
         title: "Add",
         activeColorPrimary: Colors.blue,
         inactiveColorPrimary: Colors.grey,

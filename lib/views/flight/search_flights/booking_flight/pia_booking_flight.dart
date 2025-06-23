@@ -3,7 +3,7 @@ import 'package:get/get.dart';
 import '../../../../services/api_service_pia.dart';
 import '../../../../utility/colors.dart';
 import '../../../../widgets/travelers_selection_bottom_sheet.dart';
-import '../flight_package/pia/pia_flight_model.dart';
+import '../pia/pia_flight_model.dart';
 import '../search_flight_utils/widgets/pia_flight_card.dart';
 import 'booking_flight_controller.dart';
 import 'flight_print_voucher.dart';
@@ -624,7 +624,6 @@ class _PIAFlightBookingFormState extends State<PIAFlightBookingForm> {
 
                 if (true) {
                   try {
-                    print("check");
                     // First save the booking
                     final response = await PIAFlightApiService().savePIABooking(
                       bookingController: bookingController,
@@ -649,7 +648,7 @@ class _PIAFlightBookingFormState extends State<PIAFlightBookingForm> {
                           backgroundColor: Colors.green,
                           colorText: Colors.white,
                         );
-                        Get.to(() => const FlightBookingDetailsScreen());
+                        // Get.to(() => const FlightBookingDetailsScreen());
                       } else {
                         Get.snackbar(
                           'Partial Success',

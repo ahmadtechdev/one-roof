@@ -1,9 +1,9 @@
 import 'package:flutter/cupertino.dart';
 import 'package:get/get.dart';
 
-import '../../search_flight_utils/filter_flight_model.dart';
+import '../search_flight_utils/filter_flight_model.dart';
 import 'pia_flight_model.dart';
-import 'pia_flight_package.dart';
+import '../flight_package/pia/pia_flight_package.dart';
 
 class PIAFlightController extends GetxController {
   final RxList<PIAFlight> outboundFlights = <PIAFlight>[].obs;

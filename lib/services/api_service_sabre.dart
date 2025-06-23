@@ -5,10 +5,10 @@ import 'package:dio/dio.dart';
 
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../views/flight/search_flights/flight_package/sabre/sabre_flight_models.dart';
+import '../views/flight/search_flights/sabre/sabre_flight_models.dart';
 import 'api_service_airblue.dart';
 
-class ApiServiceFlight extends GetxService {
+class ApiServiceSabre extends GetxService {
   late final Dio dio;
   // Initialize directly instead of using late
   final AirBlueFlightApiService flightShoppingService = AirBlueFlightApiService();
@@ -46,7 +46,7 @@ class ApiServiceFlight extends GetxService {
     return _cabinClassMapping[cabin.toUpperCase()] ?? 'Economy';
   }
 
-  ApiServiceFlight() {
+  ApiServiceSabre() {
     dio = Dio(BaseOptions(
       baseUrl: _baseUrl,
       validateStatus: (status) => true,
@@ -379,7 +379,7 @@ class ApiServiceFlight extends GetxService {
     }
   }
 
-  // Add to ApiServiceFlight class in api_service_flight.dart
+  // Add to ApiServiceFlight class in api_service_sabre.dart
 
   Future<Map<String, dynamic>> checkFlightAvailability({
     required int type,
@@ -539,15 +539,24 @@ class ApiServiceFlight extends GetxService {
     final marginVal = marginData['margin_val'];
     final marginPer = marginData['margin_per'];
 
+    print("xyz");
+    print(basePrice);
+    print("zy1");
+    print(marginData);
+
+
     if (marginVal != null && marginVal != 'N/A') {
       // Fixed margin value
+      print("zy13");
       return basePrice + double.parse(marginVal);
     } else if (marginPer != null && marginPer != 'N/A') {
       // Percentage margin
+      print("zy14");
       final percentage = double.parse(marginPer);
+      print(percentage);
       return basePrice * (1 + (percentage / 100));
     }
-
+    print("xyz15");
     // If no margin data is available, return the base price
     return basePrice;
   }

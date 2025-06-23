@@ -638,7 +638,7 @@ class PDFPrintScreen extends StatelessWidget {
 
     // Print formatted JSON
     const JsonEncoder encoder = JsonEncoder.withIndent('  ');
-    String prettyprint = encoder.convert(bookingData);
+    encoder.convert(bookingData);
 
 
     // Print passenger details
@@ -889,27 +889,7 @@ class PDFPrintScreen extends StatelessWidget {
     }
   }
 
-  String _getTotalFare() {
-    try {
-      final fares = bookingData['data']?['data']?['fares'] ?? 0;
-      return NumberFormat('#,##0').format(fares);
-    } catch (e) {
-      return '0';
-    }
-  }
 
-  String _getDepartureDate() {
-    try {
-      final deptDate = bookingData['data']?['data']?['group']?['dept_date'];
-      if (deptDate != null) {
-        final date = DateTime.parse(deptDate);
-        return DateFormat('EEE dd MMM yyyy').format(date);
-      }
-      return DateFormat('EEE dd MMM yyyy').format(DateTime.now());
-    } catch (e) {
-      return DateFormat('EEE dd MMM yyyy').format(DateTime.now());
-    }
-  }
 
   String _getAirlineInfo() {
     try {

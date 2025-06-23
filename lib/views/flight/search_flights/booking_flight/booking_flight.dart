@@ -4,13 +4,13 @@ import 'package:get/get.dart';
 import '../../../../utility/colors.dart';
 import '../../../../widgets/travelers_selection_bottom_sheet.dart';
 
-import '../flight_package/sabre/sabre_flight_models.dart';
+import '../sabre/sabre_flight_models.dart';
 import '../search_flight_utils/widgets/sabre_flight_card.dart';
 import 'booking_flight_controller.dart';
 import 'flight_print_voucher.dart';
 
 class BookingForm extends StatefulWidget {
-  final Flight flight;
+  final SabreFlight flight;
   const BookingForm({super.key, required this.flight});
 
   @override
@@ -713,7 +713,7 @@ class _BookingFormState extends State<BookingForm> {
                   colorText: Colors.white,
                 );
 
-                Get.to(()=> const FlightBookingDetailsScreen());
+                // Get.to(()=> const FlightBookingDetailsScreen());
               }
             },
             style: ElevatedButton.styleFrom(

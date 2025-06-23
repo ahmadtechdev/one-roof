@@ -1,25 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../../../../../services/api_service_flight.dart';
+import '../../../../../services/api_service_sabre.dart';
 import '../../../../../utility/colors.dart';
 import '../../../../../widgets/snackbar.dart';
 import '../../../../../widgets/travelers_selection_bottom_sheet.dart';
 
 import '../../../form/controllers/flight_date_controller.dart';
-import '../../review_flight/review_flight.dart';
-import 'sabre_flight_controller.dart';
-import 'sabre_flight_models.dart';
+import '../../review_flight/sabre_review_flight.dart';
+import '../../sabre/sabre_flight_controller.dart';
+import '../../sabre/sabre_flight_models.dart';
 import '../../search_flight_utils/widgets/sabre_flight_card.dart';
-import 'sabre_package_modal.dart';
+import '../../sabre/sabre_package_modal.dart';
 
-class PackageSelectionDialog extends StatelessWidget {
-  final Flight flight;
+class SabrePackageSelectionDialog extends StatelessWidget {
+  final SabreFlight flight;
   final bool isAnyFlightRemaining;
   final isLoading = false.obs;
   // final List<Map<String, dynamic>> pricingInformation; // Add this parameter
 
-  PackageSelectionDialog({
+  SabrePackageSelectionDialog({
     super.key,
     required this.flight,
     required this.isAnyFlightRemaining,
@@ -187,7 +187,7 @@ class PackageSelectionDialog extends StatelessWidget {
     // Add this method to fetch margin data
     Future<void> fetchMarginData() async {
       try {
-        final apiService = Get.find<ApiServiceFlight>();
+        final apiService = Get.find<ApiServiceSabre>();
         final data = await apiService.getMargin();
         marginData.value = data;
 
@@ -443,7 +443,7 @@ class PackageSelectionDialog extends StatelessWidget {
   void onSelectPackage(int selectedPackageIndex) async {
     try {
       isLoading.value = true;
-      final apiService = ApiServiceFlight();
+      final apiService = ApiServiceSabre();
       final travelersController = Get.find<TravelersController>();
       final flightController = Get.find<FlightController>();
 

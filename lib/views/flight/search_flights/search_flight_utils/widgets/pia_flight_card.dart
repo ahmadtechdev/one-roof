@@ -4,8 +4,8 @@ import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../../utility/colors.dart';
-import '../../flight_package/pia/pia_flight_model.dart';
-import '../../flight_package/pia/pia_flight_controller.dart';
+import '../../pia/pia_flight_model.dart';
+import '../../pia/pia_flight_controller.dart';
 
 class PIAFlightCard extends StatefulWidget {
   final PIAFlight flight;

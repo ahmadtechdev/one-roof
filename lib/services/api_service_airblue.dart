@@ -5,13 +5,15 @@ import 'dart:io';
 import 'dart:math';
 import 'package:dio/dio.dart';
 import 'package:dio/io.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:xml2json/xml2json.dart';
 import 'package:xml/xml.dart' as xml;
+import '../views/flight/search_flights/airblue/airblue_flight_model.dart';
+import '../views/flight/search_flights/airblue/airblue_pnr_pricing.dart';
 import '../views/flight/search_flights/booking_flight/booking_flight_controller.dart';
-import '../views/flight/search_flights/flight_package/airblue/airblue_flight_model.dart';
-import '../views/flight/search_flights/flight_package/sabre/sabre_flight_models.dart';
+import '../views/flight/search_flights/sabre/sabre_flight_models.dart';
 
 class AirBlueFlightApiService {
   // final String link = 'https://otatest2.zapways.com/v2.0/OTAAPI.asmx';
@@ -217,7 +219,9 @@ class AirBlueFlightApiService {
       // Convert XML to JSON
       return _convertXmlToJson(response.data.toString());
     } catch (e) {
-      print('Error in shoppingFlight: $e');
+      if (kDebugMode) {
+        print('Error in shoppingFlight: $e');
+      }
       rethrow;
     }
   }
@@ -422,7 +426,7 @@ class AirBlueFlightApiService {
         statusCode: e.response?.statusCode,
         errors: {},
       );
-    } catch (e, stackTrace) {
+    } catch (e) {
       throw ApiException(message: e.toString(), statusCode: null, errors: {});
     }
   }
@@ -891,8 +895,33 @@ class AirBlueFlightApiService {
       // Convert XML to JSON
       final jsonResponse = _convertXmlToJson(response.data.toString());
       printDebugData('PNR RESPONSE (JSON)', jsonResponse);
-      return jsonResponse;
-    } catch (e, stackTrace) {
+
+      // Parse the pricing information
+      List<AirBluePNRPricing> pnrPricing = [];
+      try {
+        final ptcBreakdowns = jsonResponse['soap\$Envelope']['soap\$Body']['AirBookResponse']
+        ['AirBookResult']['AirReservation']['PriceInfo']['PTC_FareBreakdowns']['PTC_FareBreakdown'];
+
+        if (ptcBreakdowns is List) {
+          for (var breakdown in ptcBreakdowns) {
+            pnrPricing.add(AirBluePNRPricing.fromJson(breakdown));
+          }
+        } else if (ptcBreakdowns is Map) {
+          pnrPricing.add(AirBluePNRPricing.fromJson(ptcBreakdowns));
+        }
+      } catch (e) {
+        print('Error parsing PNR pricing: $e');
+      }
+
+// Add the pricing info to the return map
+      final result = {
+        ...jsonResponse,
+        'pnrPricing': pnrPricing.map((p) => p.toJson()).toList(),
+        'rawPricingObjects': pnrPricing, // Add the actual objects if needed
+      };
+
+      return result;
+    } catch (e) {
       throw ApiException(
         message: 'Failed to create PNR: $e',
         statusCode: null,
@@ -938,28 +967,30 @@ class AirBlueFlightApiService {
   }
 
   void printDebugData(String label, dynamic data) {
-    print('--- DEBUG: $label ---');
+    // print('--- DEBUG: $label ---');
 
     if (data is String && data.trim().startsWith('<')) {
       // Handle XML string
-      print('Raw XML:\n$data');
+      // print('Raw XML:\n$data');
 
       try {
         // Convert XML to JSON
         final jsonData = _convertXmlToJson(data);
         printJsonPretty(jsonData);
       } catch (e) {
-        print('Error converting XML to JSON: $e');
+        if (kDebugMode) {
+          print('Error converting XML to JSON: $e');
+        }
       }
     } else if (data is String) {
       // Plain string
-      print('Plain String:\n$data');
+      // print('Plain String:\n$data');
     } else {
       // JSON/Map or other object
       printJsonPretty(data);
     }
 
-    print('--- END DEBUG: $label ---\n');
+    // print('--- END DEBUG: $label ---\n');
   }
 
   /// Converts XML string to JSON (Map)
@@ -974,7 +1005,9 @@ class AirBlueFlightApiService {
         i,
         i + chunkSize < jsonString.length ? i + chunkSize : jsonString.length,
       );
-      print(chunk);
+      if (kDebugMode) {
+        print(chunk);
+      }
     }
   }
 }
