@@ -4,8 +4,8 @@ import 'dart:io';
 import 'dart:async';
 import 'package:http/http.dart' as http;
 import 'package:get/get.dart';
+import 'package:oneroof/utility/colors.dart';
 
-import 'colors.dart'; // Ensure you have this file with color definitions
 
 class AirportData {
   final String code;

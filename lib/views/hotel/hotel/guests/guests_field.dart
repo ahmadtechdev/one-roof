@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../../../../../widgets/colors.dart';
+import 'package:oneroof/utility/colors.dart';
 import 'guests_controller.dart';
 
 class GuestsField extends StatefulWidget {

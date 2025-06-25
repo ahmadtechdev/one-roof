@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
+import 'package:oneroof/utility/colors.dart';
 
-import '../../../../../widgets/colors.dart';
 import '../../../../widgets/travelers_selection_bottom_sheet.dart';
 
 class TravelersField extends StatefulWidget {
