@@ -1,3 +1,5 @@
+// ignore_for_file: empty_catches
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -10,7 +12,6 @@ import '../../../../services/api_service_sabre.dart';
 import '../../../../utility/colors.dart';
 import '../airblue/airblue_flight_controller.dart';
 import '../airblue/airblue_flight_model.dart';
-import '../flight_package/airblue/airblue_flight_package.dart';
 import 'booking_flight_controller.dart';
 
 class FlightBookingDetailsScreen extends StatefulWidget {
@@ -36,7 +37,7 @@ class _FlightBookingDetailsScreenState extends State<FlightBookingDetailsScreen>
   final AirBlueFlightController flightController = Get.find<AirBlueFlightController>();
   // Get margin data from API service
   final apiService = Get.find<ApiServiceSabre>();
-  late Map<String, dynamic> marginData = Map<String, dynamic>();
+  late Map<String, dynamic> marginData = <String, dynamic>{};
   DateTime selectedDate = DateTime.now();
   String bookingReference = 'ORD-${DateTime.now().millisecondsSinceEpoch.toString().substring(5)}';
   String pnrNumber = 'PNR-${DateTime.now().millisecondsSinceEpoch.toString().substring(5)}';
@@ -58,10 +59,7 @@ class _FlightBookingDetailsScreenState extends State<FlightBookingDetailsScreen>
         marginData = await apiService.getMargin();
 
       }
-      print(marginData);
     } catch (e) {
-      print(marginData);
-      print(e);
     }
   }
 
@@ -377,7 +375,7 @@ class _FlightBookingDetailsScreenState extends State<FlightBookingDetailsScreen>
               ],
             ),
           );
-        }).toList(),
+        }),
       ],
     );
   }
@@ -395,10 +393,6 @@ class _FlightBookingDetailsScreenState extends State<FlightBookingDetailsScreen>
     final returnFlight = widget.returnFlight;
     final outboundFareOption =widget.outboundFareOption;
     final returnFareOption = widget.returnFareOption;
-
-    if (outboundFlight == null) {
-      return const Center(child: Text('No flight information available'));
-    }
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
@@ -731,8 +725,6 @@ class _FlightBookingDetailsScreenState extends State<FlightBookingDetailsScreen>
     final returnFareOption = widget.returnFareOption;
 
 
-    print("check 211");
-    print(marginData);
 
     // Calculate prices with margin for each passenger type
     final adultPrice = _calculatePassengerPrice(
@@ -764,10 +756,6 @@ class _FlightBookingDetailsScreenState extends State<FlightBookingDetailsScreen>
 
     final currency = outboundFlight.currency;
 
-    print("object:  ");
-    print(adultPrice);
-    print(childPrice);
-    print(infantPrice);
 
     return Card(
       elevation: 2,
@@ -832,21 +820,12 @@ class _FlightBookingDetailsScreenState extends State<FlightBookingDetailsScreen>
     double tax = 0;
     double fee = 0;
 
-    print("object12");
-    print(marginData);
-    print(outboundFlight.pnrPricing);
 
     // Check if we have PNR pricing data
     if (outboundFlight.pnrPricing != null && outboundFlight.pnrPricing!.isNotEmpty) {
 
-      print("object12");
-      print(passengerType);
-      print("object12.3");
       // Find pricing for this passenger type
       for (var pricing in outboundFlight.pnrPricing!) {
-        print(pricing.passengerType);
-        print(pricing.baseFare);
-        print(pricing.totalFees);
         if (pricing.passengerType == passengerType) {
           base = pricing.baseFare;
           tax = pricing.totalTax;
@@ -858,8 +837,6 @@ class _FlightBookingDetailsScreenState extends State<FlightBookingDetailsScreen>
       Get.snackbar("Ahmad", "hello");
     }
 
-    print("object123");
-    print(base);
 
     // Apply margin if needed (assuming apiService has calculatePriceWithMargin method)
     base = apiService.calculatePriceWithMargin(base, marginData);
@@ -1049,7 +1026,7 @@ class _FlightBookingDetailsScreenState extends State<FlightBookingDetailsScreen>
               ),
             ),
             pw.Divider(),
-            pw.Table.fromTextArray(
+            pw.TableHelper. fromTextArray(
               context: context,
               border: pw.TableBorder.all(color: PdfColors.grey300),
               headerDecoration: pw.BoxDecoration(color: PdfColors.grey200),

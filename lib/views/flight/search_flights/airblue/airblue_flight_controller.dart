@@ -33,7 +33,6 @@ class AirBlueFlightController extends GetxController {
 
   void clearFlights() {
 
-    print('Clearing flights data');
     flights.clear();
     fareOptionsByRPH.clear();
     errorMessage.value = '';

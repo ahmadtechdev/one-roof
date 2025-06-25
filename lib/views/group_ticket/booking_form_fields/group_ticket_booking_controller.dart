@@ -1,5 +1,8 @@
+// ignore_for_file: non_constant_identifier_names
+
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:oneroof/utility/colors.dart';
@@ -42,7 +45,9 @@ class GroupTicketBookingController extends GetxController {
         booker_email.value = userData['cs_email'];
       }
     } catch (e) {
-      print('Error loading user email: $e');
+      if (kDebugMode) {
+        print('Error loading user email: $e');
+      }
     }
   }
 
@@ -65,8 +70,6 @@ class GroupTicketBookingController extends GetxController {
 
   /// Initializes booking data from flight model
   void initializeFromFlight(GroupFlightModel flight, int groupId) async {
-    print("check 2");
-    print(groupId);
     bookingData.update((val) {
       if (val == null) return;
 
@@ -184,7 +187,6 @@ class GroupTicketBookingController extends GetxController {
       );
       // Hide loading
       isLoading.value = false;
-      print(result2);
 
       if (result['success'] == true) {
         showSuccessSnackbar(result['message']);
@@ -216,7 +218,7 @@ class GroupTicketBookingController extends GetxController {
   // Update your save button in the UI to show loading state
   Widget buildSaveButton() {
     return Obx(() {
-      return Container(
+      return SizedBox(
         width: double.infinity,
         child: ElevatedButton(
           onPressed: isLoading.value ? null : submitBooking,

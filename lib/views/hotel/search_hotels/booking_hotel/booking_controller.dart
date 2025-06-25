@@ -57,6 +57,7 @@ class BookingController extends GetxController {
   GuestsController guestsController = Get.find<GuestsController>();
 
   ApiServiceHotel apiService = ApiServiceHotel();
+  // ignore: non_constant_identifier_names
   var booking_num = 0.obs;
 
   // Booker Information

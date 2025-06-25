@@ -910,7 +910,9 @@ class AirBlueFlightApiService {
           pnrPricing.add(AirBluePNRPricing.fromJson(ptcBreakdowns));
         }
       } catch (e) {
-        print('Error parsing PNR pricing: $e');
+        if (kDebugMode) {
+          print('Error parsing PNR pricing: $e');
+        }
       }
 
 // Add the pricing info to the return map

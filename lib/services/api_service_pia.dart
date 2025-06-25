@@ -638,7 +638,7 @@ class PIAFlightApiService {
           <password>NewOneRoof@121</password>
           <preferredCurrency>PKR</preferredCurrency>
           <preferredLanguage>PK</preferredLanguage>
-          <userName>BSP2730402</userName>
+          <userName>PSA2746487</userName>
         </clientInformation>
         <airItinerary>
           <adviceCodeSegmentExist>false</adviceCodeSegmentExist>
@@ -648,7 +648,7 @@ class PIAFlightApiService {
         </airItinerary>
         ${_buildPassengersXML(adults, children, infants)}
         ${_buildContactXML(bookingController)}
-        <availabilityReferenceID>${_getInternalIds(bookingSegments)}</availabilityReferenceID>
+        <availabilityReferenceID>${flight.selectedFareOption?.rawData["internalID"]}</availabilityReferenceID>
         <infantWithSeatCount>${infants.length}</infantWithSeatCount>
         <requestPurpose>MODIFY_PERMANENTLY_AND_CALC</requestPurpose>
         <specialRequestDetails>
@@ -698,6 +698,10 @@ class PIAFlightApiService {
 
       // Use the selected fare option from the flight
       final fareInfo = flight.selectedFareOption?.rawData ?? {};
+
+      print("check 123:");
+      print(bookingClass);
+
 
       bookingSegments.add({
         "flightSegment": flightSegment,
@@ -766,10 +770,16 @@ class PIAFlightApiService {
       // Find the matching booking class from the selected fare option
       String? resBookDesigQuantity;
       if (bookingClassList is List) {
+        print("AHmad A:");
         for (var bookingClass in bookingClassList) {
-          if (bookingClass['cabin'] == fareInfo['cabin'] &&
-              bookingClass['resBookDesigCode'] == fareInfo['resBookDesigCode']) {
+          print("AHmad B:");
+          print(fareInfo['passengerFareInfoList']['fareInfoList']['resBookDesigCode'] );
+          if (
+              bookingClass['resBookDesigCode'] == fareInfo['passengerFareInfoList']['fareInfoList']['resBookDesigCode']) {
+            print("AHmad C:");
             resBookDesigQuantity = _extractStringValue(bookingClass['resBookDesigQuantity']);
+           print("Ahmad D:");
+           print(resBookDesigQuantity);
             break;
           }
         }
@@ -782,7 +792,7 @@ class PIAFlightApiService {
 <bookingClass>
     <cabin>${_extractStringValue(fareInfo['passengerFareInfoList']['fareInfoList']?['cabin'])}</cabin>
     <resBookDesigCode>${_extractStringValue(fareInfo['passengerFareInfoList']['fareInfoList']?['resBookDesigCode'])}</resBookDesigCode>
-    <resBookDesigQuantity>${resBookDesigQuantity ?? '1'}</resBookDesigQuantity>
+    <resBookDesigQuantity>${resBookDesigQuantity ?? ''}</resBookDesigQuantity>
 </bookingClass>
 <fareInfo>
     <cabin>${_extractStringValue(fareInfo['passengerFareInfoList']['fareInfoList']?['cabin'])}</cabin>
@@ -884,6 +894,7 @@ class PIAFlightApiService {
   }
   String _buildPassengersXML(List<Map<String, dynamic>> adults, List<Map<String, dynamic>> children, List<Map<String, dynamic>> infants) {
     final buffer = StringBuffer();
+    // ignore: unused_local_variable
     int sequence = 0;
 
     // Process adults
@@ -1180,6 +1191,9 @@ class PIAFlightApiService {
 
   String _getInternalIds(List<Map<String, dynamic>> segments) {
     final ids = segments.map((s) => s['internalID']).toSet().toList();
+
+    print("ahmad");
+    print(ids);
     return ids.join(',');
   }
 

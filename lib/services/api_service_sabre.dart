@@ -539,24 +539,16 @@ class ApiServiceSabre extends GetxService {
     final marginVal = marginData['margin_val'];
     final marginPer = marginData['margin_per'];
 
-    print("xyz");
-    print(basePrice);
-    print("zy1");
-    print(marginData);
 
 
     if (marginVal != null && marginVal != 'N/A') {
       // Fixed margin value
-      print("zy13");
       return basePrice + double.parse(marginVal);
     } else if (marginPer != null && marginPer != 'N/A') {
       // Percentage margin
-      print("zy14");
       final percentage = double.parse(marginPer);
-      print(percentage);
       return basePrice * (1 + (percentage / 100));
     }
-    print("xyz15");
     // If no margin data is available, return the base price
     return basePrice;
   }

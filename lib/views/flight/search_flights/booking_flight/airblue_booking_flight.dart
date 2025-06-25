@@ -1,3 +1,5 @@
+// ignore_for_file: unused_local_variable
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:oneroof/views/flight/search_flights/airblue/airblue_flight_controller.dart';
@@ -667,17 +669,10 @@ class _AirBlueBookingFlightState extends State<AirBlueBookingFlight> {
                         clientPhone: bookingController.phoneController.text,
                       );
 
-                      print("PNR Response:");
-                      print(pnrResponse);
 
                       // Access the pricing information
                       if (pnrResponse['pnrPricing'] != null) {
-                        print("Pricing Details:");
                         for (var price in pnrResponse['rawPricingObjects'] as List<AirBluePNRPricing>) {
-                          print('${price.passengerType} x${price.quantity}: ${price.currency} ${price.totalFare}');
-                          print('  Base: ${price.baseFare}');
-                          print('  Tax: ${price.totalTax}');
-                          print('  Fees: ${price.totalFees}');
                         }
                       }
 
@@ -711,7 +706,6 @@ class _AirBlueBookingFlightState extends State<AirBlueBookingFlight> {
                       ));
 
                     } catch (e) {
-                      print('PNR creation error: $e');
                       Get.snackbar(
                         'Error',
                         'Failed to create PNR: $e',
@@ -720,9 +714,6 @@ class _AirBlueBookingFlightState extends State<AirBlueBookingFlight> {
                       );
                     }
 
-                    print("check 12345556");
-                    print(flightController.selectedReturnFareOption);
-                    print(flightController.selectedOutboundFareOption);
 
                   } else {
                     // Handle API success response with error status

@@ -1,7 +1,7 @@
 name: oneroof
 description: "OneRoof Journey Online Flutter project."
 publish_to: "none"
-version: 0.1.0+6
+version: 0.1.1+7
 
 environment:
   sdk: ^3.7.2
