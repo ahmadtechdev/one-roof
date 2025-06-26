@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:oneroof/services/api_service_airarabia.dart';
 import 'package:oneroof/services/api_service_sabre.dart';
 import 'package:oneroof/utility/colors.dart';
 import 'package:oneroof/views/flight/form/controllers/flight_date_controller.dart';
@@ -29,6 +30,7 @@ class MyApp extends StatelessWidget {
     Get.lazyPut(() => TravelersController(), fenix: true);
     Get.lazyPut(() => AirBlueFlightController(), fenix: true);
     Get.lazyPut(() => ApiServiceSabre(), fenix: true);
+    Get.lazyPut(()=> ApiServiceAirArabia(), fenix: true);
      Get.put(AuthController());
 
     return GetMaterialApp(

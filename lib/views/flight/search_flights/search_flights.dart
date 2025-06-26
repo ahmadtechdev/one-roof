@@ -4,9 +4,11 @@ import 'package:oneroof/views/flight/search_flights/airblue/airblue_flight_contr
 import 'package:oneroof/views/flight/search_flights/search_flight_utils/widgets/airblue_flight_card.dart';
 
 import '../../../utility/colors.dart';
+import 'airarabia/airarabia_flight_controller.dart';
 import 'pia/pia_flight_controller.dart';
 import 'sabre/sabre_flight_controller.dart';
 import 'search_flight_utils/filter_flight_model.dart';
+import 'search_flight_utils/widgets/airarabia_flight_card.dart';
 import 'search_flight_utils/widgets/currency_dialog.dart';
 import 'search_flight_utils/widgets/flight_bottom_sheet.dart';
 import 'search_flight_utils/widgets/pia_flight_card.dart';
@@ -20,8 +22,8 @@ class FlightBookingPage extends StatelessWidget {
   final FlightScenario scenario;
   final FlightController controller = Get.put(FlightController());
   final AirBlueFlightController airBlueController = Get.find<AirBlueFlightController>();
-
   final PIAFlightController piaController = Get.put(PIAFlightController());
+  final AirArabiaFlightController airArabiaController = Get.put(AirArabiaFlightController());
 
   FlightBookingPage({super.key, required this.scenario}) {
     controller.setScenario(scenario);
@@ -240,6 +242,33 @@ class FlightBookingPage extends StatelessWidget {
                 },
               );
             }),
+
+
+            // Air Arabia flights section
+            Obx(() {
+              if (airArabiaController.isLoading.value && airArabiaController.flights.isEmpty) {
+                return const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 8.0),
+                  child: Center(child: CircularProgressIndicator()),
+                );
+              }
+              return ListView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: airArabiaController.flights.length,
+                itemBuilder: (context, index) {
+                  final flight = airArabiaController.flights[index];
+                  return GestureDetector(
+                    onTap: () {
+                      // Handle Air Arabia flight selection
+                    },
+                    child: AirArabiaFlightCard(flight: flight),
+                  );
+                },
+              );
+            }),
+
+
           ],
         ),
       ),
@@ -251,6 +280,7 @@ class FlightBookingPage extends StatelessWidget {
         // Update sort type in all controllers
         controller.updateSortType(text);
         airBlueController.applyFilters(FlightFilter(sortType: text));
+        airArabiaController.applyFilters(FlightFilter(sortType: text));
         piaController.applyFilters(FlightFilter(sortType: text));
       },
       style: TextButton.styleFrom(
