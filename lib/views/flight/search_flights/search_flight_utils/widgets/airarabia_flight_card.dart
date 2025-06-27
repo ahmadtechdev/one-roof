@@ -51,6 +51,7 @@ class _AirArabiaFlightCardState extends State<AirArabiaFlightCard> {
     }
   }
 
+// Update the build method in _AirArabiaFlightCardState
   @override
   Widget build(BuildContext context) {
     return AnimatedContainer(
@@ -109,131 +110,8 @@ class _AirArabiaFlightCardState extends State<AirArabiaFlightCard> {
                   ],
                 ),
                 const SizedBox(height: 16),
-                for (var segment in widget.flight.flightSegments)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 8.0),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        CachedNetworkImage(
-                          imageUrl: widget.flight.airlineImg,
-                          height: 32,
-                          width: 32,
-                          placeholder:
-                              (context, url) => const SizedBox(
-                                height: 24,
-                                width: 24,
-                                child: Center(
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                  ),
-                                ),
-                              ),
-                          errorWidget:
-                              (context, url, error) =>
-                                  const Icon(Icons.flight, size: 24),
-                          fit: BoxFit.contain,
-                        ),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              formatTimeFromDateTime(
-                                segment['departure']['dateTime'],
-                              ),
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            Text(
-                              segment['departure']['airport'] ?? 'N/A',
-                              style: const TextStyle(
-                                color: TColors.grey,
-                                fontSize: 15,
-                              ),
-                            ),
-                          ],
-                        ),
-                        Column(
-                          children: [
-                            Text(
-                              '${segment['elapsedTime'] ~/ 60}h ${segment['elapsedTime'] % 60}m',
-                              style: const TextStyle(
-                                color: TColors.grey,
-                                fontSize: 14,
-                              ),
-                            ),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Container(
-                                  width: 10,
-                                  height: 10,
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    border: Border.all(
-                                      color: Colors.grey.shade300,
-                                      width: 2,
-                                    ),
-                                    color: Colors.white,
-                                  ),
-                                ),
-                                Container(
-                                  height: 2,
-                                  width:
-                                      MediaQuery.of(context).size.width * 0.4,
-                                  color: Colors.grey[300],
-                                ),
-                                Container(
-                                  width: 10,
-                                  height: 10,
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    border: Border.all(
-                                      color: Colors.grey.shade300,
-                                      width: 2,
-                                    ),
-                                    color: Colors.white,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            Text(
-                              widget.flight.isDirectFlight
-                                  ? 'Nonstop'
-                                  : '${widget.flight.flightSegments.length - 1} Stop',
-                              style: const TextStyle(
-                                fontSize: 14,
-                                color: TColors.grey,
-                              ),
-                            ),
-                          ],
-                        ),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: [
-                            Text(
-                              formatTimeFromDateTime(
-                                segment['arrival']['dateTime'],
-                              ),
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            Text(
-                              segment['arrival']['airport'] ?? 'N/A',
-                              style: const TextStyle(
-                                color: TColors.grey,
-                                fontSize: 15,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
+                // Show only origin and destination in main view
+                _buildMainFlightSegment(),
               ],
             ),
           ),
@@ -271,7 +149,7 @@ class _AirArabiaFlightCardState extends State<AirArabiaFlightCard> {
                   Container(
                     width: 60,
                     decoration: BoxDecoration(
-                      color: const Color(0xFF2850B6),
+                      color: const Color(0xFFDF0104),
                       borderRadius: BorderRadius.circular(8),
                       boxShadow: [
                         BoxShadow(
@@ -298,7 +176,7 @@ class _AirArabiaFlightCardState extends State<AirArabiaFlightCard> {
                       // Add booking functionality here
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: TColors.secondary,
+                      backgroundColor: TColors.third,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(32),
                       ),
@@ -331,238 +209,366 @@ class _AirArabiaFlightCardState extends State<AirArabiaFlightCard> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // Show all segments in expanded view
                   for (var segment in widget.flight.flightSegments)
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        border: Border(
-                          bottom: BorderSide(
-                            color: Colors.grey[300]!,
-                            width: 1,
-                          ),
-                        ),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              const Icon(
-                                Icons.flight_takeoff,
-                                size: 16,
-                                color: TColors.primary,
-                              ),
-                              const SizedBox(width: 8),
-                              Text(
-                                'Flight ${widget.flight.flightSegments.indexOf(segment) + 1}',
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 12,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 12),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: TColors.primary.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                            child: Text(
-                              getCabinClassName(widget.flight.cabinClass),
-                              style: const TextStyle(
-                                color: TColors.primary,
-                                fontWeight: FontWeight.w500,
-                                fontSize: 12,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          Row(
-                            children: [
-                              CachedNetworkImage(
-                                imageUrl: widget.flight.airlineImg,
-                                height: 24,
-                                width: 24,
-                                placeholder:
-                                    (context, url) => const SizedBox(
-                                      height: 24,
-                                      width: 24,
-                                      child: Center(
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2,
-                                        ),
-                                      ),
-                                    ),
-                                errorWidget:
-                                    (context, url, error) =>
-                                        const Icon(Icons.flight, size: 24),
-                                fit: BoxFit.contain,
-                              ),
-                              const SizedBox(width: 8),
-                              Text(
-                                '${widget.flight.airlineName} ${segment['flightNumber']}',
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w500,
-                                  fontSize: 14,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 12),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      segment['departure']['city'] ?? "UNK",
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    ),
-                                    Text(
-                                      'Terminal ${segment['departure']['terminal']}',
-                                      style: const TextStyle(
-                                        color: Colors.grey,
-                                        fontSize: 12,
-                                      ),
-                                    ),
-                                    Text(
-                                      formatTimeFromDateTime(
-                                        segment['departure']['dateTime'],
-                                      ),
-                                      style: const TextStyle(
-                                        color: Colors.grey,
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    ),
-                                    Text(
-                                      formatFullDateTime(
-                                        segment['departure']['dateTime'],
-                                      ),
-                                      style: const TextStyle(
-                                        color: Colors.grey,
-                                        fontSize: 12,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              const Icon(Icons.flight, color: TColors.primary),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.end,
-                                  children: [
-                                    Text(
-                                      segment['arrival']['city'] ?? "UNK",
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    ),
-                                    Text(
-                                      'Terminal ${segment['arrival']['terminal']}',
-                                      style: const TextStyle(
-                                        color: Colors.grey,
-                                        fontSize: 12,
-                                      ),
-                                    ),
-                                    Text(
-                                      formatTimeFromDateTime(
-                                        segment['arrival']['dateTime'],
-                                      ),
-                                      style: const TextStyle(
-                                        color: Colors.grey,
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    ),
-                                    Text(
-                                      formatFullDateTime(
-                                        segment['arrival']['dateTime'],
-                                      ),
-                                      style: const TextStyle(
-                                        color: Colors.grey,
-                                        fontSize: 12,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
+                    _buildDetailedFlightSegment(segment),
+                  _buildBaggageSection(),
+                  _buildPolicySection(),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+// Add these new helper methods to _AirArabiaFlightCardState
+  Widget _buildMainFlightSegment() {
+    final firstSegment = widget.flight.flightSegments.first;
+    final lastSegment = widget.flight.flightSegments.last;
+    final totalDuration = widget.flight.totalDuration;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          CachedNetworkImage(
+            imageUrl: widget.flight.airlineImg,
+            height: 32,
+            width: 32,
+            placeholder: (context, url) => const SizedBox(
+              height: 24,
+              width: 24,
+              child: Center(
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                ),
+              ),
+            ),
+            errorWidget: (context, url, error) =>
+            const Icon(Icons.flight, size: 24),
+            fit: BoxFit.contain,
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                formatTimeFromDateTime(firstSegment['departure']['dateTime']),
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              Text(
+                firstSegment['departure']['airport'] ?? 'N/A',
+                style: const TextStyle(
+                  color: TColors.grey,
+                  fontSize: 15,
+                ),
+              ),
+            ],
+          ),
+          Column(
+            children: [
+              Text(
+                '${totalDuration ~/ 60}h ${totalDuration % 60}m',
+                style: const TextStyle(
+                  color: TColors.grey,
+                  fontSize: 14,
+                ),
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
                   Container(
-                    padding: const EdgeInsets.all(16),
+                    width: 10,
+                    height: 10,
                     decoration: BoxDecoration(
-                      border: Border(
-                        bottom: BorderSide(color: Colors.grey[300]!),
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: Colors.grey.shade300,
+                        width: 2,
                       ),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            const Icon(
-                              Icons.luggage,
-                              size: 16,
-                              color: TColors.primary,
-                            ),
-                            const SizedBox(width: 8),
-                            const Text(
-                              'Baggage Allowance',
-                              style: TextStyle(fontWeight: FontWeight.bold),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        const Text(
-                          '20 KGS included',
-                          style: TextStyle(color: Colors.grey, fontSize: 12),
-                        ),
-                      ],
+                      color: Colors.white,
                     ),
                   ),
                   Container(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            const Icon(
-                              Icons.rule,
-                              size: 16,
-                              color: TColors.primary,
-                            ),
-                            const SizedBox(width: 8),
-                            const Text(
-                              'Policy',
-                              style: TextStyle(fontWeight: FontWeight.bold),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        const Text(
-                          '• Non-refundable ticket\n• Date change permitted with fee\n• Standard meal included\n• Free seat selection\n• Cabin baggage allowed\n• Check-in baggage as per policy',
-                          style: TextStyle(color: Colors.grey, fontSize: 12),
-                        ),
-                      ],
+                    height: 2,
+                    width: MediaQuery.of(context).size.width * 0.4,
+                    color: Colors.grey[300],
+                  ),
+                  Container(
+                    width: 10,
+                    height: 10,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: Colors.grey.shade300,
+                        width: 2,
+                      ),
+                      color: Colors.white,
                     ),
                   ),
                 ],
               ),
+              Text(
+                widget.flight.isDirectFlight
+                    ? 'Nonstop'
+                    : '${widget.flight.flightSegments.length - 1} Stop',
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: TColors.grey,
+                ),
+              ),
+            ],
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                formatTimeFromDateTime(lastSegment['arrival']['dateTime']),
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              Text(
+                lastSegment['arrival']['airport'] ?? 'N/A',
+                style: const TextStyle(
+                  color: TColors.grey,
+                  fontSize: 15,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDetailedFlightSegment(Map<String, dynamic> segment) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        border: Border(
+          bottom: BorderSide(
+            color: Colors.grey[300]!,
+            width: 1,
+          ),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(
+                Icons.flight_takeoff,
+                size: 16,
+                color: TColors.primary,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'Flight ${widget.flight.flightSegments.indexOf(segment) + 1}',
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 12,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 8,
+              vertical: 4,
             ),
+            decoration: BoxDecoration(
+              color: TColors.primary.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: Text(
+              getCabinClassName(widget.flight.cabinClass),
+              style: const TextStyle(
+                color: TColors.primary,
+                fontWeight: FontWeight.w500,
+                fontSize: 12,
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              CachedNetworkImage(
+                imageUrl: widget.flight.airlineImg,
+                height: 24,
+                width: 24,
+                placeholder: (context, url) => const SizedBox(
+                  height: 24,
+                  width: 24,
+                  child: Center(
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                    ),
+                  ),
+                ),
+                errorWidget: (context, url, error) =>
+                const Icon(Icons.flight, size: 24),
+                fit: BoxFit.contain,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                '${widget.flight.airlineName} ${segment['flightNumber']}',
+                style: const TextStyle(
+                  fontWeight: FontWeight.w500,
+                  fontSize: 14,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      segment['departure']['city'] ?? "UNK",
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    Text(
+                      'Terminal ${segment['departure']['terminal']}',
+                      style: const TextStyle(
+                        color: Colors.grey,
+                        fontSize: 12,
+                      ),
+                    ),
+                    Text(
+                      formatTimeFromDateTime(segment['departure']['dateTime']),
+                      style: const TextStyle(
+                        color: Colors.grey,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    Text(
+                      formatFullDateTime(segment['departure']['dateTime']),
+                      style: const TextStyle(
+                        color: Colors.grey,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Icon(Icons.flight, color: TColors.primary),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      segment['arrival']['city'] ?? "UNK",
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    Text(
+                      'Terminal ${segment['arrival']['terminal']}',
+                      style: const TextStyle(
+                        color: Colors.grey,
+                        fontSize: 12,
+                      ),
+                    ),
+                    Text(
+                      formatTimeFromDateTime(segment['arrival']['dateTime']),
+                      style: const TextStyle(
+                        color: Colors.grey,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    Text(
+                      formatFullDateTime(segment['arrival']['dateTime']),
+                      style: const TextStyle(
+                        color: Colors.grey,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBaggageSection() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        border: Border(
+          bottom: BorderSide(color: Colors.grey[300]!),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(
+                Icons.luggage,
+                size: 16,
+                color: TColors.primary,
+              ),
+              const SizedBox(width: 8),
+              const Text(
+                'Baggage Allowance',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            '20 KGS included',
+            style: TextStyle(color: Colors.grey, fontSize: 12),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPolicySection() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(
+                Icons.rule,
+                size: 16,
+                color: TColors.primary,
+              ),
+              const SizedBox(width: 8),
+              const Text(
+                'Policy',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            '• Non-refundable ticket\n• Date change permitted with fee\n• Standard meal included\n• Free seat selection\n• Cabin baggage allowed\n• Check-in baggage as per policy',
+            style: TextStyle(color: Colors.grey, fontSize: 12),
+          ),
         ],
       ),
     );
