@@ -1,7 +1,9 @@
 import 'dart:convert';
 
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
+import 'package:xml2json/xml2json.dart';
 
 class ApiServiceAirArabia {
   final Dio _dio = Dio();
@@ -44,6 +46,9 @@ class ApiServiceAirArabia {
         data: data,
       );
 
+      // printDebugData('Air Arabia Response', response);
+      print("AHmad");
+      print(response.data);
       if (response.statusCode == 200) {
         // Ensure the response is parsed as Map
         if (response.data is String) {
@@ -56,6 +61,64 @@ class ApiServiceAirArabia {
     } catch (e) {
       print('Error in Air Arabia API: $e');
       rethrow;
+    }
+  }
+
+  Map<String, dynamic> _convertXmlToJson(String xmlString) {
+    try {
+      final transformer = Xml2Json();
+      transformer.parse(xmlString);
+      final jsonString = transformer.toGData();
+      return jsonDecode(jsonString) as Map<String, dynamic>;
+    } catch (e) {
+      // print('Error converting XML to JSON: $e');
+      return {'error': 'Failed to parse XML response'};
+    }
+  }
+
+
+  void printDebugData(String label, dynamic data) {
+    // print('--- DEBUG: $label ---');
+
+    if (data is String && data.trim().startsWith('<')) {
+      // Handle XML string
+      // print('Raw XML:\n$data');
+
+      try {
+        // Convert XML to JSON
+        final jsonData = _convertXmlToJson(data);
+        printJsonPretty(jsonData);
+      } catch (e) {
+        if (kDebugMode) {
+          print('Error converting XML to JSON: $e');
+        }
+      }
+    } else if (data is String) {
+      // Plain string
+      // print('Plain String:\n$data');
+    } else {
+      // JSON/Map or other object
+      printJsonPretty(data);
+    }
+
+    // print('--- END DEBUG: $label ---\n');
+  }
+
+  /// Converts XML string to JSON (Map)
+
+
+  /// Prints JSON nicely with chunking
+  void printJsonPretty(dynamic jsonData) {
+    const int chunkSize = 1000;
+    final jsonString = const JsonEncoder.withIndent('  ').convert(jsonData);
+    for (int i = 0; i < jsonString.length; i += chunkSize) {
+      final chunk = jsonString.substring(
+        i,
+        i + chunkSize < jsonString.length ? i + chunkSize : jsonString.length,
+      );
+      if (kDebugMode) {
+        print(chunk);
+      }
     }
   }
 }

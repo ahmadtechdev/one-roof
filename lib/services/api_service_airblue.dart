@@ -148,7 +148,7 @@ class AirBlueFlightApiService {
       // print("request");
       final xmlRequest = request.toString();
       _convertXmlToJson(xmlRequest);
-      printDebugData('Air Blue Request', xmlRequest);
+      // printDebugData('Air Blue Request', xmlRequest);
 
 
       // _printJsonPretty(jsonRequest);
@@ -209,7 +209,7 @@ class AirBlueFlightApiService {
       final xmlResponse = response.data.toString();
       _convertXmlToJson(xmlResponse);
 
-      printDebugData('Air Blue Response', xmlResponse);
+      // printDebugData('Air Blue Response', xmlResponse);
 
       // printJsonPretty(jsonResponse);
 
@@ -894,7 +894,7 @@ class AirBlueFlightApiService {
 
       // Convert XML to JSON
       final jsonResponse = _convertXmlToJson(response.data.toString());
-      printDebugData('PNR RESPONSE (JSON)', jsonResponse);
+      // printDebugData('PNR RESPONSE (JSON)', jsonResponse);
 
       // Parse the pricing information
       List<AirBluePNRPricing> pnrPricing = [];

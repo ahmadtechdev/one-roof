@@ -165,9 +165,6 @@ class ApiServiceSabre extends GetxService {
         }
       }
 
-
-
-
         return {};
     } catch (e) {
       // print('Error in searchFlights: $e');
