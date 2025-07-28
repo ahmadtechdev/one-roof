@@ -1,6 +1,6 @@
 // ignore_for_file: non_constant_identifier_names, unused_local_variable
 
-
+import 'dart:convert';
 import 'package:dio/dio.dart' as dio;
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
@@ -16,12 +16,121 @@ class GroupTicketingController extends GetxController {
   final RxString selectedRegion = ''.obs;
   final RxString selectedRegion2 = ''.obs;
 
+  // Margin variables
+  var travelnetworkmargin = 0.0;
+  var al_haidermargin = 0.0;
+
   // Store tokens separately
   final String travelNetworkAuthToken =
       'eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiI1IiwianRpIjoiMTdmOTNjMTM2NjkwNmU1ZmZlMWYxMTRkNjFhZmJhODg3YWNjYWYxYmQyM2I0NGU5OTg5MTg5NGYyZmUwMjdlZTBlZGYwMDMyN2Q0YmYzN2IiLCJpYXQiOjE3MzgyNDQ2NDkuODI2MDc4LCJuYmYiOjE3MzgyNDQ2NDkuODI2MDgsImV4cCI6MTc2OTc4MDY0OS43OTQ4MTEsInN1YiI6IjM5Iiwic2NvcGVzIjpbXX0.g09sNMCTRD7V0Y7FKflF63seB5ri6vuwJ66TNrEy2cgQByMKveomh8IAtb2Q5bsdeGZeqQVrkvzD97wblJXVjLNTuBrC0xtLOxkN9pOd1LcPlEHU9gbXpyjUNa841ESXVuLhmabedb2d0CZxitrOb62TIQH81J6k_uapZRQsBbPissnFsZCNZndwlQC3oSFvQmqJJ_qdtliYQ39z27M7XUlVH3NEk0mgVcj34NanGi7ENWuVPjCPiSr33pCRbsAZUcU5eMk97brgpXtiZuMpy2E7EWnFlFbVCme9mffq3ISP4dNigqN09-gS2dObQ_r1HcgPLcaX3netnvDOUBrgvONjdS8YDDQ5Xpxf3gN6Ez-4lxwSFhF1bhHFYvpPEsrv-dLGgN_c3rGSIBqRowrA_JH1jCTo6-HTwB_tPn5ZJ-nN5v5732Rl0OM4Yhhwv23yEToA5q20S74gOx1wMYQbRCMQEEkouZdLabv5Jns_ADBrTnlE8IMlUu5viCYUaLzs0PZeW0IbVAFjKVICiydF7bAuxysRwAedhQcm5zbTQKnKFH65UqLwf7Q5b2uoE3L7yqWWbyOSWmPM4DahDfMyA8-L3D2Q5nMeDYwnFpVQQujQUoaSDHRVTEXZM0-gZ-cJ0G7obvZ5D2lf36ZVzotAPb7FbLENuh3pdEqktO7p1NY';
 
   final String alhaiderAuthToken =
       'eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiI5ZTc4OTIxMS0zZjc0LTQ1ZTUtOWE3NC03YzZhYzNmMWVjZGQiLCJqdGkiOiIxNDE0NDE2YmNlNjE5OTk3YTJkNzE4MWYzYWY3YTRkMTA1YzZmZGUxNDYwNDFhZTJjYjVjZDA5ZTlhYTVhYjQ1Y2Q2M2EyNDI2MzBhZjdiZiIsImlhdCI6MTc0MzA3MjA1NC4yMDk1MTgsIm5iZiI6MTc0MzA3MjA1NC4yMDk1MjMsImV4cCI6MTc3NDYwODA1NC4xOTM4MzYsInN1YiI6Ijc0Iiwic2NvcGVzIjpbXX0.mv6GXni4w0wCJAUKWAtFOcfnH9fmI5bWTSIddDzkS3H3UUgk-0CcehU86U_m_91XRUwljgO_X06VtS3VQs29m3wwjBcNxZcL74gkmWk5zSzgjezhoaMSSuYsF_yHb3-XXODLFe6yq0-6yQ8nydhr57ifa1CLvRZRfVYdfPTCnkZqb6Y6pH_FXex4EjC5vHWHPPUOU9n6jrIvL1TM4sSs7Ie4PznkazOLdJME1XZqwrge1gdVhA7MYSVvEbPZBw7nuRdNAuA1xUHWgS2PC-qvrO_4atWEeWA__2jI6_0_Hr1nE1vUqVbRmtg3eiudmZgqo2Zfb2xjhwNfPdNgVqveFSZDiN2HmweWylN-7oGM6yKZyfa8RMSR1OH1-ubyr2TEcggUiv7Dew0gUGgq5J-kjUTWMIKpWJ_o_yZUXMCrMaBheKqDMXTZQ2w3C4CNqKf96Ky2YIU3kuQHtfgTOwhzysZSzU1Fpd9fCPo6UGbsPbzFut2vTj413dlvu1NdXWT6n-ZGhhbGxoi3JVUuOvWksKP-W1XugsbAUIeh5hyp_tr8iiORpf5DGiGjphD2PEksIxE7n9NTp1iR4TQZlSY_nUXyuW1TNd3KmdWb7eZFhP_lWc2Ycfkmt8Kq9ii_DbtTlrjtimTn24Nud33szwK19mFOfkXN55wA1DXAKA4anDs';
+
+  @override
+  void onInit() {
+    super.onInit();
+    // Initialize margins on controller creation
+    fetchGroupTicketingMargins();
+  }
+
+  /// Fetch group ticketing margins
+  Future<void> fetchGroupTicketingMargins() async {
+    var data = '';
+
+    try {
+      var response = await dio1.request(
+        'https://onerooftravel.net/api/groupTicketingMargins',
+        options: dio.Options(method: 'POST'),
+        data: data,
+      );
+
+      if (response.statusCode == 200) {
+        if (kDebugMode) {
+          print(
+            'Group Ticketing Margins Response: ${json.encode(response.data)}',
+          );
+        }
+
+        // Handle both String and Map responses
+        Map<String, dynamic> responseData;
+
+        if (response.data is String) {
+          // Parse JSON string
+          responseData = json.decode(response.data) as Map<String, dynamic>;
+        } else if (response.data is Map<String, dynamic>) {
+          // Already a Map
+          responseData = response.data as Map<String, dynamic>;
+        } else {
+          if (kDebugMode) {
+            print('Unexpected response type: ${response.data.runtimeType}');
+          }
+          return;
+        }
+
+        if (responseData['success'] == true && responseData['data'] != null) {
+          final data = responseData['data'] as List;
+          if (data.isNotEmpty) {
+            final marginData = data[0] as Map<String, dynamic>;
+
+            // Store travel network margin (B2C)
+            travelnetworkmargin =
+                double.tryParse(
+                  marginData['travel_network_margin_b2c']?.toString() ?? '0',
+                ) ??
+                0.0;
+
+            // Store Al Haider margin (B2C)
+            al_haidermargin =
+                double.tryParse(
+                  marginData['ah_b2cmargin']?.toString() ?? '0',
+                ) ??
+                0.0;
+
+            if (kDebugMode) {
+              print(
+                'Travel Network Margin (B2C) updated: $travelnetworkmargin',
+              );
+              print('Al Haider Margin (B2C) updated: $al_haidermargin');
+            }
+          }
+        }
+      } else {
+        if (kDebugMode) {
+          print('Group Ticketing Margins API Error: ${response.statusMessage}');
+        }
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error fetching group ticketing margins: $e');
+      }
+    }
+  }
+
+  /// Apply margin to flight price based on source
+  double applyMarginToPrice(double originalPrice, String source) {
+    double margin = 0.0;
+
+    // Determine which margin to apply based on source
+    if (source.toLowerCase().contains('travel') ||
+        source.toLowerCase().contains('network')) {
+      margin = travelnetworkmargin;
+    } else if (source.toLowerCase().contains('alhaider') ||
+        source.toLowerCase().contains('haider')) {
+      margin = al_haidermargin;
+    }
+
+    // Add margin to original price (margin is already in PKR)
+    double finalPrice = originalPrice + margin;
+
+    if (kDebugMode) {
+      print(
+        'Original Price: $originalPrice, Margin: $margin, Final Price: $finalPrice',
+      );
+    }
+
+    return finalPrice;
+  }
 
   // Helper methods to get headers for different services
   Map<String, String> getTravelNetworkHeaders() {
@@ -36,7 +145,7 @@ class GroupTicketingController extends GetxController {
       'Accept': 'application/json',
       'Authorization': 'Bearer $alhaiderAuthToken',
       'Cookie':
-      'XSRF-TOKEN=your_xsrf_token_here; al_haider_international_travels_tours_session=your_session_token_here',
+          'XSRF-TOKEN=your_xsrf_token_here; al_haider_international_travels_tours_session=your_session_token_here',
     };
   }
 
@@ -103,7 +212,6 @@ class GroupTicketingController extends GetxController {
         url += '?type=';
       }
 
-
       var response = await dio1.get(
         url,
         options: dio.Options(headers: getTravelNetworkHeaders()),
@@ -116,14 +224,27 @@ class GroupTicketingController extends GetxController {
         final groups = response.data['groups'] as List;
         final sampleSize = groups.length > 3 ? 3 : groups.length;
 
-        for (int i = 0; i < sampleSize; i++) {
-        }
+        for (int i = 0; i < sampleSize; i++) {}
 
         // Print available keys in the response data
-        for (var key in (response.data as Map).keys) {
-        }
+        for (var key in (response.data as Map).keys) {}
 
-        return response.data['groups'] as List<dynamic>;
+        // Apply margin to each group's price
+        final processedGroups =
+            groups.map((group) {
+              if (group['price'] != null) {
+                final originalPrice =
+                    double.tryParse(group['price'].toString()) ?? 0.0;
+                final finalPrice = applyMarginToPrice(
+                  originalPrice,
+                  'travel_network',
+                );
+                group['price'] = finalPrice.toInt();
+              }
+              return group;
+            }).toList();
+
+        return processedGroups;
       } else {
         return [];
       }
@@ -187,21 +308,20 @@ class GroupTicketingController extends GetxController {
           "agent_notes": agentNotes ?? "",
         },
         "booking_details":
-        passengers
-            .map(
-              (passenger) => {
-            "surname": passenger['lastName'],
-            "given_name": passenger['firstName'],
-            "title": passenger['title'],
-            "passport_no": passenger['passportNumber'] ?? "",
-            "dob": passenger['dateOfBirth'] ?? "",
-            "doe": passenger['passportExpiry'] ?? "",
-          },
-        )
-            .toList(),
+            passengers
+                .map(
+                  (passenger) => {
+                    "surname": passenger['lastName'],
+                    "given_name": passenger['firstName'],
+                    "title": passenger['title'],
+                    "passport_no": passenger['passportNumber'] ?? "",
+                    "dob": passenger['dateOfBirth'] ?? "",
+                    "doe": passenger['passportExpiry'] ?? "",
+                  },
+                )
+                .toList(),
         "group_price_detail_id": groupPriceDetailId,
       };
-
 
       // Add timeout to avoid hanging requests
       var response = await dio1.post(
@@ -214,7 +334,6 @@ class GroupTicketingController extends GetxController {
           sendTimeout: const Duration(seconds: 30),
         ),
       );
-
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         // Check if the response has the nested data structure
@@ -242,7 +361,7 @@ class GroupTicketingController extends GetxController {
               return {
                 'success': false,
                 'message':
-                innerData['message'] ??
+                    innerData['message'] ??
                     'Booking could not be created - no data returned',
                 'data': null,
               };
@@ -265,7 +384,6 @@ class GroupTicketingController extends GetxController {
         };
       }
     } on dio.DioException catch (e) {
-
       // Check for specific error types
       if (e.type == dio.DioExceptionType.connectionTimeout ||
           e.type == dio.DioExceptionType.sendTimeout ||
@@ -273,7 +391,7 @@ class GroupTicketingController extends GetxController {
         return {
           'success': false,
           'message':
-          'Request timed out. Please check your internet connection and try again.',
+              'Request timed out. Please check your internet connection and try again.',
           'error_details': e.message,
           'data': null,
         };
@@ -302,7 +420,6 @@ class GroupTicketingController extends GetxController {
         'data': null,
       };
     } catch (e) {
-
       return {
         'success': false,
         'message': 'An unexpected error occurred',
@@ -328,13 +445,27 @@ class GroupTicketingController extends GetxController {
         final groups = response.data['groups'] as List;
         final sampleSize = groups.length > 3 ? 3 : groups.length;
 
-        for (int i = 0; i < sampleSize; i++) {
-        }
+        for (int i = 0; i < sampleSize; i++) {}
 
         // Print available keys in the response data
-        for (var key in (response.data as Map).keys) {
-        }
-        return response.data['groups'] as List<dynamic>;
+        for (var key in (response.data as Map).keys) {}
+
+        // Apply margin to each group's price
+        final processedGroups =
+            groups.map((group) {
+              if (group['price'] != null) {
+                final originalPrice =
+                    double.tryParse(group['price'].toString()) ?? 0.0;
+                final finalPrice = applyMarginToPrice(
+                  originalPrice,
+                  'alhaider',
+                );
+                group['price'] = finalPrice.toInt();
+              }
+              return group;
+            }).toList();
+
+        return processedGroups;
       } else {
         return [];
       }
@@ -367,7 +498,6 @@ class GroupTicketingController extends GetxController {
   Future<List<dynamic>> fetchCombinedGroups(String type, String type2) async {
     selectedRegion.value = type;
 
-
     try {
       // Fetch groups from both APIs concurrently
       final travelNetworkFuture = fetchGroups(type);
@@ -377,7 +507,7 @@ class GroupTicketingController extends GetxController {
       final travelNetworkGroups = await travelNetworkFuture;
       final alhaiderGroups = await alhaiderFuture;
 
-      // Combine the results (ensure alhaiderGroups is also a List)
+      // Combine the results (margins are already applied in individual methods)
       final combinedGroups = [...travelNetworkGroups, ...alhaiderGroups];
 
       return combinedGroups;
@@ -463,7 +593,7 @@ class GroupTicketingController extends GetxController {
         "booker_data": {
           "name": bookername.isNotEmpty ? bookername : "OneRoofTravel",
           "email":
-          booker_email.isNotEmpty ? booker_email : "resOneroof@gmail.com",
+              booker_email.isNotEmpty ? booker_email : "resOneroof@gmail.com",
           "mobile": bookername_num.isNotEmpty ? bookername_num : "03001232412",
         },
         "agency_info": {
@@ -473,34 +603,33 @@ class GroupTicketingController extends GetxController {
           "agency_name": agencyName,
           "created_at": currentDate, // Current timestamp
           "no_of_seats":
-          (noOfSeats ?? (adults + (children ?? 0) + (infants ?? 0)))
-              .toString(),
+              (noOfSeats ?? (adults + (children ?? 0) + (infants ?? 0)))
+                  .toString(),
           "fares": fares ?? 642.0, // Default fare or calculated
           "airline_name":
-          airlineName ?? "Default Airline", // Default airline name
+              airlineName ?? "Default Airline", // Default airline name
           "adults": adults,
           "child": children ?? 0,
           "infant": infants ?? 0,
           "agent_notes": agentNotes,
         },
         "booking_details":
-        passengers
-            .map(
-              (passenger) => {
-            "surname": passenger['lastName'],
-            "given_name": passenger['firstName'],
-            "title":
-            passenger['title']?.toUpperCase() ??
-                "MR", // Ensure uppercase
-            "passport_no": passenger['passportNumber'] ?? "",
-            "dob": passenger['dateOfBirth'] ?? "",
-            "doe": passenger['passportExpiry'] ?? "",
-          },
-        )
-            .toList(),
+            passengers
+                .map(
+                  (passenger) => {
+                    "surname": passenger['lastName'],
+                    "given_name": passenger['firstName'],
+                    "title":
+                        passenger['title']?.toUpperCase() ??
+                        "MR", // Ensure uppercase
+                    "passport_no": passenger['passportNumber'] ?? "",
+                    "dob": passenger['dateOfBirth'] ?? "",
+                    "doe": passenger['passportExpiry'] ?? "",
+                  },
+                )
+                .toList(),
         "group_price_detail_id": groupPriceDetailId,
       };
-
 
       // Updated endpoint URL based on the accurate API
       var response = await dio1.post(
@@ -513,7 +642,6 @@ class GroupTicketingController extends GetxController {
         ),
       );
 
-
       if (response.statusCode == 200) {
         return {
           'success': true,
@@ -524,13 +652,12 @@ class GroupTicketingController extends GetxController {
         return {
           'success': false,
           'message':
-          'Failed to save booking to database. Status: ${response.statusCode}',
+              'Failed to save booking to database. Status: ${response.statusCode}',
           'error_details': response.data?.toString() ?? 'No error details',
           'data': null,
         };
       }
     } on dio.DioException catch (e) {
-
       if (e.type == dio.DioExceptionType.connectionTimeout ||
           e.type == dio.DioExceptionType.sendTimeout ||
           e.type == dio.DioExceptionType.receiveTimeout) {
@@ -564,7 +691,6 @@ class GroupTicketingController extends GetxController {
         'data': null,
       };
     } catch (e) {
-
       return {
         'success': false,
         'message': 'An unexpected database error occurred',
@@ -572,5 +698,10 @@ class GroupTicketingController extends GetxController {
         'data': null,
       };
     }
+  }
+
+  /// Method to manually refresh margins
+  Future<void> refreshMargins() async {
+    await fetchGroupTicketingMargins();
   }
 }

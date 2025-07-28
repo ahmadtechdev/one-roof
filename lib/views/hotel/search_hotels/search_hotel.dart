@@ -620,7 +620,7 @@ class HotelCard extends StatelessWidget {
     // Print the original image URL from hotel data
     print('Hotel image URL: $imageUrl');
 
-    // Check if the image is a URL
+    // Check if the image is a full URL (starts with http/https)
     if (imageUrl.startsWith('http')) {
       print('Loading network image from: $imageUrl');
 
@@ -649,8 +649,41 @@ class HotelCard extends StatelessWidget {
           );
         },
       );
-    } else {
-      // If not a URL, assume it's a local asset path
+    }
+    // Check if the image is a relative path starting with '/'
+    else if (imageUrl.startsWith('/')) {
+      // Convert relative path to full URL
+      String fullImageUrl = 'https://static.giinfotech.ae/medianew$imageUrl';
+      print('Converting relative path to full URL: $fullImageUrl');
+
+      return CachedNetworkImage(
+        imageUrl: fullImageUrl,
+        height: 200,
+        width: double.infinity,
+        fit: BoxFit.cover,
+        placeholder: (context, url) {
+          print('Loading placeholder for: $url');
+          return Container(
+            color: Colors.grey[300],
+            child: const Center(
+              child: CircularProgressIndicator(color: TColors.primary),
+            ),
+          );
+        },
+        errorWidget: (context, url, error) {
+          print('Error loading image from: $url');
+          print('Error details: $error');
+          return Image.asset(
+            'assets/img/cardbg/broken-image.png',
+            height: 200,
+            width: double.infinity,
+            fit: BoxFit.cover,
+          );
+        },
+      );
+    }
+    // If imageUrl is empty or doesn't match above conditions, use default asset
+    else {
       String assetPath =
           imageUrl.isEmpty ? 'assets/images/hotel1.jpg' : imageUrl;
       print('Loading local asset: $assetPath');
@@ -659,12 +692,20 @@ class HotelCard extends StatelessWidget {
         assetPath,
         height: 200,
         width: double.infinity,
-        fit: BoxFit.contain,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) {
+          print('Error loading asset: $assetPath');
+          return Image.asset(
+            'assets/img/cardbg/broken-image.png',
+            height: 200,
+            width: double.infinity,
+            fit: BoxFit.cover,
+          );
+        },
       );
     }
-  }
+  } // Alternative: Print all hotel image URLs at once
 
-  // Alternative: Print all hotel image URLs at once
   void printAllHotelImageUrls(List<Map<String, dynamic>> hotels) {
     print('=== All Hotel Image URLs ===');
     for (int i = 0; i < hotels.length; i++) {

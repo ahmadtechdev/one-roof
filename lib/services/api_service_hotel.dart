@@ -15,11 +15,16 @@ class ApiServiceHotel extends GetxService {
   late final Dio dio;
   static const String _apiKey = 'VyBZUyOkbCSNvvDEMOV2==';
   static const String _baseUrl = 'http://uat-apiv2.giinfotech.ae/api/v2';
+
+  // Variables to store margin and PKR price
+
   ApiServiceHotel() {
     dio = Dio(BaseOptions(baseUrl: _baseUrl));
     if (!Get.isRegistered<SearchHotelController>()) {
       Get.put(SearchHotelController());
     }
+    // Initialize margin data on service creation
+    fetchMargin();
   }
 
   /// Helper: Sets default headers for API requests.
@@ -42,6 +47,68 @@ class ApiServiceHotel extends GetxService {
         print('Date formatting error: $e');
       }
       return isoDate; // Fallback to the original format if parsing fails.
+    }
+  }
+
+  /// Fetch margin and ROE data
+  Future<void> fetchMargin() async {
+    var data = '';
+    var dio = Dio();
+
+    try {
+      var response = await dio.request(
+        'https://onerooftravel.net/api/marginTesting',
+        options: Options(method: 'POST'),
+        
+        data: data,
+      );
+
+      if (response.statusCode == 200) {
+        if (kDebugMode) {
+          print('Raw response: ${response.data}');
+        }
+
+        // Handle both String and Map responses
+        Map<String, dynamic> responseData;
+
+        if (response.data is String) {
+          // Parse JSON string
+          responseData = json.decode(response.data) as Map<String, dynamic>;
+        } else if (response.data is Map<String, dynamic>) {
+          // Already a Map
+          responseData = response.data as Map<String, dynamic>;
+        } else {
+          if (kDebugMode) {
+            print('Unexpected response type: ${response.data.runtimeType}');
+          }
+          return;
+        }
+
+        if (responseData['success'] == true) {
+          // Store margin
+          margin = double.tryParse(responseData['margin'].toString()) ?? 0.0;
+
+          // Store ROE (rate of exchange) in pkrprice
+          final siteOptions =
+              responseData['siteOptions'] as Map<String, dynamic>?;
+          if (siteOptions != null) {
+            pkrprice = double.tryParse(siteOptions['roe'].toString()) ?? 276.0;
+          }
+
+          if (kDebugMode) {
+            print('Margin updated: $margin');
+            print('PKR Price (ROE) updated: $pkrprice');
+          }
+        }
+      } else {
+        if (kDebugMode) {
+          print('Margin API Error: ${response.statusMessage}');
+        }
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error fetching margin: $e');
+      }
     }
   }
 
@@ -120,14 +187,14 @@ class ApiServiceHotel extends GetxService {
         "CheckOutDate": _formatDate(checkOutDate),
         "Rooms": {
           "Room":
-          rooms
-              .map(
-                (room) => {
-              "RoomIdentifier": room["RoomIdentifier"],
-              "Adult": room["Adult"],
-            },
-          )
-              .toList(),
+              rooms
+                  .map(
+                    (room) => {
+                      "RoomIdentifier": room["RoomIdentifier"],
+                      "Adult": room["Adult"],
+                    },
+                  )
+                  .toList(),
         },
         "TassProInfo": {"CustomerCode": "4805", "RegionID": "123"},
       },
@@ -150,22 +217,28 @@ class ApiServiceHotel extends GetxService {
         searchController.destinationCode.value = destinationCode ?? '';
         searchController.hotels.value =
             hotels.map<Map<String, dynamic>>((hotel) {
+              // Calculate price with margin and PKR conversion
+              double basePrice =
+                  hotel['minPrice'] != null
+                      ? (double.tryParse(hotel['minPrice'].toString()) ?? 0)
+                      : 0;
+
+              // Apply PKR conversion and margin
+              double finalPrice = basePrice * pkrprice;
+              finalPrice = finalPrice + (finalPrice * margin / 100);
+
               return {
                 'name': hotel['name'] ?? 'Unknown Hotel',
-                'price':
-                hotel['minPrice'] != null
-                    ? (double.tryParse(hotel['minPrice'].toString()) ?? 0) *
-                    pkrprice
-                    : 0,
+                'price': finalPrice,
                 'address':
-                hotel['hotelInfo']?['add1'] ?? 'Address not available',
+                    hotel['hotelInfo']?['add1'] ?? 'Address not available',
                 'image':
-                hotel['hotelInfo']?['image'] ??
+                    hotel['hotelInfo']?['image'] ??
                     'assets/img/cardbg/broken-image.png',
                 'rating':
-                double.tryParse(
-                  hotel['hotelInfo']?['starRating']?.toString() ?? '0',
-                ) ??
+                    double.tryParse(
+                      hotel['hotelInfo']?['starRating']?.toString() ?? '0',
+                    ) ??
                     3.0,
                 'latitude': hotel['hotelInfo']?['lat'] ?? 0.0,
                 'longitude': hotel['hotelInfo']?['lon'] ?? 0.0,
@@ -173,11 +246,8 @@ class ApiServiceHotel extends GetxService {
                 'hotelCity': hotel['hotelInfo']?['city'] ?? '',
               };
             }).toList();
-
-      } else {
-      }
-    } catch (e) {
-    }
+      } else {}
+    } catch (e) {}
   }
 
   /// Fetch room details.
@@ -185,15 +255,15 @@ class ApiServiceHotel extends GetxService {
     final guestsController = Get.find<GuestsController>();
 
     List<Map<String, dynamic>> rooms =
-    guestsController.rooms.asMap().entries.map((entry) {
-      final index = entry.key;
-      final room = entry.value;
-      return {
-        "RoomIdentifier": index + 1,
-        "Adult": room.adults.value,
-        if (room.children.value > 0) "child": room.children.value,
-      };
-    }).toList();
+        guestsController.rooms.asMap().entries.map((entry) {
+          final index = entry.key;
+          final room = entry.value;
+          return {
+            "RoomIdentifier": index + 1,
+            "Adult": room.adults.value,
+            if (room.children.value > 0) "child": room.children.value,
+          };
+        }).toList();
 
     final requestBody = {
       "SessionId": sessionId,
@@ -221,12 +291,9 @@ class ApiServiceHotel extends GetxService {
           searchController.hotelName.value = hotelInfo['name'];
           searchController.image.value = hotelInfo['image'];
           searchController.roomsdata.value = roomData;
-        } else {
-        }
-      } else {
-      }
-    } catch (e) {
-    }
+        } else {}
+      } else {}
+    } catch (e) {}
   }
 
   /// Pre-book a room.
@@ -255,7 +322,6 @@ class ApiServiceHotel extends GetxService {
       );
 
       if (response.statusCode == 200) {
-
         // Extract and print the condition list
         final data = response.data as Map<String, dynamic>;
         final hotel = data['hotel'] as Map<String, dynamic>?;
@@ -273,8 +339,7 @@ class ApiServiceHotel extends GetxService {
                     for (int j = 0; j < policyList.length; j++) {
                       final policy = policyList[j] as Map<String, dynamic>;
                       final conditions = policy['condition'] as List<dynamic>?;
-                      if (conditions != null) {
-                      }
+                      if (conditions != null) {}
                     }
                   }
                 }
@@ -284,10 +349,8 @@ class ApiServiceHotel extends GetxService {
         }
 
         return data;
-      } else {
-      }
-    } catch (e) {
-    }
+      } else {}
+    } catch (e) {}
     return null;
   }
 
@@ -317,10 +380,8 @@ class ApiServiceHotel extends GetxService {
 
       if (response.statusCode == 200) {
         return response.data as Map<String, dynamic>;
-      } else {
-      }
-    } catch (e) {
-    }
+      } else {}
+    } catch (e) {}
     return null;
   }
 
@@ -350,10 +411,8 @@ class ApiServiceHotel extends GetxService {
 
       if (response.statusCode == 200) {
         return response.data as Map<String, dynamic>;
-      } else {
-      }
-    } catch (e) {
-    }
+      } else {}
+    } catch (e) {}
     return null;
   }
 
@@ -413,8 +472,7 @@ class ApiServiceHotel extends GetxService {
         return false;
       }
     } on DioException catch (e) {
-      if (e.response != null) {
-      }
+      if (e.response != null) {}
       return false;
     } catch (e) {
       return false;
