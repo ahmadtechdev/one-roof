@@ -1,15 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:oneroof/views/flight/search_flights/airblue/airblue_flight_controller.dart';
-import 'package:oneroof/views/flight/search_flights/search_flight_utils/widgets/airblue_flight_card.dart';
-
 import '../../../utility/colors.dart';
 import 'airarabia/airarabia_flight_controller.dart';
+import 'airblue/airblue_flight_controller.dart';
 import 'filters/flight_filter_service.dart';
 import 'pia/pia_flight_controller.dart';
 import 'sabre/sabre_flight_controller.dart';
-import 'search_flight_utils/filter_flight_model.dart';
 import 'search_flight_utils/widgets/airarabia_flight_card.dart';
+import 'search_flight_utils/widgets/airblue_flight_card.dart';
 import 'search_flight_utils/widgets/currency_dialog.dart';
 import 'filters/flight_bottom_sheet.dart';
 import 'search_flight_utils/widgets/pia_flight_card.dart';

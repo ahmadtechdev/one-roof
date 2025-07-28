@@ -9,7 +9,7 @@ import 'filter_flight_model.dart';
 import 'flight_filter_service.dart';
 
 class FlightFilterBottomSheet extends StatefulWidget {
-  const FlightFilterBottomSheet({Key? key}) : super(key: key);
+  const FlightFilterBottomSheet({super.key});
 
   @override
   State<FlightFilterBottomSheet> createState() => _FlightFilterBottomSheetState();

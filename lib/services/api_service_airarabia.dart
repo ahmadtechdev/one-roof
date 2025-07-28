@@ -2,7 +2,6 @@ import 'dart:convert';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
-import 'package:get/get.dart';
 import 'package:xml2json/xml2json.dart';
 
 class ApiServiceAirArabia {
@@ -47,8 +46,6 @@ class ApiServiceAirArabia {
       );
 
       // printDebugData('Air Arabia Response', response);
-      print("AHmad");
-      print(response.data);
       if (response.statusCode == 200) {
         // Ensure the response is parsed as Map
         if (response.data is String) {
@@ -59,7 +56,6 @@ class ApiServiceAirArabia {
         throw Exception('Failed to load Air Arabia flights: ${response.statusMessage}');
       }
     } catch (e) {
-      print('Error in Air Arabia API: $e');
       rethrow;
     }
   }

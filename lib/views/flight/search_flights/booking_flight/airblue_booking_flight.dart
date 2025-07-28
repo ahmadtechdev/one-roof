@@ -2,10 +2,10 @@
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:oneroof/views/flight/search_flights/airblue/airblue_flight_controller.dart';
 import '../../../../services/api_service_airblue.dart';
 import '../../../../utility/colors.dart';
 import '../../../../widgets/travelers_selection_bottom_sheet.dart';
+import '../airblue/airblue_flight_controller.dart';
 import '../airblue/airblue_flight_model.dart';
 import '../airblue/airblue_pnr_pricing.dart';
 import '../search_flight_utils/widgets/airblue_flight_card.dart';

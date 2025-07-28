@@ -3,7 +3,6 @@ import 'package:get/get.dart';
 
 import '../../../../services/api_service_airarabia.dart';
 import '../filters/filter_flight_model.dart';
-import '../search_flight_utils/filter_flight_model.dart';
 import 'airarabia_flight_model.dart';
 
 class AirArabiaFlightController extends GetxController {
@@ -90,6 +89,7 @@ class AirArabiaFlightController extends GetxController {
     // We need to identify which route is outbound and which is inbound
     // The first route in the response is typically outbound, second is inbound
     final outboundRoute = routes[0];
+    // ignore: unused_local_variable
     final inboundRoute = routes[1];
 
     // Get all outbound and inbound flight options

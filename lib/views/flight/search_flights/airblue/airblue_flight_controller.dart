@@ -5,7 +5,6 @@ import 'package:get/get.dart';
 import '../../../../services/api_service_sabre.dart';
 
 import '../filters/filter_flight_model.dart';
-import '../search_flight_utils/filter_flight_model.dart';
 import '../flight_package/airblue/airblue_flight_package.dart';
 import 'airblue_flight_model.dart';
 

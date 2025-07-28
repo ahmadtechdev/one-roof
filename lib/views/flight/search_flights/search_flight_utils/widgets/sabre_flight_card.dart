@@ -2,11 +2,10 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
-import 'package:oneroof/views/flight/form/flight_booking_controller.dart';
-
 import '../../../../../services/api_service_sabre.dart';
 
 import '../../../../../utility/colors.dart';
+import '../../../form/flight_booking_controller.dart';
 import '../../sabre/sabre_flight_controller.dart';
 import '../../sabre/sabre_flight_models.dart';
 import '../helper_functions.dart';

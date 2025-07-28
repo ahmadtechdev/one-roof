@@ -1,4 +1,4 @@
-// ignore_for_file: empty_catches
+// ignore_for_file: empty_catches, unused_local_variable
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';

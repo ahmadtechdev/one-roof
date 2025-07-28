@@ -1,8 +1,6 @@
 // airarabia_flight_model.dart
 import 'package:flutter/foundation.dart';
-import 'package:get/get.dart';
 
-import '../../../../widgets/custom_textfield.dart';
 
 class AirArabiaFlight {
   final String id;
@@ -104,7 +102,9 @@ class AirArabiaFlight {
           'availabilityStatus': 'UNAVAILABLE'
         };
 
-        print("Error: $e");
+        if (kDebugMode) {
+          print("Error: $e");
+        }
       }
 
       // Get flight segments for outbound/inbound logic

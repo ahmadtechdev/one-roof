@@ -84,20 +84,8 @@ class _AirArabiaFlightCardState extends State<AirArabiaFlightCard>
   @override
   Widget build(BuildContext context) {
     // Get origin and destination from the first and last segments
-    final origin =
-        widget.flight.flightSegments.first['departure']?['airport'] ?? 'N/A';
-    final destination =
-        widget.flight.flightSegments.last['arrival']?['airport'] ?? 'N/A';
-    final stops = widget.flight.flightSegments.length - 1;
 
     // Calculate total price - ensure it's not zero
-    final price =
-        widget.flight.price > 0
-            ? widget.flight.price
-            : (widget.flight.flightSegments.first['cabinPrices']?[0]['price']
-                        as num?)
-                    ?.toDouble() ??
-                0.0;
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
@@ -384,8 +372,6 @@ class _AirArabiaFlightCardState extends State<AirArabiaFlightCard>
     required bool isReturn,
   }) {
     // Get origin from first segment and destination from last segment
-    final origin = segments.first['origin']?['airportCode'] ?? 'N/A';
-    final destination = segments.last['destination']?['airportCode'] ?? 'N/A';
 
     // Calculate stop count and layover cities
     final stopCount = segments.length - 1;
@@ -538,7 +524,7 @@ class _AirArabiaFlightCardState extends State<AirArabiaFlightCard>
                       ],
                     ),
                     Text(
-                      stopCount == 0 ? 'Nonstop' : '${stopCount} Stop${stopCount > 1 ? 's' : ''}',
+                      stopCount == 0 ? 'Nonstop' : '$stopCount Stop${stopCount > 1 ? 's' : ''}',
                       style: const TextStyle(
                         fontSize: 12,
                         color: TColors.grey,
@@ -630,157 +616,7 @@ class _AirArabiaFlightCardState extends State<AirArabiaFlightCard>
   //     return 'N/A';
   //   }
   // }
-  Widget _buildFlightSegment(Map<String, dynamic> segment) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          // Airline Logo
-          CachedNetworkImage(
-            imageUrl: widget.flight.airlineImg,
-            height: 32,
-            width: 32,
-            placeholder: (context, url) => const SizedBox(
-              height: 24,
-              width: 24,
-              child: Center(
-                child: CircularProgressIndicator(strokeWidth: 2),
-              ),
-            ),
-            errorWidget: (context, url, error) => const Icon(Icons.flight, size: 24),
-          ),
 
-          // Departure Info
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                formatTimeFromDateTime(segment['departureDateTimeLocal']),
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              Text(
-                segment['origin']?['airportCode'] ?? 'N/A',
-                style: const TextStyle(
-                  color: TColors.grey,
-                  fontSize: 12,
-                ),
-              ),
-            ],
-          ),
-
-          // Flight Duration
-          Column(
-            children: [
-              Text(
-                _calculateSegmentDuration(segment),
-                style: const TextStyle(
-                  color: TColors.grey,
-                  fontSize: 12,
-                ),
-              ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Container(
-                    width: 10,
-                    height: 10,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: Colors.grey.shade300,
-                        width: 2,
-                      ),
-                      color: Colors.white,
-                    ),
-                  ),
-                  Container(
-                    height: 2,
-                    width: MediaQuery.of(context).size.width * 0.2,
-                    color: Colors.grey[300],
-                  ),
-                  Container(
-                    width: 10,
-                    height: 10,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: Colors.grey.shade300,
-                        width: 2,
-                      ),
-                      color: Colors.white,
-                    ),
-                  ),
-                ],
-              ),
-              Text(
-                segment == widget.flight.flightSegments.first &&
-                    segment == widget.flight.flightSegments.last
-                    ? 'Nonstop'
-                    : '${widget.flight.flightSegments.length - 1} Stop',
-                style: const TextStyle(
-                  fontSize: 12,
-                  color: TColors.grey,
-                ),
-              ),
-            ],
-          ),
-
-          // Arrival Info
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(
-                formatTimeFromDateTime(segment['arrivalDateTimeLocal']),
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              Text(
-                segment['destination']?['airportCode'] ?? 'N/A',
-                style: const TextStyle(
-                  color: TColors.grey,
-                  fontSize: 12,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-  String _calculateSegmentDuration(Map<String, dynamic> segment) {
-    try {
-      final departure = DateTime.parse(segment['departureDateTimeLocal']);
-      final arrival = DateTime.parse(segment['arrivalDateTimeLocal']);
-      final duration = arrival.difference(departure);
-      return '${duration.inHours}h ${duration.inMinutes.remainder(60)}m';
-    } catch (e) {
-      return 'N/A';
-    }
-  }
-
-  String _calculateLayoverTime(List<dynamic> segments) {
-    if (segments.length < 2) return 'No layover';
-
-    try {
-      Duration totalLayover = Duration.zero;
-
-      for (int i = 0; i < segments.length - 1; i++) {
-        final currentArrival = DateTime.parse(segments[i]['arrivalDateTimeLocal']);
-        final nextDeparture = DateTime.parse(segments[i+1]['departureDateTimeLocal']);
-        totalLayover += nextDeparture.difference(currentArrival);
-      }
-
-      return '${totalLayover.inHours}h ${totalLayover.inMinutes.remainder(60)}m';
-    } catch (e) {
-      return 'N/A';
-    }
-  }
 
   Widget _buildDetailedFlightSegment(Map<String, dynamic> segment) {
     final departure = segment['departure'] as Map<String, dynamic>?;

@@ -1,6 +1,6 @@
 
 
-import 'package:oneroof/views/flight/search_flights/sabre/sabre_package_modal.dart';
+import 'sabre_package_modal.dart';
 
 class SabreFlight {
   final String imgPath;

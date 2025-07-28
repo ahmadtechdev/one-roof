@@ -65,8 +65,6 @@ class PIAPackageSelectionDialog extends StatelessWidget {
     final List<PIAFareOption> fareOptions = piaController
         .getFareOptionsForFlight(flight);
 
-    print("abc:");
-    print(fareOptions);
 
 
     if (fareOptions.isEmpty) {
@@ -412,8 +410,6 @@ class PIAPackageSelectionDialog extends StatelessWidget {
           .getFareOptionsForFlight(flight);
       final selectedFareOption = fareOptions[selectedPackageIndex];
 
-      print("abcd");
-      print(selectedFareOption.rawData);
       // Create a copy of the flight with the selected fare option
       final updatedFlight = flight.copyWith(
         selectedFareOption: selectedFareOption,

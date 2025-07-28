@@ -445,12 +445,8 @@ class FlightBookingController extends GetxController {
       );
 
       // Make sure the result is a Map
-      if (result is Map<String, dynamic>) {
-        airArabiaController.loadFlights(result);
-      } else {
-        throw Exception('Invalid API response format');
-      }
-    } catch (e) {
+      airArabiaController.loadFlights(result);
+        } catch (e) {
       debugPrint('Air Arabia API error: $e');
       airArabiaController.setErrorMessage('Failed to load Air Arabia flights');
     }

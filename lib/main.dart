@@ -4,7 +4,6 @@ import 'package:oneroof/services/api_service_airarabia.dart';
 import 'package:oneroof/services/api_service_sabre.dart';
 import 'package:oneroof/utility/colors.dart';
 import 'package:oneroof/views/flight/form/controllers/flight_date_controller.dart';
-import 'package:oneroof/views/flight/search_flights/filters/flight_filter_service.dart';
 import 'package:oneroof/views/hotel/hotel/guests/guests_controller.dart';
 import 'package:oneroof/views/hotel/hotel/hotel_date_controller.dart';
 import 'package:oneroof/views/hotel/search_hotels/search_hotel_controller.dart';

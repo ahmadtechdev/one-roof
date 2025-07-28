@@ -1,7 +1,7 @@
 // 1. First, let's update the Flight model to match the API response
 
-import 'package:oneroof/utility/colors.dart';
 
+import '../../../../utility/colors.dart';
 import '../../../../widgets/snackbar.dart';
 import '../sabre/sabre_flight_models.dart';
 

@@ -699,8 +699,6 @@ class PIAFlightApiService {
       // Use the selected fare option from the flight
       final fareInfo = flight.selectedFareOption?.rawData ?? {};
 
-      print("check 123:");
-      print(bookingClass);
 
 
       bookingSegments.add({
@@ -770,16 +768,10 @@ class PIAFlightApiService {
       // Find the matching booking class from the selected fare option
       String? resBookDesigQuantity;
       if (bookingClassList is List) {
-        print("AHmad A:");
         for (var bookingClass in bookingClassList) {
-          print("AHmad B:");
-          print(fareInfo['passengerFareInfoList']['fareInfoList']['resBookDesigCode'] );
           if (
               bookingClass['resBookDesigCode'] == fareInfo['passengerFareInfoList']['fareInfoList']['resBookDesigCode']) {
-            print("AHmad C:");
             resBookDesigQuantity = _extractStringValue(bookingClass['resBookDesigQuantity']);
-           print("Ahmad D:");
-           print(resBookDesigQuantity);
             break;
           }
         }
@@ -1192,8 +1184,6 @@ class PIAFlightApiService {
   String _getInternalIds(List<Map<String, dynamic>> segments) {
     final ids = segments.map((s) => s['internalID']).toSet().toList();
 
-    print("ahmad");
-    print(ids);
     return ids.join(',');
   }
 
