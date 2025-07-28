@@ -23,12 +23,6 @@ class SelectPkgScreen extends StatelessWidget {
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.pop(context),
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.print),
-            onPressed: () {},
-          ),
-        ],
       ),
       body: Obx(() {
         if (controller.isLoading.value) {
@@ -102,10 +96,7 @@ class SelectPkgScreen extends StatelessWidget {
           const SizedBox(height: 16),
           const Text(
             'No flights available',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           const Text(
             'Try adjusting your filters',
@@ -126,7 +117,10 @@ class SelectPkgScreen extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       child: Row(
         children: [
-          const Text('Filters', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+          const Text(
+            'Filters',
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          ),
           const Spacer(),
           TextButton(
             onPressed: controller.resetFilters,
@@ -143,7 +137,8 @@ class SelectPkgScreen extends StatelessWidget {
 
   Widget _buildAppliedFilters() {
     return Obx(() {
-      final hasFilters = controller.selectedSector.value != 'all' ||
+      final hasFilters =
+          controller.selectedSector.value != 'all' ||
           controller.selectedAirline.value != 'all' ||
           controller.selectedDate.value != 'all';
 
@@ -157,9 +152,11 @@ class SelectPkgScreen extends StatelessWidget {
           children: [
             if (controller.selectedSector.value != 'all')
               _buildFilterChip(
-                label: controller.sectorOptions.firstWhere(
-                      (option) => option['value'] == controller.selectedSector.value,
-                )['label']!,
+                label:
+                    controller.sectorOptions.firstWhere(
+                      (option) =>
+                          option['value'] == controller.selectedSector.value,
+                    )['label']!,
                 onDeleted: () => controller.updateSector('all'),
               ),
             if (controller.selectedAirline.value != 'all')
@@ -169,9 +166,9 @@ class SelectPkgScreen extends StatelessWidget {
               ),
             if (controller.selectedDate.value != 'all')
               _buildFilterChip(
-                label: DateFormat('dd MMM yyyy').format(
-                  DateTime.parse(controller.selectedDate.value),
-                ),
+                label: DateFormat(
+                  'dd MMM yyyy',
+                ).format(DateTime.parse(controller.selectedDate.value)),
                 onDeleted: () => controller.updateDate('all'),
               ),
           ],
@@ -342,15 +339,21 @@ class SelectPkgScreen extends StatelessWidget {
   }
 
   Widget _buildAirlineFilterSection() {
-    final airlineOptions = controller.groupFlights
-        .map((flight) => flight['airline']['airline_name'] as String) // Cast to String
-        .toSet()
-        .toList()
-        .map((airline) => <String, String>{ // Explicitly create Map<String, String>
-      'label': airline,
-      'value': airline.toLowerCase(),
-    })
-        .toList();
+    final airlineOptions =
+        controller.groupFlights
+            .map(
+              (flight) => flight['airline']['airline_name'] as String,
+            ) // Cast to String
+            .toSet()
+            .toList()
+            .map(
+              (airline) => <String, String>{
+                // Explicitly create Map<String, String>
+                'label': airline,
+                'value': airline.toLowerCase(),
+              },
+            )
+            .toList();
 
     return _buildFilterSection(
       title: 'Airlines',
@@ -362,19 +365,22 @@ class SelectPkgScreen extends StatelessWidget {
       onSelect: controller.updateAirline,
     );
   }
+
   Widget _buildDateFilterSection() {
-    final dateOptions = controller.groupFlights
-        .map((flight) => flight['dept_date'] as String) // Cast to String
-        .toSet()
-        .toList()
-        .map((date) {
-      final formattedDate = DateFormat('yyyy-MM-dd').parse(date);
-      return <String, String>{ // Explicitly create Map<String, String>
-        'label': DateFormat('dd MMM yyyy').format(formattedDate),
-        'value': date,
-      };
-    })
-        .toList();
+    final dateOptions =
+        controller.groupFlights
+            .map((flight) => flight['dept_date'] as String) // Cast to String
+            .toSet()
+            .toList()
+            .map((date) {
+              final formattedDate = DateFormat('yyyy-MM-dd').parse(date);
+              return <String, String>{
+                // Explicitly create Map<String, String>
+                'label': DateFormat('dd MMM yyyy').format(formattedDate),
+                'value': date,
+              };
+            })
+            .toList();
 
     return _buildFilterSection(
       title: 'Departure Dates',
@@ -386,6 +392,7 @@ class SelectPkgScreen extends StatelessWidget {
       onSelect: controller.updateDate,
     );
   }
+
   Widget _buildFilterSection({
     required String title,
     required List<Map<String, String>> options,
@@ -404,58 +411,89 @@ class SelectPkgScreen extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 10),
-        Obx(() => Wrap(
-          spacing: 10,
-          runSpacing: 10,
-          children: options.map((option) {
-            final isSelected = currentValue.value == option['value'];
-            return GestureDetector(
-              onTap: () => onSelect(option['value']!),
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 10,
-                ),
-                decoration: BoxDecoration(
-                  color: isSelected ? TColors.third : TColors.background,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: isSelected ? TColors.third : Colors.grey[300]!,
-                    width: 1,
-                  ),
-                ),
-                child: Text(
-                  option['label']!,
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: isSelected ? TColors.white : TColors.text,
-                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                  ),
-                ),
-              ),
-            );
-          }).toList(),
-        )),
+        Obx(
+          () => Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children:
+                options.map((option) {
+                  final isSelected = currentValue.value == option['value'];
+                  return GestureDetector(
+                    onTap: () => onSelect(option['value']!),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 10,
+                      ),
+                      decoration: BoxDecoration(
+                        color: isSelected ? TColors.third : TColors.background,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: isSelected ? TColors.third : Colors.grey[300]!,
+                          width: 1,
+                        ),
+                      ),
+                      child: Text(
+                        option['label']!,
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: isSelected ? TColors.white : TColors.text,
+                          fontWeight:
+                              isSelected ? FontWeight.bold : FontWeight.normal,
+                        ),
+                      ),
+                    ),
+                  );
+                }).toList(),
+          ),
+        ),
       ],
     );
   }
+
+  // Enhanced flight card widgets for displaying flights with dynamic segments (1, 2, 4, or more legs)
 
   Widget _buildFlightCard(GroupFlightModel flight, BuildContext context) {
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       elevation: 2,
       color: TColors.background,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
         padding: const EdgeInsets.all(12),
         child: Column(
           children: [
             _buildFlightHeader(flight),
-            const SizedBox(height: 8),
-            _buildFlightRoute(flight),
-            const SizedBox(height: 8),
+            const SizedBox(height: 12),
+
+            // Display all segments dynamically
+            ...flight.segments.asMap().entries.map((entry) {
+              int index = entry.key;
+              FlightSegment segment = entry.value;
+
+              return Column(
+                children: [
+                  _buildSegmentHeader(
+                    _getSegmentTitle(index, flight.segments.length),
+                    segment,
+                  ),
+                  const SizedBox(height: 8),
+                  _buildFlightRoute(segment),
+
+                  // Show layover info between segments (except after the last segment)
+                  if (index < flight.segments.length - 1) ...[
+                    const SizedBox(height: 8),
+                    _buildLayoverInfoBetweenSegments(
+                      segment,
+                      flight.segments[index + 1],
+                    ),
+                  ],
+
+                  const SizedBox(height: 12),
+                ],
+              );
+            }).toList(),
+
             _buildFlightDetails(flight),
             const SizedBox(height: 8),
             _buildFlightFooter(flight, context),
@@ -465,89 +503,154 @@ class SelectPkgScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildFlightHeader(GroupFlightModel flight) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          width: 40,
-          height: 40,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: TColors.background,
-            // border: Border.all(color: TColors.primary, width: 1.5),
-            image: DecorationImage(
-              image: flight.logoUrl.startsWith('data:')
-                  ? MemoryImage(base64Decode(flight.logoUrl.split(',')[1]))
-                  : NetworkImage(flight.logoUrl) as ImageProvider,
-              fit: BoxFit.contain,
-            ),
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                flight.airline,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: TColors.text,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-              Text(
-                'Departure',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: TColors.grey,
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(width: 8),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-          decoration: BoxDecoration(
-            color: TColors.secondary.withOpacity(0.2),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Text(
-            DateFormat('dd MMM').format(flight.departure),
-            style: const TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.bold,
-              color: TColors.secondary,
-            ),
-          ),
-        ),
-      ],
-    );
+  // Helper method to determine segment title based on position and total segments
+  String _getSegmentTitle(int index, int totalSegments) {
+    if (totalSegments == 1) {
+      return "Direct Flight";
+    } else if (totalSegments == 2) {
+      return index == 0 ? "Outbound Flight" : "Return Flight";
+    } else {
+      // For more than 2 segments (complex itinerary)
+      if (index == 0) {
+        return "Departure - Leg ${index + 1}";
+      } else if (index == totalSegments - 1) {
+        return "Final Leg - Leg ${index + 1}";
+      } else {
+        return "Connecting Flight - Leg ${index + 1}";
+      }
+    }
   }
 
-  Widget _buildFlightRoute(GroupFlightModel flight) {
+  // Enhanced segment header with more detailed information
+  Widget _buildSegmentHeader(String title, FlightSegment segment) {
+    IconData segmentIcon;
+    Color segmentColor;
+
+    if (title.contains("Departure") || title.contains("Outbound")) {
+      segmentIcon = Icons.flight_takeoff;
+      segmentColor = TColors.primary;
+    } else if (title.contains("Final") || title.contains("Return")) {
+      segmentIcon = Icons.flight_land;
+      segmentColor = TColors.secondary;
+    } else if (title.contains("Connecting")) {
+      segmentIcon = Icons.connecting_airports;
+      segmentColor = TColors.third;
+    } else {
+      segmentIcon = Icons.flight;
+      segmentColor = TColors.primary;
+    }
+
     return Container(
-      margin: const EdgeInsets.symmetric(vertical: 8),
-      padding: const EdgeInsets.symmetric(vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        border: Border(
-          top: BorderSide(color: Colors.grey[200]!, width: 1),
-          bottom: BorderSide(color: Colors.grey[200]!, width: 1),
-        ),
+        color: segmentColor.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: segmentColor.withOpacity(0.2)),
       ),
       child: Row(
         children: [
+          Icon(segmentIcon, size: 16, color: segmentColor),
+          const SizedBox(width: 8),
           Expanded(
+            child: Text(
+              title,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: segmentColor,
+              ),
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+            decoration: BoxDecoration(
+              color: segmentColor.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: Text(
+              segment.formattedShortDate,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                color: segmentColor,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // New method to show layover information between segments
+  Widget _buildLayoverInfoBetweenSegments(
+    FlightSegment currentSegment,
+    FlightSegment nextSegment,
+  ) {
+    // Calculate layover duration (simplified - you might want to make this more accurate)
+    String layoverLocation = currentSegment.destination;
+
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: Colors.orange.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: Colors.orange.withOpacity(0.3)),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.schedule, size: 16, color: Colors.orange[700]),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              'Layover at $layoverLocation',
+              style: TextStyle(
+                fontSize: 12,
+                color: Colors.orange[700],
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+            decoration: BoxDecoration(
+              color: Colors.orange.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: Text(
+              'Transit',
+              style: TextStyle(
+                fontSize: 10,
+                color: Colors.orange[800],
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Enhanced flight route with better visual indicators for different segment types
+  Widget _buildFlightRoute(FlightSegment segment) {
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+      decoration: BoxDecoration(
+        color: Colors.grey[50],
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.grey[200]!, width: 1),
+      ),
+      child: Row(
+        children: [
+          // Departure info
+          Expanded(
+            flex: 2,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  flight.departureTime,
+                  segment.departureTime,
                   style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
@@ -555,64 +658,115 @@ class SelectPkgScreen extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  flight.origin,
+                  segment.origin,
                   style: TextStyle(
                     fontSize: 14,
                     color: TColors.grey,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
               ],
             ),
           ),
+
+          // Flight path visualization with enhanced design
           Expanded(
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
+            flex: 3,
+            child: Column(
               children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      width: 8,
+                      height: 8,
+                      decoration: BoxDecoration(
+                        color: TColors.third,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    Expanded(
+                      child: Container(
+                        height: 2,
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              TColors.third,
+                              TColors.third.withOpacity(0.3),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        color: TColors.third.withOpacity(0.1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Transform.rotate(
+                        angle: 1.5708, // 90 degrees
+                        child: Icon(
+                          Icons.flight,
+                          color: TColors.third,
+                          size: 20,
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: Container(
+                        height: 2,
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              TColors.third.withOpacity(0.3),
+                              TColors.third,
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    Container(
+                      width: 8,
+                      height: 8,
+                      decoration: BoxDecoration(
+                        color: TColors.third,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
                 Container(
-                  width: 6,
-                  height: 6,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 3,
+                  ),
                   decoration: BoxDecoration(
-                    color: TColors.third,
-                    shape: BoxShape.circle,
+                    color: TColors.primary.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(4),
                   ),
-                ),
-                Expanded(
-                  child: Container(
-                    height: 1,
-                    color: TColors.third.withOpacity(0.3),
-                  ),
-                ),
-                Transform.rotate(
-                  angle: 1.5708,
-                  child: Icon(
-                    Icons.flight,
-                    color: TColors.third,
-                    size: 25,
-                  ),
-                ),
-                Expanded(
-                  child: Container(
-                    height: 1,
-                    color: TColors.third.withOpacity(0.3),
-                  ),
-                ),
-                Container(
-                  width: 6,
-                  height: 6,
-                  decoration: BoxDecoration(
-                    color: TColors.third,
-                    shape: BoxShape.circle,
+                  child: Text(
+                    segment.flightNumber,
+                    style: const TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      color: TColors.primary,
+                    ),
                   ),
                 ),
               ],
             ),
           ),
+
+          // Arrival info
           Expanded(
+            flex: 2,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Text(
-                  flight.arrivalTime,
+                  segment.arrivalTime,
                   style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
@@ -620,10 +774,11 @@ class SelectPkgScreen extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  flight.destination,
+                  segment.destination,
                   style: TextStyle(
                     fontSize: 14,
                     color: TColors.grey,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
               ],
@@ -634,75 +789,101 @@ class SelectPkgScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildFlightDetails(GroupFlightModel flight) {
+  // Enhanced flight header with journey summary
+  Widget _buildFlightHeader(GroupFlightModel flight) {
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          width: 45,
+          height: 45,
           decoration: BoxDecoration(
-            color: TColors.primary.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(4),
-          ),
-          child: Text(
-            flight.flightNumber,
-            style: const TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-              color: TColors.primary,
+            shape: BoxShape.circle,
+            color: TColors.background,
+            border: Border.all(
+              color: TColors.primary.withOpacity(0.2),
+              width: 1,
             ),
           ),
-        ),
-        const Spacer(),
-        Row(
-          children: [
-            Icon(
-              Icons.info_outline,
-              size: 14,
-              color: TColors.secondary,
-            ),
-            const SizedBox(width: 4),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-              decoration: BoxDecoration(
-                color: TColors.secondary.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: const Text(
-                'NO',
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                  color: TColors.secondary,
-                ),
-              ),
-            ),
-          ],
+          child: _buildAirlineLogo(flight),
         ),
         const SizedBox(width: 12),
-        Row(
-          children: [
-            Icon(
-              Icons.luggage,
-              size: 14,
-              color: TColors.third,
-            ),
-            const SizedBox(width: 4),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-              decoration: BoxDecoration(
-                color: TColors.third.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(4),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      flight.airline,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: TColors.text,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: _getTypeColor(flight.type).withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: _getTypeColor(flight.type).withOpacity(0.3),
+                        width: 1,
+                      ),
+                    ),
+                    child: Text(
+                      flight.type,
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: _getTypeColor(flight.type),
+                      ),
+                    ),
+                  ),
+                ],
               ),
-              child: Text(
-                flight.baggage,
-                style: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                  color: TColors.third,
-                ),
+              const SizedBox(height: 4),
+              Row(
+                children: [
+                  Icon(Icons.route, size: 14, color: TColors.grey),
+                  const SizedBox(width: 4),
+                  Text(
+                    '${flight.segments.length} segment${flight.segments.length > 1 ? 's' : ''}',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: TColors.grey,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  if (flight.segments.length > 2) ...[
+                    const SizedBox(width: 12),
+                    Icon(
+                      Icons.connecting_airports,
+                      size: 14,
+                      color: TColors.secondary,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      '${flight.segments.length - 1} stop${flight.segments.length > 2 ? 's' : ''}',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: TColors.secondary,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ],
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ],
     );
@@ -711,35 +892,48 @@ class SelectPkgScreen extends StatelessWidget {
   Widget _buildFlightFooter(GroupFlightModel flight, BuildContext context) {
     return Container(
       margin: const EdgeInsets.only(top: 8),
-      padding: const EdgeInsets.only(top: 8),
+      padding: const EdgeInsets.only(top: 12),
       decoration: BoxDecoration(
-        border: Border(
-          top: BorderSide(color: Colors.grey[200]!, width: 1),
-        ),
+        border: Border(top: BorderSide(color: Colors.grey[200]!, width: 1)),
       ),
       child: Row(
         children: [
-          RichText(
-            text: TextSpan(
-              children: [
-                const TextSpan(
-                  text: 'PKR ',
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              RichText(
+                text: TextSpan(
+                  children: [
+                    const TextSpan(
+                      text: 'PKR ',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: TColors.grey,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    TextSpan(
+                      text:
+                          '${flight.price.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},')}',
+                      style: const TextStyle(
+                        fontSize: 22,
+                        color: TColors.primary,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              if (flight.isRoundTrip)
+                Text(
+                  'Round Trip',
                   style: TextStyle(
-                    fontSize: 14,
+                    fontSize: 12,
                     color: TColors.grey,
-                    fontWeight: FontWeight.bold,
+                    fontStyle: FontStyle.italic,
                   ),
                 ),
-                TextSpan(
-                  text: '${flight.price}',
-                  style: const TextStyle(
-                    fontSize: 20,
-                    color: TColors.primary,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
+            ],
           ),
           const Spacer(),
           ElevatedButton(
@@ -751,23 +945,218 @@ class SelectPkgScreen extends StatelessWidget {
             style: ElevatedButton.styleFrom(
               backgroundColor: TColors.secondary,
               foregroundColor: TColors.background,
-              padding: const EdgeInsets.symmetric(
-                horizontal: 24,
-                vertical: 10,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 12),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(25),
               ),
-              elevation: 2,
+              elevation: 3,
             ),
             child: const Text(
               'Book Now',
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
             ),
           ),
+        ],
+      ),
+    );
+  }
+
+  // Helper function to get color based on flight type
+  Color _getTypeColor(String type) {
+    switch (type.toUpperCase()) {
+      case 'UMRAH':
+        return Colors.green;
+      case 'UAE':
+        return Colors.blue;
+      case 'KSA':
+        return Colors.purple;
+      case 'UK':
+        return Colors.indigo;
+      case 'OMAN':
+        return Colors.orange;
+      default:
+        return TColors.primary;
+    }
+  }
+
+  // Helper widget to build airline logo with proper error handling
+  Widget _buildAirlineLogo(GroupFlightModel flight) {
+    print('Building logo for: ${flight.airline}, URL: ${flight.logoUrl}');
+
+    // Check if we have a valid logo URL
+    if (flight.logoUrl.isNotEmpty &&
+        flight.logoUrl !=
+            'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAACklEQVR4nGMAAQAABQABDQottAAAAABJRU5ErkJggg==') {
+      try {
+        if (flight.logoUrl.startsWith('data:image')) {
+          // Handle base64 encoded images
+          final base64String = flight.logoUrl.split(',')[1];
+          return Container(
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              image: DecorationImage(
+                image: MemoryImage(base64Decode(base64String)),
+                fit: BoxFit.contain,
+                onError: (exception, stackTrace) {
+                  print('Error loading base64 image: $exception');
+                },
+              ),
+            ),
+          );
+        } else if (flight.logoUrl.startsWith('http')) {
+          // Handle network images
+          return Container(
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              image: DecorationImage(
+                image: NetworkImage(flight.logoUrl),
+                fit: BoxFit.contain,
+                onError: (exception, stackTrace) {
+                  print('Error loading network image: $exception');
+                },
+              ),
+            ),
+          );
+        } else if (flight.logoUrl.startsWith('assets/')) {
+          // Handle asset images
+          return Container(
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              image: DecorationImage(
+                image: AssetImage(flight.logoUrl),
+                fit: BoxFit.contain,
+                onError: (exception, stackTrace) {
+                  print('Error loading asset image: $exception');
+                },
+              ),
+            ),
+          );
+        }
+      } catch (e) {
+        print('Error building airline logo: $e');
+      }
+    }
+
+    // Fallback to flight icon
+    return Icon(Icons.flight, color: TColors.primary, size: 24);
+  }
+
+  // Enhanced flight details with total journey information
+  Widget _buildFlightDetails(GroupFlightModel flight) {
+    return Container(
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: TColors.background,
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: Colors.grey[200]!, width: 1),
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              // Seats available
+              Expanded(
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.airline_seat_recline_normal,
+                      size: 16,
+                      color: TColors.primary,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      '${flight.seats} seats',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        color: TColors.primary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // Baggage
+              Expanded(
+                child: Row(
+                  children: [
+                    Icon(Icons.luggage, size: 16, color: TColors.third),
+                    const SizedBox(width: 4),
+                    Text(
+                      flight.baggage,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        color: TColors.third,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // Meal
+              Expanded(
+                child: Row(
+                  children: [
+                    Icon(Icons.restaurant, size: 16, color: TColors.secondary),
+                    const SizedBox(width: 4),
+                    Text(
+                      flight.meal,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        color: TColors.secondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+
+          // Show journey summary for multi-segment flights
+          if (flight.segments.length > 1) ...[
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: TColors.primary.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Total Journey: ${flight.segments.first.origin} → ${flight.segments.last.destination}',
+                    style: const TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w500,
+                      color: TColors.primary,
+                    ),
+                  ),
+                  if (flight.segments.length > 2)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 4,
+                        vertical: 1,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.orange.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(3),
+                      ),
+                      child: Text(
+                        '${flight.segments.length - 1} stops',
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.orange[700],
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ],
         ],
       ),
     );

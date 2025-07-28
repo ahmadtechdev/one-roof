@@ -4,7 +4,9 @@ import 'package:oneroof/views/group_ticket/booking_form_fields/group_ticket_book
 import 'package:oneroof/views/group_ticket/booking_form_fields/booking_form.dart';
 
 class BookingSummaryScreen extends StatelessWidget {
-  final GroupTicketBookingController controller = Get.put(GroupTicketBookingController());
+  final GroupTicketBookingController controller = Get.put(
+    GroupTicketBookingController(),
+  );
 
   BookingSummaryScreen({super.key});
 
@@ -12,6 +14,7 @@ class BookingSummaryScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        foregroundColor: Colors.white,
         backgroundColor: Color(0xFF0F3041), // Dark blue background
         title: Text('Book Seats', style: TextStyle(color: Colors.white)),
         actions: [
@@ -352,10 +355,10 @@ class BookingSummaryScreen extends StatelessWidget {
           if (controller.bookingData.value.totalPassengers <=
               controller.bookingData.value.availableSeats) {
             Get.to(
-                  () => PassengerDetailsScreen(),
+              () => PassengerDetailsScreen(),
               arguments: {
                 'groupId': controller.bookingData.value.groupId,
-                 // Pass the flight model if needed
+                // Pass the flight model if needed
               },
             );
           } else {

@@ -155,7 +155,7 @@ class GroupTicketBookingController extends GetxController {
         groupPriceDetailId: bookingData.value.groupPriceDetailId,
       );
 
-      final _ = await apiController.saveBooking_into_database(
+      final result2 = await apiController.saveBooking_into_database(
         groupId: bookingData.value.groupId,
         agentName: 'ONE ROOF TRAVEL',
         agencyName: 'ONE ROOF TRAVEL',

@@ -180,8 +180,8 @@ class GroupTicket extends StatelessWidget {
                             // Await the fetch to complete before navigating
                             // await controller.fetchGroups('UMRAH');
                             await controller.fetchCombinedGroups(
-                              'OMRAH',
-                              'OMRAH',
+                              'UMRAH',
+                              'UMRAH',
                             );
                             Get.to(() => SelectPkgScreen());
                             Get.snackbar(

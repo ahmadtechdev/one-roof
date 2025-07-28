@@ -601,7 +601,11 @@ class HotelCard extends StatelessWidget {
               ),
               child: const Text(
                 'Select Room',
-                style: TextStyle(fontSize: 18,color: TColors.white, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  fontSize: 18,
+                  color: TColors.white,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
           ),
@@ -613,37 +617,61 @@ class HotelCard extends StatelessWidget {
   Widget _buildHotelImage() {
     String imageUrl = hotel['image'] ?? '';
 
+    // Print the original image URL from hotel data
+    print('Hotel image URL: $imageUrl');
+
     // Check if the image is a URL
     if (imageUrl.startsWith('http')) {
+      print('Loading network image from: $imageUrl');
+
       return CachedNetworkImage(
         imageUrl: imageUrl,
         height: 200,
         width: double.infinity,
         fit: BoxFit.cover,
-        placeholder:
-            (context, url) => Container(
-              color: Colors.grey[300],
-              child: const Center(
-                child: CircularProgressIndicator(color: TColors.primary),
-              ),
+        placeholder: (context, url) {
+          print('Loading placeholder for: $url');
+          return Container(
+            color: Colors.grey[300],
+            child: const Center(
+              child: CircularProgressIndicator(color: TColors.primary),
             ),
-        errorWidget:
-            (context, url, error) => Image.asset(
-              'assets/img/cardbg/broken-image.png',
-              height: 200,
-              width: double.infinity,
-              fit: BoxFit.cover,
-            ),
+          );
+        },
+        errorWidget: (context, url, error) {
+          print('Error loading image from: $url');
+          print('Error details: $error');
+          return Image.asset(
+            'assets/img/cardbg/broken-image.png',
+            height: 200,
+            width: double.infinity,
+            fit: BoxFit.cover,
+          );
+        },
       );
     } else {
       // If not a URL, assume it's a local asset path
+      String assetPath =
+          imageUrl.isEmpty ? 'assets/images/hotel1.jpg' : imageUrl;
+      print('Loading local asset: $assetPath');
+
       return Image.asset(
-        imageUrl.isEmpty ? 'assets/images/hotel1.jpg' : imageUrl,
+        assetPath,
         height: 200,
         width: double.infinity,
         fit: BoxFit.contain,
       );
     }
+  }
+
+  // Alternative: Print all hotel image URLs at once
+  void printAllHotelImageUrls(List<Map<String, dynamic>> hotels) {
+    print('=== All Hotel Image URLs ===');
+    for (int i = 0; i < hotels.length; i++) {
+      String imageUrl = hotels[i]['image'] ?? '';
+      print('Hotel $i: $imageUrl');
+    }
+    print('============================');
   }
 }
 
