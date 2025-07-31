@@ -18,6 +18,7 @@ class GroupTicketingController extends GetxController {
 
   // Margin variables
   var travelnetworkmargin = 0.0;
+
   var al_haidermargin = 0.0;
 
   // Store tokens separately
@@ -254,6 +255,7 @@ class GroupTicketingController extends GetxController {
   }
 
   // Save Booking to Travel Network
+  // Save Booking to Travel Network with Enhanced Error Handling
   Future<Map<String, dynamic>> saveBooking({
     required int groupId,
     required String agentName,
@@ -268,14 +270,54 @@ class GroupTicketingController extends GetxController {
     required int groupPriceDetailId,
   }) async {
     try {
+      // Enhanced passenger validation
+      if (passengers.isEmpty) {
+        return {
+          'success': false,
+          'message': 'No passengers provided',
+          'data': null,
+        };
+      }
+
+      // Validate passenger counts match
+      final expectedTotal = adults + (children ?? 0) + (infants ?? 0);
+      if (passengers.length != expectedTotal) {
+        return {
+          'success': false,
+          'message':
+              'Passenger count mismatch: Expected $expectedTotal, got ${passengers.length}',
+          'data': null,
+        };
+      }
+
       // Validate passengers data before creating the request
-      for (var passenger in passengers) {
+      for (int i = 0; i < passengers.length; i++) {
+        var passenger = passengers[i];
+
+        // Check required fields
         if (passenger['firstName'] == null ||
-            passenger['lastName'] == null ||
-            passenger['title'] == null) {
+            passenger['firstName'].toString().trim().isEmpty) {
           return {
             'success': false,
-            'message': 'Missing required passenger information (name or title)',
+            'message': 'Passenger ${i + 1}: First name is required',
+            'data': null,
+          };
+        }
+
+        if (passenger['lastName'] == null ||
+            passenger['lastName'].toString().trim().isEmpty) {
+          return {
+            'success': false,
+            'message': 'Passenger ${i + 1}: Last name is required',
+            'data': null,
+          };
+        }
+
+        if (passenger['title'] == null ||
+            passenger['title'].toString().trim().isEmpty) {
+          return {
+            'success': false,
+            'message': 'Passenger ${i + 1}: Title is required',
             'data': null,
           };
         }
@@ -284,13 +326,33 @@ class GroupTicketingController extends GetxController {
         String? dob = passenger['dateOfBirth'];
         String? doe = passenger['passportExpiry'];
 
-        // Format dates only if they exist
+        // Format dates only if they exist and are valid
         if (dob != null && dob.length >= 10) {
-          passenger['dateOfBirth'] = dob.substring(0, 10);
+          try {
+            // Validate date format
+            DateTime.parse(dob);
+            passenger['dateOfBirth'] = dob.substring(0, 10);
+          } catch (e) {
+            return {
+              'success': false,
+              'message': 'Passenger ${i + 1}: Invalid date of birth format',
+              'data': null,
+            };
+          }
         }
 
         if (doe != null && doe.length >= 10) {
-          passenger['passportExpiry'] = doe.substring(0, 10);
+          try {
+            // Validate date format
+            DateTime.parse(doe);
+            passenger['passportExpiry'] = doe.substring(0, 10);
+          } catch (e) {
+            return {
+              'success': false,
+              'message': 'Passenger ${i + 1}: Invalid passport expiry format',
+              'data': null,
+            };
+          }
         }
       }
 
@@ -311,17 +373,28 @@ class GroupTicketingController extends GetxController {
             passengers
                 .map(
                   (passenger) => {
-                    "surname": passenger['lastName'],
-                    "given_name": passenger['firstName'],
-                    "title": passenger['title'],
-                    "passport_no": passenger['passportNumber'] ?? "",
-                    "dob": passenger['dateOfBirth'] ?? "",
-                    "doe": passenger['passportExpiry'] ?? "",
+                    "surname": passenger['lastName']?.toString().trim() ?? "",
+                    "given_name":
+                        passenger['firstName']?.toString().trim() ?? "",
+                    "title": passenger['title']?.toString().trim() ?? "",
+                    "passport_no":
+                        passenger['passportNumber']?.toString().trim() ?? "",
+                    "dob": passenger['dateOfBirth']?.toString() ?? "",
+                    "doe": passenger['passportExpiry']?.toString() ?? "",
                   },
                 )
                 .toList(),
         "group_price_detail_id": groupPriceDetailId,
       };
+
+      // Log the complete request data for debugging
+      if (kDebugMode) {
+        print('=== BOOKING REQUEST DATA ===');
+        // print('URL: $travelNetworkBaseUrl/create/booking');
+        // print('Headers: ${getTravelNetworkHeaders()}');
+        print('Payload: ${jsonEncode(data)}');
+        print('========================');
+      }
 
       // Add timeout to avoid hanging requests
       var response = await dio1.post(
@@ -330,39 +403,114 @@ class GroupTicketingController extends GetxController {
         options: dio.Options(
           headers: getTravelNetworkHeaders(),
           contentType: 'application/json',
-          receiveTimeout: const Duration(seconds: 30),
-          sendTimeout: const Duration(seconds: 30),
+          receiveTimeout: const Duration(seconds: 45),
+          sendTimeout: const Duration(seconds: 45),
         ),
       );
+
+      // Log the complete response for debugging
+      if (kDebugMode) {
+        print('=== BOOKING RESPONSE ===');
+        print('Status Code: ${response.statusCode}');
+        print('Response Data: ${jsonEncode(response.data)}');
+        print('========================');
+      }
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         // Check if the response has the nested data structure
         var responseData = response.data;
 
+        // Enhanced response validation
+        if (responseData == null) {
+          return {
+            'success': false,
+            'message': 'Empty response from server',
+            'data': null,
+          };
+        }
+
         // Check for business logic success/failure in nested data
-        if (responseData is Map<String, dynamic> &&
-            responseData['data'] != null) {
-          var innerData = responseData['data'];
+        if (responseData is Map<String, dynamic>) {
+          // Check for explicit error flags
+          if (responseData.containsKey('error') &&
+              responseData['error'] == true) {
+            return {
+              'success': false,
+              'message':
+                  responseData['message']?.toString() ?? 'Booking failed',
+              'error_details': responseData.toString(),
+              'data': null,
+            };
+          }
 
-          // Check if the inner data indicates an error or empty data
-          if (innerData is Map<String, dynamic>) {
-            // Check for explicit error flag or success flag
-            if (innerData['error'] == true || innerData['success'] == false) {
-              return {
-                'success': false,
-                'message': innerData['message'] ?? 'Booking failed',
-                'data': null,
-              };
+          if (responseData.containsKey('success') &&
+              responseData['success'] == false) {
+            return {
+              'success': false,
+              'message':
+                  responseData['message']?.toString() ?? 'Booking failed',
+              'error_details': responseData.toString(),
+              'data': null,
+            };
+          }
+
+          // Check nested data structure
+          if (responseData.containsKey('data')) {
+            var innerData = responseData['data'];
+
+            if (innerData is Map<String, dynamic>) {
+              // Check for explicit error flag or success flag in nested data
+              if (innerData.containsKey('error') &&
+                  innerData['error'] == true) {
+                return {
+                  'success': false,
+                  'message':
+                      innerData['message']?.toString() ??
+                      'Booking creation failed',
+                  'error_details': innerData.toString(),
+                  'data': null,
+                };
+              }
+
+              if (innerData.containsKey('success') &&
+                  innerData['success'] == false) {
+                return {
+                  'success': false,
+                  'message':
+                      innerData['message']?.toString() ??
+                      'Booking creation failed',
+                  'error_details': innerData.toString(),
+                  'data': null,
+                };
+              }
+
+              // Check if data array is empty (booking not created)
+              if (innerData.containsKey('data') &&
+                  innerData['data'] is List &&
+                  (innerData['data'] as List).isEmpty) {
+                return {
+                  'success': false,
+                  'message':
+                      innerData['message']?.toString() ??
+                      'Booking could not be created - no booking data returned',
+                  'error_details': innerData.toString(),
+                  'data': null,
+                };
+              }
             }
+          }
 
-            // Check if data array is empty (booking not created)
-            if (innerData['data'] is List &&
-                (innerData['data'] as List).isEmpty) {
+          // Check for specific error messages in the response
+          String? responseMessage = responseData['message']?.toString();
+          if (responseMessage != null) {
+            if (responseMessage.toLowerCase().contains('server error') ||
+                responseMessage.toLowerCase().contains('internal error') ||
+                responseMessage.toLowerCase().contains('database error')) {
               return {
                 'success': false,
                 'message':
-                    innerData['message'] ??
-                    'Booking could not be created - no data returned',
+                    'Server encountered an error. Please try again or contact support.',
+                'error_details': responseData.toString(),
                 'data': null,
               };
             }
@@ -372,64 +520,100 @@ class GroupTicketingController extends GetxController {
         // If we reach here, the booking was successful
         return {
           'success': true,
-          'message': responseData['message'] ?? 'Booking saved successfully',
+          'message':
+              responseData['message']?.toString() ??
+              'Booking saved successfully',
           'data': responseData,
         };
       } else {
         return {
           'success': false,
-          'message': 'Failed to save booking. Status: ${response.statusCode}',
+          'message':
+              'HTTP Error: ${response.statusCode} - ${response.statusMessage}',
           'error_details': response.data?.toString() ?? 'No error details',
+          'status_code': response.statusCode,
           'data': null,
         };
       }
     } on dio.DioException catch (e) {
+      // Enhanced DioException handling
+      String errorMessage = 'Network error occurred';
+      String? errorDetails = e.message;
+
+      if (kDebugMode) {
+        print('=== DIO EXCEPTION ===');
+        print('Type: ${e.type}');
+        print('Message: ${e.message}');
+        print('Response: ${e.response?.data}');
+        print('Status Code: ${e.response?.statusCode}');
+        print('=====================');
+      }
+
       // Check for specific error types
-      if (e.type == dio.DioExceptionType.connectionTimeout ||
-          e.type == dio.DioExceptionType.sendTimeout ||
-          e.type == dio.DioExceptionType.receiveTimeout) {
-        return {
-          'success': false,
-          'message':
-              'Request timed out. Please check your internet connection and try again.',
-          'error_details': e.message,
-          'data': null,
-        };
-      } else if (e.type == dio.DioExceptionType.badResponse) {
-        // Try to parse error response for more details
-        final errorData = e.response?.data;
-        String errorMessage = 'Server returned an error';
-
-        if (errorData is Map<String, dynamic>) {
-          errorMessage = errorData['message'] ?? errorMessage;
-        }
-
-        return {
-          'success': false,
-          'message': errorMessage,
-          'error_details': errorData?.toString(),
-          'status_code': e.response?.statusCode,
-          'data': null,
-        };
+      switch (e.type) {
+        case dio.DioExceptionType.connectionTimeout:
+          errorMessage =
+              'Connection timed out. Please check your internet connection.';
+          break;
+        case dio.DioExceptionType.sendTimeout:
+          errorMessage =
+              'Request timed out while sending data. Please try again.';
+          break;
+        case dio.DioExceptionType.receiveTimeout:
+          errorMessage =
+              'Request timed out while receiving response. Please try again.';
+          break;
+        case dio.DioExceptionType.badResponse:
+          // Try to parse error response for more details
+          final errorData = e.response?.data;
+          if (errorData is Map<String, dynamic>) {
+            errorMessage =
+                errorData['message']?.toString() ??
+                'Server returned error code ${e.response?.statusCode}';
+            errorDetails = errorData.toString();
+          } else if (errorData is String) {
+            errorMessage =
+                errorData.isNotEmpty
+                    ? errorData
+                    : 'Server returned error code ${e.response?.statusCode}';
+          } else {
+            errorMessage =
+                'Server returned error code ${e.response?.statusCode}';
+          }
+          break;
+        case dio.DioExceptionType.cancel:
+          errorMessage = 'Request was cancelled.';
+          break;
+        case dio.DioExceptionType.unknown:
+          errorMessage = 'Unknown network error occurred.';
+          break;
+        default:
+          errorMessage = 'Network error: ${e.message ?? 'Unknown error'}';
       }
 
       return {
         'success': false,
-        'message': 'Network error occurred: ${e.message}',
-        'error_details': e.response?.data?.toString() ?? 'No error details',
+        'message': errorMessage,
+        'error_details': errorDetails,
+        'status_code': e.response?.statusCode,
         'data': null,
       };
     } catch (e) {
+      if (kDebugMode) {
+        print('=== UNEXPECTED ERROR ===');
+        print('Error: $e');
+        print('Type: ${e.runtimeType}');
+        print('========================');
+      }
+
       return {
         'success': false,
-        'message': 'An unexpected error occurred',
+        'message': 'An unexpected error occurred while processing your booking',
         'error_details': e.toString(),
         'data': null,
       };
     }
-  }
-
-  // ALHAIDER API METHODS
+  } // ALHAIDER API METHODS
 
   // Fetch Groups from Alhaider
   Future<List<dynamic>> fetchAlhaiderGroups(String type) async {
@@ -538,111 +722,212 @@ class GroupTicketingController extends GetxController {
 
   // savebooking into database
   // Updated saveBooking_into_database function
+  // Updated saveBooking_into_database function to match Postman request structure
+  // Updated saveBooking_into_database function to match Postman request structure
+  // Updated saveBooking_into_database function
   Future<Map<String, dynamic>> saveBooking_into_database({
     required String bookername,
     required String bookername_num,
     required String booker_email,
     required int groupId,
-    required String agentName,
-    required String agencyName,
-    required String email,
-    required String mobile,
     required int adults,
     int? children,
     int? infants,
     String? agentNotes,
     required List<Map<String, dynamic>> passengers,
     required int groupPriceDetailId,
-    // Additional parameters for the accurate API
+    // Additional parameters
     int? noOfSeats,
     double? fares,
     String? airlineName,
+    // Required parameter for saveBooking response data
+    Map<String, dynamic>? saveBookingResponse,
   }) async {
     try {
       // Validate passengers data before creating the request
-      for (var passenger in passengers) {
-        if (passenger['firstName'] == null ||
-            passenger['lastName'] == null ||
-            passenger['title'] == null) {
-          return {
-            'success': false,
-            'message': 'Missing required passenger information (name or title)',
-            'data': null,
-          };
-        }
+      if (passengers.isEmpty) {
+        return {
+          'success': false,
+          'message': 'No passengers provided',
+          'data': null,
+        };
+      }
 
-        // Handle potential null dates safely
-        String? dob = passenger['dateOfBirth'];
-        String? doe = passenger['passportExpiry'];
+      // Extract data from saveBooking response if available
+      String? pnrValue;
+      String? apiBookingId;
+      String? apiGroupId;
+      String? apiSector;
+      String? apiAirline;
+      String? apiDeptDate;
+      double? apiFare;
 
-        // Format dates only if they exist
-        if (dob != null && dob.length >= 10) {
-          passenger['dateOfBirth'] = dob.substring(0, 10);
-        }
-
-        if (doe != null && doe.length >= 10) {
-          passenger['passportExpiry'] = doe.substring(0, 10);
+      if (saveBookingResponse != null && saveBookingResponse['data'] != null) {
+        var responseData = saveBookingResponse['data']['data'];
+        if (responseData != null) {
+          // Extract PNR from group data
+          pnrValue = responseData['group']?['pnr']?.toString();
+          apiBookingId = responseData['id']?.toString();
+          apiGroupId = responseData['group_id']?.toString();
+          apiSector = responseData['group']?['sector']?.toString();
+          apiAirline =
+              responseData['group']?['airline']?['airline_code']?.toString();
+          apiDeptDate = responseData['group']?['dept_date']?.toString();
+          apiFare =
+              double.tryParse(responseData['fares']?.toString() ?? '0') ?? 0.0;
         }
       }
 
-      // Get current timestamp for created_at
-      final currentDate = DateTime.now().toIso8601String().substring(0, 10);
+      // Helper function to map passenger type to human_type number
+      int getHumanTypeNumber(String title) {
+        String lowerTitle = title.toLowerCase();
+        if (['mr', 'mrs', 'ms'].contains(lowerTitle)) {
+          return 1; // adult
+        } else if (['mstr', 'miss'].contains(lowerTitle)) {
+          return 2; // child
+        } else if (['inf'].contains(lowerTitle)) {
+          return 3; // infant
+        }
+        return 1; // default to adult
+      }
 
+      // Helper function to determine gender from title
+      String getGenderFromTitle(String title) {
+        String lowerTitle = title.toLowerCase();
+        if (['mr', 'mstr'].contains(lowerTitle)) {
+          return 'male';
+        } else if (['mrs', 'ms', 'miss'].contains(lowerTitle)) {
+          return 'female';
+        }
+        return 'male'; // default
+      }
+
+      // Get current date for various fields
+      final currentDate = DateTime.now();
+      final formattedDate = currentDate.toIso8601String().substring(0, 10);
+
+      // Calculate exchange rate (example: PKR to USD)
+      const double exchangeRate = 280.0; // PKR per USD (adjust as needed)
+
+      // Process passengers data according to API structure
+      List<Map<String, dynamic>> processedPassengers =
+          passengers.map((passenger) {
+            // Extract price information
+            double pricePkr = apiFare ?? fares ?? 45000.0;
+            double priceUsd = pricePkr / exchangeRate;
+
+            // Format dates safely
+            String dobFormatted = '';
+            String doeFormatted = '';
+            String doiFormatted = '';
+
+            if (passenger['dateOfBirth'] != null) {
+              try {
+                DateTime dob = DateTime.parse(passenger['dateOfBirth']);
+                dobFormatted =
+                    "${dob.year.toString().padLeft(4, '0')}-${dob.month.toString().padLeft(2, '0')}-${dob.day.toString().padLeft(2, '0')}";
+              } catch (e) {
+                dobFormatted = formattedDate; // fallback
+              }
+            }
+
+            if (passenger['passportExpiry'] != null) {
+              try {
+                DateTime doe = DateTime.parse(passenger['passportExpiry']);
+                doeFormatted =
+                    "${doe.year.toString().padLeft(4, '0')}-${doe.month.toString().padLeft(2, '0')}-${doe.day.toString().padLeft(2, '0')}";
+              } catch (e) {
+                doeFormatted = formattedDate; // fallback
+              }
+            }
+
+            // Default DOI to current date - 2 years (passport issue date approximation)
+            DateTime doiDate = currentDate.subtract(const Duration(days: 730));
+            doiFormatted =
+                "${doiDate.year.toString().padLeft(4, '0')}-${doiDate.month.toString().padLeft(2, '0')}-${doiDate.day.toString().padLeft(2, '0')}";
+
+            return {
+              "price": priceUsd.round(),
+              "price_pkr": pricePkr.round(),
+              "reo": exchangeRate,
+              "human_type": getHumanTypeNumber(
+                passenger['title']?.toString() ?? 'Mr',
+              ),
+              "type": getGenderFromTitle(
+                passenger['title']?.toString() ?? 'Mr',
+              ),
+              "sur_name": passenger['lastName']?.toString().trim() ?? '',
+              "given_name": passenger['firstName']?.toString().trim() ?? '',
+              "dob": dobFormatted,
+              "pass_no": passenger['passportNumber']?.toString().trim() ?? '',
+              "doe": doeFormatted,
+              "doi": doiFormatted,
+              "pnr_1":
+                  pnrValue ?? "PNR${DateTime.now().millisecondsSinceEpoch}",
+            };
+          }).toList();
+
+      // Construct the request data according to the Postman structure
       final data = {
-        "group_id": groupId,
-        "booker_data": {
+        "booker_details": {
           "name": bookername.isNotEmpty ? bookername : "OneRoofTravel",
           "email":
               booker_email.isNotEmpty ? booker_email : "resOneroof@gmail.com",
-          "mobile": bookername_num.isNotEmpty ? bookername_num : "03001232412",
+          "phone": bookername_num.isNotEmpty ? bookername_num : "03001232412",
         },
-        "agency_info": {
-          "group_id": groupId,
-
-          "agent_name": agentName,
-          "agency_name": agencyName,
-          "created_at": currentDate, // Current timestamp
+        "group_data": {
+          "group_id": apiGroupId ?? groupId.toString(),
+          "group_type": "international", // You might want to make this dynamic
           "no_of_seats":
-              (noOfSeats ?? (adults + (children ?? 0) + (infants ?? 0)))
-                  .toString(),
-          "fares": fares ?? 642.0, // Default fare or calculated
-          "airline_name":
-              airlineName ?? "Default Airline", // Default airline name
-          "adults": adults,
-          "child": children ?? 0,
-          "infant": infants ?? 0,
-          "agent_notes": agentNotes,
+              noOfSeats ?? (adults + (children ?? 0) + (infants ?? 0)),
+          "status": "confirmed",
+          "date_created": "${currentDate.toIso8601String().substring(0, 19)}Z",
+          "api_fares": (apiFare ?? fares ?? 45000.0).round(),
+          "api_booking_id":
+              apiBookingId ?? "APIBK${DateTime.now().millisecondsSinceEpoch}",
+          "api_group_id": apiGroupId ?? groupId.toString(),
+          "api_status": "active",
+          "api_booking_date": formattedDate,
+          "api_fare": (apiFare ?? fares ?? 45000.0).round(),
+          "api_dept_date": apiDeptDate ?? formattedDate,
+          "api_group_type": "GIT",
+          "api_sector": apiSector ?? "LHE-DXB",
+          "api_ailrine": apiAirline ?? (airlineName ?? "EK"),
         },
-        "booking_details":
-            passengers
-                .map(
-                  (passenger) => {
-                    "surname": passenger['lastName'],
-                    "given_name": passenger['firstName'],
-                    "title":
-                        passenger['title']?.toUpperCase() ??
-                        "MR", // Ensure uppercase
-                    "passport_no": passenger['passportNumber'] ?? "",
-                    "dob": passenger['dateOfBirth'] ?? "",
-                    "doe": passenger['passportExpiry'] ?? "",
-                  },
-                )
-                .toList(),
-        "group_price_detail_id": groupPriceDetailId,
+        "passengers_data": processedPassengers,
       };
 
-      // Updated endpoint URL based on the accurate API
+      // Log the complete request data for debugging
+      if (kDebugMode) {
+        print('=== DATABASE BOOKING REQUEST DATA ===');
+        print('URL: https://onerooftravel.net/api/save-group-ticketing');
+        print('Payload: ${jsonEncode(data)}');
+        print('====================================');
+      }
+
+      // Make the API request
       var response = await dio1.post(
         'https://onerooftravel.net/api/save-group-ticketing',
         data: data,
         options: dio.Options(
-          headers: {'Content-Type': 'application/json'},
-          receiveTimeout: const Duration(seconds: 30),
-          sendTimeout: const Duration(seconds: 30),
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+          },
+          receiveTimeout: const Duration(seconds: 45),
+          sendTimeout: const Duration(seconds: 45),
         ),
       );
 
-      if (response.statusCode == 200) {
+      // Log the response for debugging
+      if (kDebugMode) {
+        print('=== DATABASE BOOKING RESPONSE ===');
+        print('Status Code: ${response.statusCode}');
+        print('Response Data: ${jsonEncode(response.data)}');
+        print('=================================');
+      }
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
         return {
           'success': true,
           'message': 'Booking saved to database successfully',
@@ -658,39 +943,74 @@ class GroupTicketingController extends GetxController {
         };
       }
     } on dio.DioException catch (e) {
-      if (e.type == dio.DioExceptionType.connectionTimeout ||
-          e.type == dio.DioExceptionType.sendTimeout ||
-          e.type == dio.DioExceptionType.receiveTimeout) {
-        return {
-          'success': false,
-          'message': 'Database request timed out. Please try again.',
-          'error_details': e.message,
-          'data': null,
-        };
-      } else if (e.type == dio.DioExceptionType.badResponse) {
-        final errorData = e.response?.data;
-        String errorMessage = 'Database server returned an error';
+      String errorMessage = 'Database network error occurred';
+      String? errorDetails = e.message;
 
-        if (errorData is Map<String, dynamic>) {
-          errorMessage = errorData['message'] ?? errorMessage;
-        }
+      if (kDebugMode) {
+        print('=== DATABASE DIO EXCEPTION ===');
+        print('Type: ${e.type}');
+        print('Message: ${e.message}');
+        print('Response: ${e.response?.data}');
+        print('Status Code: ${e.response?.statusCode}');
+        print('==============================');
+      }
 
-        return {
-          'success': false,
-          'message': errorMessage,
-          'error_details': errorData?.toString(),
-          'status_code': e.response?.statusCode,
-          'data': null,
-        };
+      switch (e.type) {
+        case dio.DioExceptionType.connectionTimeout:
+          errorMessage =
+              'Database connection timed out. Please check your internet connection.';
+          break;
+        case dio.DioExceptionType.sendTimeout:
+          errorMessage =
+              'Database request timed out while sending data. Please try again.';
+          break;
+        case dio.DioExceptionType.receiveTimeout:
+          errorMessage =
+              'Database request timed out while receiving response. Please try again.';
+          break;
+        case dio.DioExceptionType.badResponse:
+          final errorData = e.response?.data;
+          if (errorData is Map<String, dynamic>) {
+            errorMessage =
+                errorData['message']?.toString() ??
+                'Database server returned error code ${e.response?.statusCode}';
+            errorDetails = errorData.toString();
+          } else if (errorData is String) {
+            errorMessage =
+                errorData.isNotEmpty
+                    ? errorData
+                    : 'Database server returned error code ${e.response?.statusCode}';
+          } else {
+            errorMessage =
+                'Database server returned error code ${e.response?.statusCode}';
+          }
+          break;
+        case dio.DioExceptionType.cancel:
+          errorMessage = 'Database request was cancelled.';
+          break;
+        case dio.DioExceptionType.unknown:
+          errorMessage = 'Unknown database error occurred.';
+          break;
+        default:
+          errorMessage =
+              'Database network error: ${e.message ?? 'Unknown error'}';
       }
 
       return {
         'success': false,
-        'message': 'Database network error occurred: ${e.message}',
-        'error_details': e.response?.data?.toString() ?? 'No error details',
+        'message': errorMessage,
+        'error_details': errorDetails,
+        'status_code': e.response?.statusCode,
         'data': null,
       };
     } catch (e) {
+      if (kDebugMode) {
+        print('=== DATABASE UNEXPECTED ERROR ===');
+        print('Error: $e');
+        print('Type: ${e.runtimeType}');
+        print('=================================');
+      }
+
       return {
         'success': false,
         'message': 'An unexpected database error occurred',

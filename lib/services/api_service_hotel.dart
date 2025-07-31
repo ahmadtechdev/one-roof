@@ -59,7 +59,7 @@ class ApiServiceHotel extends GetxService {
       var response = await dio.request(
         'https://onerooftravel.net/api/marginTesting',
         options: Options(method: 'POST'),
-        
+
         data: data,
       );
 
@@ -92,7 +92,11 @@ class ApiServiceHotel extends GetxService {
           final siteOptions =
               responseData['siteOptions'] as Map<String, dynamic>?;
           if (siteOptions != null) {
-            pkrprice = double.tryParse(siteOptions['roe'].toString()) ?? 276.0;
+            pkrprice =
+                double.tryParse(
+                  siteOptions['currency_roe_to_pkr'].toString(),
+                ) ??
+                276.0;
           }
 
           if (kDebugMode) {

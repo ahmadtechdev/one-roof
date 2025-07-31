@@ -48,7 +48,7 @@ class PassengerDetailsScreen extends StatelessWidget {
                 key: controller.formKey,
                 onChanged: () {
                   // Debounce the validation to avoid frequent rebuilds
-                  Future.microtask(() => controller.validateForm());
+                  // Future.microtask(() => controller.validateForm());
                 },
                 child: Obx(() {
                   // Wrap the content that needs reactivity in a separate Obx
@@ -108,7 +108,6 @@ class PassengerDetailsScreen extends StatelessWidget {
 
     return passengers;
   }
-
 
   Widget _buildTripSummaryCard() {
     return Obx(() {
@@ -221,15 +220,30 @@ class PassengerDetailsScreen extends StatelessWidget {
             Divider(height: 24),
             SizedBox(height: 8),
             _buildResponsiveRow([
-              _buildTextField('Booker Name', (value) {
-                // controller.bookingData.value.bookerName = value;
-              }, Icons.person_outline),
-              _buildTextField('Booker Phone', (value) {
-                // controller.bookingData.value.bookerPhone = value;
-              }, Icons.phone_outlined),
-              _buildTextField('Booker Email', (value) {
-                // controller.bookingData.value.bookerEmail = value;
-              }, Icons.email_outlined),
+              _buildTextField(
+                'Booker Name',
+                (value) {
+                  controller.booker_name.value = value;
+                },
+                Icons.person_outline,
+                controller.booker_name.value.toString(),
+              ),
+              _buildTextField(
+                'Booker Phone',
+                (value) {
+                  controller.booker_num.value = value;
+                },
+                Icons.phone_outlined,
+                controller.booker_num.value.toString(),
+              ),
+              _buildTextField(
+                'Booker Email',
+                (value) {
+                  controller.booker_email.value = value;
+                },
+                Icons.email_outlined,
+                controller.booker_email.value.toString(),
+              ),
             ]),
           ],
         ),
@@ -477,6 +491,7 @@ class PassengerDetailsScreen extends StatelessWidget {
     String label,
     Function(String) onChanged, [
     IconData? icon,
+    String? hintText, // Added optional hint text parameter
   ]) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -489,6 +504,8 @@ class PassengerDetailsScreen extends StatelessWidget {
         TextFormField(
           decoration: InputDecoration(
             contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+            hintText: hintText, // Added hint text
+            hintStyle: TextStyle(color: TColors.black, fontSize: 14),
             prefixIcon:
                 icon != null
                     ? Icon(icon, color: TColors.secondary, size: 20)
@@ -569,7 +586,10 @@ class PassengerDetailsScreen extends StatelessWidget {
                       onPrimary: TColors.white,
                       surface: TColors.white,
                       onSurface: TColors.primary,
-                    ), dialogTheme: DialogThemeData(backgroundColor: TColors.white),
+                    ),
+                    dialogTheme: DialogThemeData(
+                      backgroundColor: TColors.white,
+                    ),
                   ),
                   child: child!,
                 );

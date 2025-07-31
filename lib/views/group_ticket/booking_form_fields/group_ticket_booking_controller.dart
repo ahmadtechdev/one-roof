@@ -40,13 +40,52 @@ class GroupTicketBookingController extends GetxController {
       final authController = Get.find<AuthController>();
       final userData = await authController.getUserData();
 
-      if (userData != null && userData['cs_email'] != null) {
+      if (userData != null) {
         // Set the email controller with the user's email
-        booker_email.value = userData['cs_email'];
+        if (userData['cs_email'] != null) {
+          booker_email.value = userData['cs_email'];
+          if (kDebugMode) {
+            print("user email ${booker_email.value}");
+          }
+        }
+
+        // Set the name controller with the user's name
+        if (userData['cs_fname'] != null) {
+          booker_name.value = userData['cs_fname'];
+          if (kDebugMode) {
+            print("user name ${booker_name.value}");
+          }
+        }
+
+        // Set the phone controller with the user's phone
+        if (userData['cs_phone'] != null) {
+          booker_num.value = userData['cs_phone'];
+          if (kDebugMode) {
+            print("user phone ${booker_num.value}");
+          }
+        }
+
+        // Optional: You can also load other fields if needed
+        // For example, if you want to load company name as well:
+        // if (userData['cs_company'] != null) {
+        //   // You can create another observable for company if needed
+        //   print("user company ${userData['cs_company']}");
+        // }
+
+        if (kDebugMode) {
+          print("All user data loaded successfully");
+          print("Name: ${booker_name.value}");
+          print("Email: ${booker_email.value}");
+          print("Phone: ${booker_num.value}");
+        }
+      } else {
+        if (kDebugMode) {
+          print("No user data found");
+        }
       }
     } catch (e) {
       if (kDebugMode) {
-        print('Error loading user email: $e');
+        print('Error loading user data: $e');
       }
     }
   }
@@ -75,7 +114,7 @@ class GroupTicketBookingController extends GetxController {
 
       val.groupId = flight.group_id;
       val.groupName =
-      '${flight.airline}-${flight.origin}-${flight.destination}';
+          '${flight.airline}-${flight.origin}-${flight.destination}';
       val.sector = '${flight.origin}-${flight.destination}';
       val.adultPrice = flight.price.toDouble();
       val.childPrice = flight.price.toDouble();
@@ -109,104 +148,126 @@ class GroupTicketBookingController extends GetxController {
   // }
 
   /// Validates the form and updates isFormValid
-  void validateForm() {
-    isFormValid.value = formKey.currentState?.validate() ?? false;
-  }
 
   final RxBool isLoading = false.obs;
 
   /// Submits the booking to the API
+  /// Updated submitBooking method in GroupTicketBookingController
   Future<void> submitBooking() async {
-    if (!isFormValid.value) {
-      showErrorSnackbar('Please fill in all required fields correctly.');
-      return;
-    }
+    // if (!isFormValid.value) {
+    //   showErrorSnackbar('Please fill in all required fields correctly.');
+    //   return;
+    // }
 
     try {
       // Show loading
       isLoading.value = true;
 
       final passengers =
-      bookingData.value.passengers
-          .map(
-            (passenger) => {
-          'firstName': passenger.firstName,
-          'lastName': passenger.lastName,
-          'title': passenger.title,
-          'passportNumber': passenger.passportNumber,
-          'dateOfBirth': passenger.dateOfBirth?.toIso8601String(),
-          'passportExpiry': passenger.passportExpiry?.toIso8601String(),
-        },
-      )
-          .toList();
+          bookingData.value.passengers
+              .map(
+                (passenger) => {
+                  'firstName': passenger.firstName,
+                  'lastName': passenger.lastName,
+                  'title': passenger.title,
+                  'passportNumber': passenger.passportNumber,
+                  'dateOfBirth': passenger.dateOfBirth?.toIso8601String(),
+                  'passportExpiry': passenger.passportExpiry?.toIso8601String(),
+                },
+              )
+              .toList();
 
+      // First API call - saveBooking
       final result = await apiController.saveBooking(
         groupId: bookingData.value.groupId,
-        agentName: 'ONE ROOF TRAVEL',
+        agentName: booker_name.value,
         agencyName: 'ONE ROOF TRAVEL',
-        email: 'usama@travelnetwork.com',
-        mobile: '03137358881',
+        email: booker_email.value,
+        mobile: booker_num.value,
         adults: bookingData.value.adults,
         children:
-        bookingData.value.children > 0 ? bookingData.value.children : null,
+            bookingData.value.children > 0 ? bookingData.value.children : null,
         infants:
-        bookingData.value.infants > 0 ? bookingData.value.infants : null,
+            bookingData.value.infants > 0 ? bookingData.value.infants : null,
         passengers: passengers,
         groupPriceDetailId: bookingData.value.groupPriceDetailId,
       );
 
+      // Check if first API call was successful
+      if (result['success'] != true) {
+        isLoading.value = false;
+        showErrorSnackbar(result['message'] ?? 'Failed to save booking');
+        return;
+      }
+
+      // Second API call - saveBooking_into_database (pass the first result)
       final result2 = await apiController.saveBooking_into_database(
         groupId: bookingData.value.groupId,
-        agentName: 'ONE ROOF TRAVEL',
-        agencyName: 'ONE ROOF TRAVEL',
-        email: 'usama@travelnetwork.com',
-        mobile: '03137358881',
+
         adults: bookingData.value.adults,
         children:
-        bookingData.value.children > 0 ? bookingData.value.children : null,
+            bookingData.value.children > 0 ? bookingData.value.children : null,
         infants:
-        bookingData.value.infants > 0 ? bookingData.value.infants : null,
+            bookingData.value.infants > 0 ? bookingData.value.infants : null,
         passengers: passengers,
         groupPriceDetailId: bookingData.value.groupPriceDetailId,
         bookername:
-        booker_name.value.isNotEmpty ? booker_name.value : "OneRoofTravel",
+            booker_name.value.isNotEmpty ? booker_name.value : "OneRoofTravel",
         bookername_num:
-        booker_num.value.isNotEmpty ? booker_num.value : "03001232412",
+            booker_num.value.isNotEmpty ? booker_num.value : "03001232412",
         booker_email:
-        booker_email.value.isNotEmpty
-            ? booker_email.value
-            : "resOneroof@gmail.com",
-        // Additional parameters with dummy data if not available
+            booker_email.value.isNotEmpty
+                ? booker_email.value
+                : "resOneroof@gmail.com",
+        // Additional parameters
         noOfSeats: bookingData.value.totalPassengers,
-        fares:
-        bookingData.value.totalPrice, // Using adult price as default fare
+        fares: bookingData.value.totalPrice,
         airlineName:
-        bookingData.value.groupName.split(
-          '-',
-        )[0], // Extract airline from group name
+            bookingData.value.groupName.split(
+              '-',
+            )[0], // Extract airline from group name
+        // Pass the saveBooking response data
+        saveBookingResponse: result,
       );
+
       // Hide loading
       isLoading.value = false;
 
+      // Check results from both API calls
       if (result['success'] == true) {
-        showSuccessSnackbar(result['message']);
+        String successMessage =
+            result['message'] ?? 'Booking saved successfully';
+
+        // Add database save status to message
+        if (result2['success'] == true) {
+          successMessage += ' and saved to database.';
+        } else {
+          successMessage +=
+              ', but failed to save to database: ${result2['message']}';
+        }
+
+        showSuccessSnackbar(successMessage);
 
         // Print full result data in chunks
-        printLargeData("the data is ${jsonEncode(result)}");
+        printLargeData("Booking API Result: ${jsonEncode(result)}");
+        printLargeData("Database API Result: ${jsonEncode(result2)}");
 
         // Navigate to PDF print screen with the API response data
         Get.to(() => PDFPrintScreen(bookingData: result));
       } else {
-        showErrorSnackbar(result['message']);
+        showErrorSnackbar(result['message'] ?? 'Booking failed');
       }
     } catch (e) {
       // Hide loading on error
       isLoading.value = false;
-      showErrorSnackbar('An error occurred while processing your booking');
-    }
-  }
+      showErrorSnackbar('An error occurred while processing your booking: $e');
 
-  // Helper function to print large data in chunks
+      if (kDebugMode) {
+        print('submitBooking error: $e');
+      }
+    }
+  } // Helper function to print large data in chunks
+
   void printLargeData(String data) {
     const int chunkSize = 800;
     for (int i = 0; i < data.length; i += chunkSize) {
@@ -231,28 +292,28 @@ class GroupTicketBookingController extends GetxController {
             ),
           ),
           child:
-          isLoading.value
-              ? Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              SizedBox(
-                height: 20,
-                width: 20,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  valueColor: AlwaysStoppedAnimation<Color>(
-                    Colors.white,
+              isLoading.value
+                  ? Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            Colors.white,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      const Text('Processing...'),
+                    ],
+                  )
+                  : const Text(
+                    'Save Booking',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                   ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              const Text('Processing...'),
-            ],
-          )
-              : const Text(
-            'Save Booking',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-          ),
         ),
       );
     });

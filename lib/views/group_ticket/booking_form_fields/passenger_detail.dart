@@ -83,7 +83,7 @@ class BookingSummaryScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Available Seats:',
+                    'Available Seats:${controller.bookingData.value.groupPriceDetailId.toString()}',
                     style: TextStyle(fontSize: 14, color: Colors.grey[600]),
                   ),
                   Text(
@@ -352,6 +352,7 @@ class BookingSummaryScreen extends StatelessWidget {
           elevation: 2,
         ),
         onPressed: () {
+          controller.loadUserEmail();
           if (controller.bookingData.value.totalPassengers <=
               controller.bookingData.value.availableSeats) {
             Get.to(
