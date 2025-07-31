@@ -758,6 +758,8 @@ class GroupTicketingController extends GetxController {
       String? apiBookingId;
       String? apiGroupId;
       String? apiSector;
+      String? type;
+
       String? apiAirline;
       String? apiDeptDate;
       double? apiFare;
@@ -770,6 +772,8 @@ class GroupTicketingController extends GetxController {
           apiBookingId = responseData['id']?.toString();
           apiGroupId = responseData['group_id']?.toString();
           apiSector = responseData['group']?['sector']?.toString();
+          type = responseData['group']?['type']?.toString();
+
           apiAirline =
               responseData['group']?['airline']?['airline_code']?.toString();
           apiDeptDate = responseData['group']?['dept_date']?.toString();
@@ -813,8 +817,8 @@ class GroupTicketingController extends GetxController {
       List<Map<String, dynamic>> processedPassengers =
           passengers.map((passenger) {
             // Extract price information
-            double pricePkr = apiFare ?? fares ?? 45000.0;
-            double priceUsd = pricePkr / exchangeRate;
+            double buying = apiFare ?? fares ?? 45000.0;
+            double selling = buying + travelnetworkmargin;
 
             // Format dates safely
             String dobFormatted = '';
@@ -847,8 +851,9 @@ class GroupTicketingController extends GetxController {
                 "${doiDate.year.toString().padLeft(4, '0')}-${doiDate.month.toString().padLeft(2, '0')}-${doiDate.day.toString().padLeft(2, '0')}";
 
             return {
-              "price": priceUsd.round(),
-              "price_pkr": pricePkr.round(),
+              "buying": buying.round(),
+
+              "selling": selling.round(),
               "reo": exchangeRate,
               "human_type": getHumanTypeNumber(
                 passenger['title']?.toString() ?? 'Mr',
