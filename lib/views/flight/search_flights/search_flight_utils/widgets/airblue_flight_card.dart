@@ -1,8 +1,10 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../../utility/colors.dart';
+import '../../airblue/airblue_flight_controller.dart';
 import '../../airblue/airblue_flight_model.dart';
 import '../../sabre/sabre_flight_models.dart';
 class AirBlueFlightCard extends StatefulWidget {
@@ -24,6 +26,7 @@ class _AirBlueFlightCardState extends State<AirBlueFlightCard>
   bool isExpanded = false;
   late AnimationController _controller;
   late Animation<double> _expandAnimation;
+  final airBlueController = Get.find<AirBlueFlightController>();
 
   @override
   void initState() {
@@ -411,9 +414,7 @@ class _AirBlueFlightCardState extends State<AirBlueFlightCard>
                     ),
                   ),
                   ElevatedButton(
-                    onPressed: () {
-                      // Add booking functionality here
-                    },
+                    onPressed: () => airBlueController.handleAirBlueFlightSelection(widget.flight),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: TColors.third,
                       shape: RoundedRectangleBorder(

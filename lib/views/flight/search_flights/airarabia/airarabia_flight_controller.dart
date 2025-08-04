@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 
 import '../../../../services/api_service_airarabia.dart';
 import '../filters/filter_flight_model.dart';
+import '../flight_package/airarabia/airarabia_flight_package.dart';
 import 'airarabia_flight_model.dart';
 
 class AirArabiaFlightController extends GetxController {
@@ -251,7 +252,14 @@ class AirArabiaFlightController extends GetxController {
   int getFlightCountByAirline(String airlineCode) {
     return getFlightsByAirline(airlineCode).length;
   }
-
+  void handleAirArabiaFlightSelection(AirArabiaFlight flight) {
+    Get.to(
+          () => AirArabiaPackageSelectionDialog(
+        flight: flight,
+        isReturnFlight: false,
+      ),
+    );
+  }
   // Method to get available airlines (for Air Arabia, it's always just G9)
   List<FilterAirline> getAvailableAirlines() {
     if (flights.isEmpty) return [];

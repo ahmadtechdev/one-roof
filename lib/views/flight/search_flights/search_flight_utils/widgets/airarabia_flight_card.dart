@@ -1,8 +1,11 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:get/get_core/src/get_main.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../../utility/colors.dart';
+import '../../airarabia/airarabia_flight_controller.dart';
 import '../../airarabia/airarabia_flight_model.dart';
 
 class AirArabiaFlightCard extends StatefulWidget {
@@ -84,6 +87,7 @@ class _AirArabiaFlightCardState extends State<AirArabiaFlightCard>
   @override
   Widget build(BuildContext context) {
     // Get origin and destination from the first and last segments
+    final AirArabiaFlightController airArabiaController = Get.put(AirArabiaFlightController());
 
     // Calculate total price - ensure it's not zero
 
@@ -295,9 +299,7 @@ class _AirArabiaFlightCardState extends State<AirArabiaFlightCard>
                     ),
                   ),
                   ElevatedButton(
-                    onPressed: () {
-                      // Add booking functionality
-                    },
+                    onPressed: () => airArabiaController.handleAirArabiaFlightSelection(widget.flight),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: TColors.third,
                       shape: RoundedRectangleBorder(

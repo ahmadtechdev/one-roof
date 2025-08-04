@@ -163,6 +163,8 @@ class _FlightCardState extends State<FlightCard>
       return time.split(':').sublist(0, 2).join(':'); // Extract HH:mm
     }
 
+    final flightController = Get.find<FlightController>();
+
     // Update these methods to handle the new DateTime format
 
     return AnimatedContainer(
@@ -523,9 +525,7 @@ class _FlightCardState extends State<FlightCard>
                     ),
                   ),
                   ElevatedButton(
-                    onPressed: () {
-                      // Add booking functionality here
-                    },
+                    onPressed: () => flightController.handleFlightSelection(widget.flight),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: TColors.third,
                       shape: RoundedRectangleBorder(

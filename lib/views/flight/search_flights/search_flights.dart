@@ -202,7 +202,8 @@ class FlightBookingPage extends StatelessWidget {
                 itemBuilder: (context, index) {
                   final flight = flightController.filteredFlights[index];
                   return GestureDetector(
-                    onTap: () => flightController.handleFlightSelection(flight),
+                    onTap: () { },
+                    // onTap: () => flightController.handleFlightSelection(flight),
                     child: FlightCard(flight: flight),
                   );
                 },
@@ -224,7 +225,8 @@ class FlightBookingPage extends StatelessWidget {
                 itemBuilder: (context, index) {
                   final flight = airBlueController.filteredFlights[index];
                   return GestureDetector(
-                    onTap: () => airBlueController.handleAirBlueFlightSelection(flight),
+                    onTap: () { },
+                    // onTap: () => airBlueController.handleAirBlueFlightSelection(flight),
                     child: AirBlueFlightCard(flight: flight),
                   );
                 },
@@ -246,7 +248,8 @@ class FlightBookingPage extends StatelessWidget {
                 itemBuilder: (context, index) {
                   final flight = piaController.filteredFlights[index];
                   return GestureDetector(
-                    onTap: () => piaController.handlePIAFlightSelection(flight),
+                    onTap: () { },
+                    // onTap: () => piaController.handlePIAFlightSelection(flight),
                     child: PIAFlightCard(flight: flight),
                   );
                 },
@@ -268,9 +271,8 @@ class FlightBookingPage extends StatelessWidget {
                 itemBuilder: (context, index) {
                   final flight = airArabiaController.filteredFlights[index]; // ✅ Using filteredFlights
                   return GestureDetector(
-                    onTap: () {
-                      // Handle Air Arabia flight selection
-                    },
+                    onTap: () { },
+                    // onTap: () => airArabiaController.handleAirArabiaFlightSelection(flight),
                     child: AirArabiaFlightCard(flight: flight),
                   );
                 },
