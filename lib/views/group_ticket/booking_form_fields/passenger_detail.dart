@@ -83,7 +83,7 @@ class BookingSummaryScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Available Seats:${controller.bookingData.value.groupPriceDetailId.toString()}',
+                    'Available Seats:',
                     style: TextStyle(fontSize: 14, color: Colors.grey[600]),
                   ),
                   Text(
