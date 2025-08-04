@@ -54,7 +54,7 @@ class AuthController extends GetxController {
     }
   }
 
-  // Check if token is valid or get a new one if needed
+  // Updated getValidToken function to automatically logout on token expiry
   Future<String?> getValidToken() async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString(_tokenKey);
@@ -70,8 +70,11 @@ class AuthController extends GetxController {
         1000; // Current time in seconds
     if (now >= expiryTimestamp) {
       if (kDebugMode) {
-        print('Token expired, needs refresh');
+        print('Token expired, logging out user automatically');
       }
+
+      // Automatically logout user when token is expired
+      await logout(isTokenExpired: true);
       return null; // Token expired
     }
 
@@ -103,11 +106,60 @@ class AuthController extends GetxController {
   }
 
   // Get stored user data
+  // Updated getUserData method in AuthController
   Future<Map<String, dynamic>?> getUserData() async {
+    // First check if token is valid
+    final token = await getValidToken();
+
+    if (token == null) {
+      // Token is invalid or expired, clear data and return null
+      if (kDebugMode) {
+        print("Token invalid or expired, clearing user data");
+      }
+      await clearAuthData();
+      return null;
+    }
+
+    // Token is valid, get user data
+    final prefs = await SharedPreferences.getInstance();
+    final userDataString = prefs.getString(_userDataKey);
+
+    if (userDataString != null) {
+      try {
+        final userData = jsonDecode(userDataString);
+        if (kDebugMode) {
+          print("Retrieved valid user data: $userData");
+        }
+        return userData;
+      } catch (e) {
+        if (kDebugMode) {
+          print("Error parsing user data: $e");
+        }
+        // Clear corrupted data
+        await prefs.remove(_userDataKey);
+        return null;
+      }
+    }
+
+    if (kDebugMode) {
+      print("No user data found in SharedPreferences");
+    }
+    return null;
+  }
+
+  // Alternative method to get user data without token validation (if needed)
+  Future<Map<String, dynamic>?> getUserDataDirect() async {
     final prefs = await SharedPreferences.getInstance();
     final userDataString = prefs.getString(_userDataKey);
     if (userDataString != null) {
-      return jsonDecode(userDataString);
+      try {
+        return jsonDecode(userDataString);
+      } catch (e) {
+        if (kDebugMode) {
+          print("Error parsing user data: $e");
+        }
+        return null;
+      }
     }
     return null;
   }
@@ -152,7 +204,6 @@ class AuthController extends GetxController {
             response.data['error'] ??
             'Login failed with status code: ${response.statusCode}';
       }
-      
 
       isLoading.value = false;
       return {
@@ -172,18 +223,76 @@ class AuthController extends GetxController {
     }
   }
 
-  Future<void> logout() async {
+  // Updated logout function with comprehensive cleanup
+  Future<void> logout({bool isTokenExpired = false}) async {
     isLoading.value = true;
 
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove(_tokenKey);
-    await prefs.remove(_tokenExpiryKey);
-    await prefs.remove(_userDataKey);
+    try {
+      final prefs = await SharedPreferences.getInstance();
 
-    // Reset login status and user data
-    isLoggedInValue.value = false;
-    userData.value = {};
-    isLoading.value = false;
+      // Remove all authentication-related data from SharedPreferences
+      await Future.wait([
+        prefs.remove(_tokenKey),
+        prefs.remove(_tokenExpiryKey),
+        prefs.remove(_userDataKey),
+      ]);
+
+      // Reset all observable values to their initial state
+      isLoggedInValue.value = false;
+      userData.value = <String, dynamic>{};
+
+      // Debug logging
+      if (kDebugMode) {
+        if (isTokenExpired) {
+          print('User logged out due to token expiration');
+        } else {
+          print('User logged out manually');
+        }
+        print('All authentication data cleared from SharedPreferences');
+        print('Observable values reset to initial state');
+      }
+
+      isLoading.value = false;
+
+      // Optional: Navigate to login screen or show message
+      // You can add navigation logic here if needed
+      // Get.offAllNamed('/login'); // Uncomment if using named routes
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error during logout: ${e.toString()}');
+      }
+
+      // Even if there's an error, reset the observable values
+      isLoggedInValue.value = false;
+      userData.value = <String, dynamic>{};
+      isLoading.value = false;
+    }
+  }
+
+  // Helper method to clear all authentication data (can be called from anywhere)
+  Future<void> clearAuthData() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+
+      // Remove all auth-related keys
+      await Future.wait([
+        prefs.remove(_tokenKey),
+        prefs.remove(_tokenExpiryKey),
+        prefs.remove(_userDataKey),
+      ]);
+
+      // Reset observable values
+      isLoggedInValue.value = false;
+      userData.value = <String, dynamic>{};
+
+      if (kDebugMode) {
+        print('Authentication data cleared successfully');
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error clearing authentication data: ${e.toString()}');
+      }
+    }
   }
 
   // Method to check if user is logged in with valid token
@@ -348,8 +457,6 @@ class AuthController extends GetxController {
       };
     }
   }
-
-  // Add this method to your AuthController class
 
   Future<Map<String, dynamic>> getHotelBookings() async {
     isLoading.value = true;
@@ -538,7 +645,7 @@ class AuthController extends GetxController {
 
       // Debug log the response
       if (kDebugMode) {
-        print('Group bookings response: ${response.data}');
+        print('Flights bookings response: ${response.data}');
       }
 
       if (response.statusCode == 200) {
@@ -546,10 +653,10 @@ class AuthController extends GetxController {
         return {
           'success': true,
           'data': response.data,
-          'message': 'Group bookings retrieved successfully',
+          'message': 'Flights bookings retrieved successfully',
         };
       } else {
-        String errorMessage = 'Failed to fetch Group bookings';
+        String errorMessage = 'Failed to fetch Flights bookings';
         if (response.data != null &&
             response.data is Map &&
             response.data.containsKey('message')) {
@@ -565,16 +672,16 @@ class AuthController extends GetxController {
       }
     } on DioException catch (e) {
       isLoading.value = false;
-      return _handleDioError(e, 'Group Bookings');
+      return _handleDioError(e, 'Flights Bookings');
     } catch (e) {
       if (kDebugMode) {
-        print('Group bookings exception: ${e.toString()}');
+        print('Flights bookings exception: ${e.toString()}');
         print('Stack trace: ${StackTrace.current}');
       }
       isLoading.value = false;
       return {
         'success': false,
-        'message': 'Failed to fetch Group bookings: ${e.toString()}',
+        'message': 'Failed to fetch Flights bookings: ${e.toString()}',
       };
     }
   }

@@ -38,6 +38,29 @@ class GroupTicketBookingController extends GetxController {
     try {
       // Import the AuthController to access user data
       final authController = Get.find<AuthController>();
+
+      // First check if user is actually logged in (this will validate token)
+      final isLoggedIn = await authController.isLoggedIn();
+
+      if (!isLoggedIn) {
+        // Token is expired or invalid - clear all fields
+        booker_email.value = '';
+        booker_name.value = '';
+        booker_num.value = '';
+
+        if (kDebugMode) {
+          print("User token expired or invalid - cleared user data");
+        }
+
+        // Optional: Show a message to user that they need to login again
+
+        // Optional: Navigate to login screen
+        // Get.offAllNamed('/login');
+
+        return;
+      }
+
+      // Token is valid - get user data
       final userData = await authController.getUserData();
 
       if (userData != null) {
@@ -65,13 +88,6 @@ class GroupTicketBookingController extends GetxController {
           }
         }
 
-        // Optional: You can also load other fields if needed
-        // For example, if you want to load company name as well:
-        // if (userData['cs_company'] != null) {
-        //   // You can create another observable for company if needed
-        //   print("user company ${userData['cs_company']}");
-        // }
-
         if (kDebugMode) {
           print("All user data loaded successfully");
           print("Name: ${booker_name.value}");
@@ -79,14 +95,63 @@ class GroupTicketBookingController extends GetxController {
           print("Phone: ${booker_num.value}");
         }
       } else {
+        // No user data found - clear fields
+        booker_email.value = '';
+        booker_name.value = '';
+        booker_num.value = '';
+
         if (kDebugMode) {
-          print("No user data found");
+          print("No user data found - fields cleared");
         }
       }
     } catch (e) {
+      // On error, clear all fields
+      booker_email.value = '';
+      booker_name.value = '';
+      booker_num.value = '';
+
       if (kDebugMode) {
         print('Error loading user data: $e');
       }
+
+      // Optional: Show error message
+      Get.snackbar(
+        'Error',
+        'Failed to load user data. Please try again.',
+        backgroundColor: TColors.red.withOpacity(0.1),
+        colorText: TColors.red,
+      );
+    }
+  }
+
+  // Also add this method to refresh user data when needed
+  Future<void> refreshUserData() async {
+    await loadUserEmail();
+  }
+
+  // Add this method to check authentication status before critical operations
+  Future<bool> validateUserSession() async {
+    try {
+      final authController = Get.find<AuthController>();
+      final isLoggedIn = await authController.isLoggedIn();
+
+      if (!isLoggedIn) {
+        // Clear user data fields
+        booker_email.value = '';
+        booker_name.value = '';
+        booker_num.value = '';
+
+        // Show session expired message
+
+        return false;
+      }
+
+      return true;
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error validating user session: $e');
+      }
+      return false;
     }
   }
 
