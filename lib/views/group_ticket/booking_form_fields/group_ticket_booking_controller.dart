@@ -52,11 +52,7 @@ class GroupTicketBookingController extends GetxController {
           print("User token expired or invalid - cleared user data");
         }
 
-        // Optional: Show a message to user that they need to login again
-
-        // Optional: Navigate to login screen
-        // Get.offAllNamed('/login');
-
+        
         return;
       }
 

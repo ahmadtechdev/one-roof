@@ -303,6 +303,7 @@ class AuthController extends GetxController {
 
   // Helper method to handle Dio errors consistently
   Map<String, dynamic> _handleDioError(DioException e, String operation) {
+    
     String errorMessage;
 
     switch (e.type) {
@@ -613,6 +614,14 @@ class AuthController extends GetxController {
     isLoading.value = true;
 
     try {
+
+
+
+
+
+
+
+      
       // Get the token from SharedPreferences
       final token = await getValidToken();
 

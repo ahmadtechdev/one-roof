@@ -28,7 +28,6 @@ class _HotelScreenState extends State<HotelScreen> {
       controller.filterhotler();
     });
   }
-
   @override
   Widget build(BuildContext context) {
     final SearchHotelController controller = Get.find<SearchHotelController>();

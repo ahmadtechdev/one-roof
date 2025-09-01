@@ -451,6 +451,8 @@ class ApiServiceHotel extends GetxService {
           response.statusCode! >= 200 &&
           response.statusCode! < 300) {
         if (response.data != null) {
+
+          print("the response data is ${response.data}");
           // Extract and store booking number
           if (response.data is Map && response.data['BookingNO'] != null) {
             String bookingStr = response.data['BookingNO'].toString();

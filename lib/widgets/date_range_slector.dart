@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -42,6 +41,7 @@ class CustomDateRangeSelector extends StatelessWidget {
                       firstDate: DateTime.now(),
                       lastDate: DateTime.now().add(const Duration(days: 365)),
                       initialDateRange: dateRange,
+                      saveText: 'Apply', // Changed from default "Save" to "Apply"
                       builder: (context, child) {
                         return Theme(
                           data: Theme.of(context).copyWith(
@@ -50,6 +50,10 @@ class CustomDateRangeSelector extends StatelessWidget {
                               onPrimary: TColors.background,
                               surface: TColors.background,
                               onSurface: TColors.text,
+                            ),
+                            datePickerTheme: DatePickerThemeData(
+                              rangeSelectionBackgroundColor: Colors.yellow.withOpacity(0.7), // Blue background for selected date range
+                              rangeSelectionOverlayColor: WidgetStateProperty.all(Colors.yellow.withOpacity(0.2)), // Blue overlay color
                             ),
                           ),
                           child: child!,

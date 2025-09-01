@@ -1,12 +1,13 @@
-import 'package:flutter/foundation.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:oneroof/services/api_service_hotel.dart';
-import 'package:oneroof/utility/colors.dart';
 
+import '../../../../services/api_service_hotel.dart';
+import '../../../../utility/colors.dart';
 import '../../hotel/guests/guests_controller.dart';
 import '../../hotel/hotel_date_controller.dart';
 import '../booking_hotel/booking_hotel.dart';
+import '../booking_hotel/booking_controller.dart';
 import '../search_hotel_controller.dart';
 import 'controller/select_room_controller.dart';
 import 'widgets/room_card.dart';
@@ -26,10 +27,19 @@ class _SelectRoomScreenState extends State<SelectRoomScreen>
   final Map<int, dynamic> selectedRooms = {};
   final guestsController = Get.find<GuestsController>();
   final selectRoomController = Get.put(SelectRoomController());
+  final bookingController = Get.put(BookingController());
   final apiService = ApiServiceHotel();
   bool isLoading = false;
+  int? loadingRoomIndex; // Track which room is currently loading
 
-  Future<void> handleBookNow() async {
+  Future<void> 
+  
+  
+  
+  
+  
+  
+  handleBookNow() async {
     setState(() {
       isLoading = true;
     });
@@ -86,11 +96,81 @@ class _SelectRoomScreenState extends State<SelectRoomScreen>
       _showErrorDialog(
         'An error occurred while processing your booking. Please try again.',
       );
-      if (kDebugMode) {
-        print('Booking error: $e');
-      }
+      print('Booking error: $e');
     } finally {
       setState(() {
+        isLoading = false;
+      });
+    }
+  }
+
+  // New method for single room booking
+  void bookSingleRoom(dynamic room) async {
+    // First select the room
+    selectRoom(0, room);
+
+    // Set the loading state for this specific room
+    setState(() {
+      // Store the actual index of the room in the controller's roomsdata list
+      loadingRoomIndex = controller.roomsdata.indexOf(room);
+      isLoading = true;
+    });
+
+    try {
+      // Extract rate key from selected room
+      List<String> rateKeys = [room['rateKey'].toString()];
+
+      if (rateKeys.isEmpty) {
+        _showErrorDialog('No valid rate key found for selected room.');
+        return;
+      }
+
+      // Get the group code from the room
+      int groupCode = room['groupCode'] as int;
+
+      // Make the prebook API call
+      var response = await apiService.prebook(
+        sessionId: controller.sessionId.value,
+        hotelCode: controller.hotelCode.value,
+        groupCode: groupCode,
+        currency: "AED",
+        rateKeys: rateKeys,
+      );
+
+      if (response != null) {
+        selectRoomController.storePrebookResponse(response);
+
+        bool isSoldOut = response['isSoldOut'] ?? false;
+        bool isPriceChanged = response['isPriceChanged'] ?? false;
+        bool isBookable = response['isBookable'] ?? false;
+
+        if (isSoldOut) {
+          _showErrorDialog('Sorry, this room is no longer available.');
+        } else if (isPriceChanged) {
+          _showErrorDialog(
+            'The price for this room has changed. Please review the updated price.',
+          );
+        } else if (!isBookable) {
+          _showErrorDialog(
+            'This room is not currently bookable. Please try a different room.',
+          );
+        } else {
+          // All validations passed, proceed to booking
+          Get.to(() => BookingHotelScreen());
+        }
+      } else {
+        _showErrorDialog(
+          'Failed to validate room availability. Please try again.',
+        );
+      }
+    } catch (e) {
+      _showErrorDialog(
+        'An error occurred while processing your booking. Please try again.',
+      );
+      print('Booking error: $e');
+    } finally {
+      setState(() {
+        loadingRoomIndex = null;
         isLoading = false;
       });
     }
@@ -137,15 +217,15 @@ class _SelectRoomScreenState extends State<SelectRoomScreen>
   }
 
   void selectRoom(int roomIndex, dynamic room) {
-    setState(() {
-      selectedRooms[roomIndex] = room;
-      // Update the selected room data in the controller
-      Get.find<SearchHotelController>().updateSelectedRoom(roomIndex, room);
-      if (roomIndex < guestsController.roomCount.value - 1) {
-        _tabController.animateTo(roomIndex + 1);
-      }
-    });
-  }
+  setState(() {
+    selectedRooms[roomIndex] = room;
+    // Update the selected room data in the controller WITH THE CORRECT INDEX
+    Get.find<SelectRoomController>().updateSelectedRoom(roomIndex, room);
+    if (roomIndex < guestsController.roomCount.value - 1) {
+      _tabController.animateTo(roomIndex + 1);
+    }
+  });
+}
 
   bool get allRoomsSelected =>
       selectedRooms.length == guestsController.roomCount.value;
@@ -153,13 +233,23 @@ class _SelectRoomScreenState extends State<SelectRoomScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Select Room', style: TextStyle(color: TColors.text)),
+      appBar:  AppBar(
+        elevation: 0,
+        backgroundColor: TColors.primary,
+        title: const Text(
+          "Select Room",
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.w600,
+            fontSize: 24,
+          ),
+        ),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: TColors.text),
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => Get.back(),
         ),
-        elevation: 0,
+      
+     
         bottom:
             guestsController.roomCount.value > 1
                 ? TabBar(
@@ -183,8 +273,8 @@ class _SelectRoomScreenState extends State<SelectRoomScreen>
                       ),
                     ),
                   ),
-                  labelColor: TColors.primary,
-                  unselectedLabelColor: TColors.grey,
+                  labelColor: TColors.white,
+                  unselectedLabelColor: TColors.white,
                   indicatorColor: TColors.primary,
                 )
                 : null,
@@ -228,6 +318,8 @@ class _SelectRoomScreenState extends State<SelectRoomScreen>
                                   (room) => selectRoom(roomIndex, room),
                               isSelected:
                                   (room) => selectedRooms[roomIndex] == room,
+                              isSingleRoom: false,
+                              loadingRoomIndex: loadingRoomIndex,
                             ),
                           ),
                         ],
@@ -239,7 +331,7 @@ class _SelectRoomScreenState extends State<SelectRoomScreen>
             ],
           );
         } else {
-          // Single room view (original layout)
+          // Single room view with "Book Now" buttons directly on rooms
           return SingleChildScrollView(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -250,8 +342,10 @@ class _SelectRoomScreenState extends State<SelectRoomScreen>
                     roomTypeName: entry.key,
                     rooms: entry.value,
                     nights: dateController.nights.value,
-                    onRoomSelected: (room) => selectRoom(0, room),
+                    onRoomSelected: (room) => bookSingleRoom(room),
                     isSelected: (room) => selectedRooms[0] == room,
+                    isSingleRoom: true,
+                    loadingRoomIndex: loadingRoomIndex,
                   ),
                 ),
               ],
@@ -260,7 +354,7 @@ class _SelectRoomScreenState extends State<SelectRoomScreen>
         }
       }),
       bottomNavigationBar:
-          guestsController.roomCount.value >= 1 && allRoomsSelected
+          guestsController.roomCount.value > 1 && allRoomsSelected
               ? Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
@@ -289,9 +383,9 @@ class _SelectRoomScreenState extends State<SelectRoomScreen>
                           ),
                         ),
                         child: Text(
-                          isLoading ? 'Checking Availability...' : 'Book Now',
+                          isLoading ? '' : 'Book Now',
                           style: const TextStyle(
-                            color: TColors.secondary,
+                            color: TColors.white,
                             fontWeight: FontWeight.bold,
                             fontSize: 16,
                           ),
@@ -314,40 +408,157 @@ class _SelectRoomScreenState extends State<SelectRoomScreen>
     );
   }
 
-  Widget _buildHotelInfo() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      color: TColors.background2,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            controller.hotelName.value,
-            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+ Widget _buildHotelInfo() {
+  return Container(
+    padding: const EdgeInsets.all(16),
+    color: TColors.background,
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Hotel Image - Small on left side
+        Container(
+          width: 60,
+          height: 60,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: TColors.background3, width: 1),
           ),
-          const SizedBox(height: 8),
-          Row(
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: _buildSmallHotelImage(),
+          ),
+        ),
+        const SizedBox(width: 12),
+        // Hotel Information
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(Icons.star, color: TColors.primary, size: 18),
-              SizedBox(width: 4),
               Text(
-                '${controller.ratingstar.value.toString()} Star Hotel',
-                style: TextStyle(color: TColors.grey, fontSize: 14),
+                controller.hotelName.value,
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: TColors.text,
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 6),
+              Row(
+                children: [
+                  Icon(Icons.star, color: TColors.primary, size: 16),
+                  const SizedBox(width: 4),
+                  Text(
+                    '${controller.ratingstar.value.toString()} Star Hotel',
+                    style: const TextStyle(
+                      color: TColors.grey,
+                      fontSize: 14,
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
-        ],
-      ),
-    );
+        ),
+      ],
+    ),
+  );
+}
+
+Widget _buildSmallHotelImage() {
+  String imageUrl = controller.image.value;
+  
+  if (imageUrl.isNotEmpty) {
+    // Handle network images
+    if (imageUrl.startsWith('http')) {
+      return CachedNetworkImage(
+        imageUrl: imageUrl,
+        height: 60,
+        width: 60,
+        fit: BoxFit.cover,
+        placeholder: (context, url) => Container(
+          height: 60,
+          width: 60,
+          color: TColors.background2,
+          child: const Center(
+            child: CircularProgressIndicator(
+              color: TColors.primary,
+              strokeWidth: 2,
+            ),
+          ),
+        ),
+        errorWidget: (context, url, error) => _buildSmallPlaceholderImage(),
+      );
+    }
+    // Handle relative paths
+    else if (imageUrl.startsWith('/')) {
+      String fullImageUrl = 'https://static.giinfotech.ae/medianew$imageUrl';
+      return CachedNetworkImage(
+        imageUrl: fullImageUrl,
+        height: 60,
+        width: 60,
+        fit: BoxFit.cover,
+        placeholder: (context, url) => Container(
+          height: 60,
+          width: 60,
+          color: TColors.background2,
+          child: const Center(
+            child: CircularProgressIndicator(
+              color: TColors.primary,
+              strokeWidth: 2,
+            ),
+          ),
+        ),
+        errorWidget: (context, url, error) => _buildSmallPlaceholderImage(),
+      );
+    }
+    // Handle local assets
+    else {
+      return Image.asset(
+        imageUrl,
+        height: 60,
+        width: 60,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) => _buildSmallPlaceholderImage(),
+      );
+    }
+  } else {
+    return _buildSmallPlaceholderImage();
   }
 }
 
+Widget _buildSmallPlaceholderImage() {
+  return Container(
+    height: 60,
+    width: 60,
+    decoration: BoxDecoration(
+      gradient: LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [
+          TColors.primary.withOpacity(0.8),
+          TColors.third.withOpacity(0.6),
+        ],
+      ),
+    ),
+    child: Center(
+      child: Icon(
+        Icons.hotel_rounded,
+        size: 24,
+        color: TColors.white.withOpacity(0.8),
+      ),
+    ),
+  );
+}}
 class RoomTypeSection extends StatefulWidget {
   final String roomTypeName;
   final List<dynamic> rooms;
   final int nights;
   final Function(dynamic) onRoomSelected;
   final Function(dynamic) isSelected;
+  final bool isSingleRoom;
+  final int? loadingRoomIndex;
 
   const RoomTypeSection({
     super.key,
@@ -356,6 +567,8 @@ class RoomTypeSection extends StatefulWidget {
     required this.nights,
     required this.onRoomSelected,
     required this.isSelected,
+    this.isSingleRoom = false,
+    this.loadingRoomIndex,
   });
 
   @override
@@ -407,14 +620,25 @@ class _RoomTypeSectionState extends State<RoomTypeSection> {
           ),
         ),
         if (isExpanded)
-          ...widget.rooms.map(
-            (room) => RoomCard(
+          ...widget.rooms.map((room) {
+            // Calculate the global room index from controller's roomsdata list
+            final SearchHotelController controller =
+                Get.find<SearchHotelController>();
+            final int globalRoomIndex = controller.roomsdata.indexOf(room);
+
+            // Check if this specific room is being loaded
+            bool isRoomLoading = widget.loadingRoomIndex == globalRoomIndex;
+
+            return RoomCard(
               room: room,
               nights: widget.nights,
               onSelect: widget.onRoomSelected,
               isSelected: widget.isSelected(room),
-            ),
-          ),
+              showBookNowButton: widget.isSingleRoom,
+              isLoading: isRoomLoading,
+              roomIndex: globalRoomIndex,
+            );
+          }),
       ],
     );
   }
