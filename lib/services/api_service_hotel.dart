@@ -253,6 +253,67 @@ class ApiServiceHotel extends GetxService {
       } else {}
     } catch (e) {}
   }
+   Future<Map<String, dynamic>?> fetchHotelDetails(String hotelId) async {
+    var headers = {'Content-Type': 'application/json'};
+
+    var data = json.encode({
+      "hotel_id": hotelId
+    });
+
+    try {
+      var response = await dio.request(
+        'https://onerooftravel.net/api/hotel-details',
+        options: Options(
+          method: 'POST',
+          headers: headers,
+        ),
+        data: data,
+      );
+
+      if (response.statusCode == 200) {
+        if (kDebugMode) {
+          print('Hotel Details Response: ${response.data}');
+        }
+
+        // Handle the case where response.data is a String (JSON string)
+        if (response.data is String) {
+          try {
+            var decodedData = json.decode(response.data);
+            return decodedData as Map<String, dynamic>?;
+          } catch (e) {
+            if (kDebugMode) {
+              print('Error decoding JSON string: $e');
+            }
+            return null;
+          }
+        }
+        // Handle the case where response.data is already a Map
+        else if (response.data is Map<String, dynamic>) {
+          return response.data as Map<String, dynamic>?;
+        }
+        // Handle unexpected response type
+        else {
+          if (kDebugMode) {
+            print('Unexpected response type: ${response.data.runtimeType}');
+          }
+          return null;
+        }
+      } else {
+        if (kDebugMode) {
+          print('Failed to fetch hotel details: ${response.statusMessage}');
+        }
+        return null;
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error fetching hotel details: $e');
+      }
+      return null;
+    }
+  }
+
+  // Updated fetchRoomDetails method with margin and ROE
+ 
 
   /// Fetch room details.
   Future<void> fetchRoomDetails(String hotelCode, String sessionId) async {
@@ -452,7 +513,6 @@ class ApiServiceHotel extends GetxService {
           response.statusCode! < 300) {
         if (response.data != null) {
 
-          print("the response data is ${response.data}");
           // Extract and store booking number
           if (response.data is Map && response.data['BookingNO'] != null) {
             String bookingStr = response.data['BookingNO'].toString();

@@ -34,10 +34,10 @@ class ApiServiceAirArabia {
         "cabin": cabin,
       };
 
-
-
+print("AirArabia Request *********************");
+      print(data);
       final response = await _dio.request(
-        'https://onerooftravel.net/api/search/air-arabia-flights',
+        'https://onerooftravel.net/api/new-air-arabia-flights',
         options: Options(
           method: 'POST',
           headers: headers,
@@ -46,6 +46,60 @@ class ApiServiceAirArabia {
       );
 
       // printDebugData('Air Arabia Response', response);
+      print("*************** Response Arabia*********");
+      print(response);
+      if (response.statusCode == 200) {
+        // Ensure the response is parsed as Map
+        if (response.data is String) {
+          return jsonDecode(response.data) as Map<String, dynamic>;
+        }
+        print("*************** Response Arabia*********");
+        print(response);
+        return response.data as Map<String, dynamic>;
+      } else {
+        throw Exception('Failed to load Air Arabia flights: ${response.statusMessage}');
+      }
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<Map<String, dynamic>> getFlightPackages({
+    required int type,
+    required int adult,
+    required int child,
+    required int infant,
+    required List<Map<String, dynamic>> sector,
+  }) async {
+    try {
+      final headers = {
+        'Content-Type': 'application/json',
+        'Cookie': 'PHPSESSID=f6e1vveq1sr0h15f4t4k31u4f6'
+      };
+
+      final data = {
+        "type": type,
+        "adult": adult,
+        "child": child,
+        "infant": infant,
+        "sector": sector,
+      };
+
+      print("AirArabia Packages Request *********************");
+      print(data);
+      
+      final response = await _dio.request(
+        'https://onerooftravel.net/api/get-air-arabia-package',
+        options: Options(
+          method: 'POST',
+          headers: headers,
+        ),
+        data: data,
+      );
+
+      print("*************** AirArabia Packages Response *********");
+      print(response);
+      
       if (response.statusCode == 200) {
         // Ensure the response is parsed as Map
         if (response.data is String) {
@@ -53,9 +107,10 @@ class ApiServiceAirArabia {
         }
         return response.data as Map<String, dynamic>;
       } else {
-        throw Exception('Failed to load Air Arabia flights: ${response.statusMessage}');
+        throw Exception('Failed to load Air Arabia packages: ${response.statusMessage}');
       }
     } catch (e) {
+      print('Error getting Air Arabia packages: $e');
       rethrow;
     }
   }

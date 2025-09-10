@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:oneroof/utility/colors.dart' show TColors;
 import 'package:oneroof/views/hotel/hotel/hotel_date_controller.dart';
+import 'package:oneroof/views/hotel/search_hotels/hotel_info/hotel_info.dart';
 
 import '../../../services/api_service_hotel.dart';
 import 'search_hotel_controller.dart';
@@ -457,7 +458,7 @@ class _HotelScreenState extends State<HotelScreen> {
 }
 
 class HotelCard extends StatelessWidget {
-  final Map hotel;
+  final Map<String, dynamic> hotel;
 
   HotelCard({super.key, required this.hotel});
 
@@ -574,21 +575,23 @@ class HotelCard extends StatelessWidget {
             ),
             child: ElevatedButton(
               onPressed: () {
-                controller.ratingstar.value =
+               controller.ratingstar.value =
                     (hotel['rating'] as double).toInt();
                 controller.hotelCode.value = hotel['hotelCode'];
                 controller.hotelCity.value = hotel['hotelCity'];
                 controller.lat.value = hotel['latitude'];
                 controller.lon.value = hotel['longitude'];
-
+                controller.hotelAddress.value=hotel['address']??"";
+                // controller.hotelid.value=(hotel['code'] as double).toInt()??0;
+                
                 controller.roomsdata.clear();
 
-                ApiServiceHotel().fetchRoomDetails(
-                  hotel['hotelCode'],
-                  controller.sessionId.value,
-                );
+                ApiServiceHotel().fetchHotelDetails(hotel['hotelCode']);
                 controller.filterhotler();
-                Get.to(() => const SelectRoomScreen());
+                Get.to(() => HotelInfoScreen(
+                  hotelId: hotel['hotelCode'],
+                  hotelData: hotel,
+                ));
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: TColors.primary,

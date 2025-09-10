@@ -14,6 +14,10 @@ class AirArabiaFlightController extends GetxController {
   final RxBool isLoading = false.obs;
   final RxString errorMessage = ''.obs;
   final RxString sortType = 'Suggested'.obs;
+  
+  // Selected flight and package for booking
+  AirArabiaFlight? selectedFlight;
+  AirArabiaPackage? selectedPackage;
 
   void clearFlights() {
     flights.clear();
@@ -171,6 +175,15 @@ class AirArabiaFlightController extends GetxController {
     return AirArabiaFlight.fromJson(combinedOption);
   }
 
+  void handleAirArabiaFlightSelection(AirArabiaFlight flight) {
+    Get.to(
+          () => AirArabiaPackageSelectionDialog(
+        flight: flight,
+        isReturnFlight: false,
+      ),
+    );
+  }
+
   // Updated apply filters method with better airline filtering
   void applyFilters({
     List<String>? airlines,
@@ -252,14 +265,7 @@ class AirArabiaFlightController extends GetxController {
   int getFlightCountByAirline(String airlineCode) {
     return getFlightsByAirline(airlineCode).length;
   }
-  void handleAirArabiaFlightSelection(AirArabiaFlight flight) {
-    Get.to(
-          () => AirArabiaPackageSelectionDialog(
-        flight: flight,
-        isReturnFlight: false,
-      ),
-    );
-  }
+
   // Method to get available airlines (for Air Arabia, it's always just G9)
   List<FilterAirline> getAvailableAirlines() {
     if (flights.isEmpty) return [];
@@ -272,5 +278,8 @@ class AirArabiaFlightController extends GetxController {
       )
     ];
   }
+
+
+
 }
 
