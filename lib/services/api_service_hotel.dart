@@ -262,7 +262,7 @@ class ApiServiceHotel extends GetxService {
 
     try {
       var response = await dio.request(
-        'https://onerooftravel.net/api/hotel-details',
+        'https://readyflights.pk/api/hotel-details',
         options: Options(
           method: 'POST',
           headers: headers,
