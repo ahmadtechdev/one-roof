@@ -12,6 +12,7 @@ import 'package:oneroof/views/users/login/login_api_service/login_api.dart';
 import 'package:oneroof/widgets/travelers_selection_bottom_sheet.dart';
 
 import 'views/flight/search_flights/airblue/airblue_flight_controller.dart';
+import 'views/flight/search_flights/airarabia/airarabia_flight_controller.dart';
 import 'widgets/city_selection_bottom_sheet.dart';
 
 void main() {
@@ -30,6 +31,7 @@ class MyApp extends StatelessWidget {
     Get.lazyPut(() => FlightDateController(), fenix: true);
     Get.lazyPut(() => TravelersController(), fenix: true);
     Get.lazyPut(() => AirBlueFlightController(), fenix: true);
+    Get.lazyPut(() => AirArabiaFlightController(), fenix: true);
     Get.lazyPut(() => ApiServiceSabre(), fenix: true);
     Get.lazyPut(()=> ApiServiceAirArabia(), fenix: true);
     Get.lazyPut(()=> AirportController(), fenix: true);

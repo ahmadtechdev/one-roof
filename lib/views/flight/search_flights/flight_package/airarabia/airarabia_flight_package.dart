@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:oneroof/views/flight/search_flights/search_flight_utils/widgets/airarabia_flight_card.dart';
 
 import '../../../../../utility/colors.dart';
 import '../../airarabia/airarabia_flight_model.dart';
 import '../../airarabia/airarabia_flight_controller.dart';
+import '../../search_flight_utils/widgets/airarabia_flight_card.dart';
 
 class AirArabiaPackageSelectionDialog extends StatelessWidget {
   final AirArabiaFlight flight;

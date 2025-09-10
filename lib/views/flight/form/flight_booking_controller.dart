@@ -356,42 +356,42 @@ class FlightBookingController extends GetxController {
         ));
       }
 
-      // Add PIA API call based on trip type
-      if (tripType.value == TripType.multiCity && cityPairs.isNotEmpty) {
-        // Prepare multi-city segments
-        final segments = cityPairs.map((pair) => {
-          'from': pair.fromCity.value,
-          'to': pair.toCity.value,
-          'date': _formatDateForAPI(
-              DateFormat('dd/MM/yyyy').parse(pair.departureDate.value))
-        }).toList();
-
-        futures.add(_callPiaApi(
-          fromCity: cityPairs.first.fromCity.value,
-          toCity: cityPairs.first.toCity.value,
-          departureDate: _formatDateForAPI(
-              DateFormat('dd/MM/yyyy').parse(cityPairs.first.departureDate.value)),
-          adultCount: adultCount.value,
-          childCount: childrenCount.value,
-          infantCount: infantCount.value,
-          tripType: 'MULTI_DIRECTIONAL',
-          multiCitySegments: segments,
-        ));
-      } else {
-        futures.add(_callPiaApi(
-          fromCity: fromCity.value,
-          toCity: toCity.value,
-          departureDate: _formatDateForAPI(
-              DateFormat('dd/MM/yyyy').parse(departureDate.value)),
-          adultCount: adultCount.value,
-          childCount: childrenCount.value,
-          infantCount: infantCount.value,
-          tripType: tripType.value == TripType.roundTrip ? 'ROUND_TRIP' : 'ONE_WAY',
-          returnDate: tripType.value == TripType.roundTrip
-              ? _formatDateForAPI(DateFormat('dd/MM/yyyy').parse(returnDate.value))
-              : null,
-        ));
-      }
+      // // Add PIA API call based on trip type
+      // if (tripType.value == TripType.multiCity && cityPairs.isNotEmpty) {
+      //   // Prepare multi-city segments
+      //   final segments = cityPairs.map((pair) => {
+      //     'from': pair.fromCity.value,
+      //     'to': pair.toCity.value,
+      //     'date': _formatDateForAPI(
+      //         DateFormat('dd/MM/yyyy').parse(pair.departureDate.value))
+      //   }).toList();
+      //
+      //   futures.add(_callPiaApi(
+      //     fromCity: cityPairs.first.fromCity.value,
+      //     toCity: cityPairs.first.toCity.value,
+      //     departureDate: _formatDateForAPI(
+      //         DateFormat('dd/MM/yyyy').parse(cityPairs.first.departureDate.value)),
+      //     adultCount: adultCount.value,
+      //     childCount: childrenCount.value,
+      //     infantCount: infantCount.value,
+      //     tripType: 'MULTI_DIRECTIONAL',
+      //     multiCitySegments: segments,
+      //   ));
+      // } else {
+      //   futures.add(_callPiaApi(
+      //     fromCity: fromCity.value,
+      //     toCity: toCity.value,
+      //     departureDate: _formatDateForAPI(
+      //         DateFormat('dd/MM/yyyy').parse(departureDate.value)),
+      //     adultCount: adultCount.value,
+      //     childCount: childrenCount.value,
+      //     infantCount: infantCount.value,
+      //     tripType: tripType.value == TripType.roundTrip ? 'ROUND_TRIP' : 'ONE_WAY',
+      //     returnDate: tripType.value == TripType.roundTrip
+      //         ? _formatDateForAPI(DateFormat('dd/MM/yyyy').parse(returnDate.value))
+      //         : null,
+      //   ));
+      // }
 
       // Don't wait for all APIs to complete - they'll update UI as they finish
       Future.wait(futures).catchError((e) {
