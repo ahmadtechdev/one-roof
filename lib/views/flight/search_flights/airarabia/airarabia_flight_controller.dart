@@ -7,14 +7,17 @@ import '../flight_package/airarabia/airarabia_flight_package.dart';
 import 'airarabia_flight_model.dart';
 
 class AirArabiaFlightController extends GetxController {
+  
   final ApiServiceAirArabia apiService = Get.find<ApiServiceAirArabia>();
+   int selectedPackageIndex = 0;
+
 
   final RxList<AirArabiaFlight> flights = <AirArabiaFlight>[].obs;
   final RxList<AirArabiaFlight> filteredFlights = <AirArabiaFlight>[].obs;
   final RxBool isLoading = false.obs;
   final RxString errorMessage = ''.obs;
   final RxString sortType = 'Suggested'.obs;
-  
+
   // Selected flight and package for booking
   AirArabiaFlight? selectedFlight;
   AirArabiaPackage? selectedPackage;
@@ -93,9 +96,9 @@ class AirArabiaFlightController extends GetxController {
 
     // We need to identify which route is outbound and which is inbound
     // The first route in the response is typically outbound, second is inbound
-    final outboundRoute = routes[0];
+    final outboundRoute = routes[1];
     // ignore: unused_local_variable
-    final inboundRoute = routes[1];
+    final inboundRoute = routes[0];
 
     // Get all outbound and inbound flight options
     final outboundFlights = <Map<String, dynamic>>[];
@@ -116,6 +119,7 @@ class AirArabiaFlightController extends GetxController {
             } else {
               inboundFlights.add(option);
             }
+            
           }
         }
       });

@@ -66,7 +66,7 @@ class AirArabiaFlight {
       // Safely get cabin price with proper type casting
       Map<String, dynamic> cabinPrice;
       try {
-           // Check if cabinPrices exists and is not null
+        // Check if cabinPrices exists and is not null
         if (json['cabinPrices'] != null) {
           final cabinPricesRaw = json['cabinPrices'] as List;
 
@@ -108,6 +108,16 @@ class AirArabiaFlight {
       }
 
       // Get flight segments for outbound/inbound logic
+
+
+
+
+
+
+
+
+
+      
       final flightSegmentsRaw = json['flightSegments'] as List;
       final flightSegmentsList = flightSegmentsRaw.map((seg) =>
       Map<String, dynamic>.from(seg as Map)
@@ -222,17 +232,17 @@ class AirArabiaPackage {
       final totalPrice = basePrice; // Will be calculated with margin later
       final currency = 'PKR';
       final cabinClass = 'Y'; // Default to Economy
-      
+
       // Parse description for package details
       final description = json['description'] ?? '';
       final descriptionLines = description.split('\n');
-      
+
       final baggageAllowance = _getBaggageAllowance(packageType);
       final mealInfo = descriptionLines.length > 2 ? descriptionLines[2] : 'Charges Apply';
       final seatInfo = descriptionLines.length > 3 ? descriptionLines[3] : 'Charges Apply';
       final modificationPolicy = descriptionLines.length > 4 ? descriptionLines[4] : 'Charges Apply';
       final cancellationPolicy = descriptionLines.length > 5 ? descriptionLines[5] : 'Charges Apply';
-      
+
       final isRefundable = !packageType.toLowerCase().contains('basic');
 
       return AirArabiaPackage(
@@ -309,41 +319,41 @@ class AirArabiaPackageResponse {
       if (bodyNode != null) {
         final body = bodyNode;
         final otaAirPriceRS = body['OTA_AirPriceRS'];
-        
+
         if (otaAirPriceRS != null) {
           final pricedItineraries = otaAirPriceRS['PricedItineraries'];
-          
+
           if (pricedItineraries != null) {
             final pricedItinerary = pricedItineraries['PricedItinerary'];
-            
+
             if (pricedItinerary != null) {
               final airItinerary = pricedItinerary['AirItinerary'];
               final airItineraryPricingInfo = pricedItinerary['AirItineraryPricingInfo'];
-              
+
               // Extract route information
               if (airItinerary != null) {
                 final originDestinationOptions = airItinerary['OriginDestinationOptions'];
                 if (originDestinationOptions != null) {
                   final aaBundledServiceExt = originDestinationOptions['AABundledServiceExt'];
-                  
+
                   if (aaBundledServiceExt != null) {
                     // Handle both single item and list
-                    final List<dynamic> bundledServices = aaBundledServiceExt is List 
-                        ? aaBundledServiceExt 
+                    final List<dynamic> bundledServices = aaBundledServiceExt is List
+                        ? aaBundledServiceExt
                         : [aaBundledServiceExt];
-                    
+
                     for (var service in bundledServices) {
                       if (service['@attributes'] != null) {
                         route = service['@attributes']['applicableOnd'] ?? '';
                       }
-                      
+
                       // Extract packages from bundledService
                       if (service['bundledService'] != null) {
                         final bundledService = service['bundledService'];
-                        final List<dynamic> serviceList = bundledService is List 
-                            ? bundledService 
+                        final List<dynamic> serviceList = bundledService is List
+                            ? bundledService
                             : [bundledService];
-                        
+
                         for (var packageData in serviceList) {
                           packages.add(AirArabiaPackage.fromJson(packageData));
                         }
@@ -352,7 +362,7 @@ class AirArabiaPackageResponse {
                   }
                 }
               }
-              
+
               // Extract base price
               if (airItineraryPricingInfo != null) {
                 final itinTotalFare = airItineraryPricingInfo['ItinTotalFare'];

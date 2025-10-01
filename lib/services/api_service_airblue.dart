@@ -266,8 +266,8 @@ class AirBlueFlightApiService {
         "blname": bookingController.lastNameController.text,
         "bemail": bookingController.emailController.text,
         "bphno": bookingController.phoneController.text,
-        "badd": bookingController.addressController.text,
-        "bcity": bookingController.cityController.text,
+        // "badd": bookingController.addressController.text,
+        // "bcity": bookingController.cityController.text,
         "final_price": flight.price.toString(),
         "client_email": bookingController.emailController.text,
         "client_phone": bookingController.phoneController.text,
@@ -282,7 +282,7 @@ class AirBlueFlightApiService {
               "last_name": adult.lastNameController.text,
               "dob": adult.dateOfBirthController.text,
               "nationality": adult.nationalityController.text,
-              "passport": adult.passportController.text,
+              "passport": adult.passportCnicController.text,
               "passport_expiry": adult.passportExpiryController.text,
               "cnic":
                   "3310285868703", // CNIC is not collected in current form, leaving empty
@@ -298,7 +298,7 @@ class AirBlueFlightApiService {
               "last_name": child.lastNameController.text,
               "dob": child.dateOfBirthController.text,
               "nationality": child.nationalityController.text,
-              "passport": child.passportController.text,
+              "passport": child.passportCnicController.text,
               "passport_expiry": child.passportExpiryController.text,
               "cnic":
                   "3310285868703", // CNIC is not collected in current form, leaving empty
@@ -314,7 +314,7 @@ class AirBlueFlightApiService {
               "last_name": infant.lastNameController.text,
               "dob": infant.dateOfBirthController.text,
               "nationality": infant.nationalityController.text,
-              "passport": infant.passportController.text,
+              "passport": infant.passportCnicController.text,
               "passport_expiry": infant.passportExpiryController.text,
               "cnic":
                   "3310285868703", // CNIC is not collected in current form, leaving empty
@@ -944,7 +944,7 @@ class AirBlueFlightApiService {
       'firstName': traveler.firstNameController.text,
       'lastName': traveler.lastNameController.text,
       'birthDate': traveler.dateOfBirthController.text,
-      'passport': traveler.passportController.text,
+      'passport': traveler.passportCnicController.text,
       'passportExpiry': traveler.passportExpiryController.text,
       'type': type,
     };

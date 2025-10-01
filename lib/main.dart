@@ -4,6 +4,7 @@ import 'package:oneroof/services/api_service_airarabia.dart';
 import 'package:oneroof/services/api_service_sabre.dart';
 import 'package:oneroof/utility/colors.dart';
 import 'package:oneroof/views/flight/form/controllers/flight_date_controller.dart';
+import 'package:oneroof/views/flight/search_flights/booking_flight/booking_flight_controller.dart';
 import 'package:oneroof/views/hotel/hotel/guests/guests_controller.dart';
 import 'package:oneroof/views/hotel/hotel/hotel_date_controller.dart';
 import 'package:oneroof/views/hotel/search_hotels/search_hotel_controller.dart';
@@ -35,6 +36,8 @@ class MyApp extends StatelessWidget {
     Get.lazyPut(() => ApiServiceSabre(), fenix: true);
     Get.lazyPut(()=> ApiServiceAirArabia(), fenix: true);
     Get.lazyPut(()=> AirportController(), fenix: true);
+    Get.lazyPut(()=> BookingFlightController(), fenix: true);
+
      Get.put(AuthController());
 
     return GetMaterialApp(

@@ -1,6 +1,7 @@
- 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:country_picker/country_picker.dart';
+import 'package:oneroof/views/flight/form/flight_booking_controller.dart';
 
 import '../../../../widgets/travelers_selection_bottom_sheet.dart';
 
@@ -8,7 +9,7 @@ class TravelerInfo {
   final TextEditingController titleController;
   final TextEditingController firstNameController;
   final TextEditingController lastNameController;
-  final TextEditingController passportController;
+  final TextEditingController passportCnicController;
   final TextEditingController nationalityController;
   final TextEditingController dateOfBirthController;
   final TextEditingController passportExpiryController;
@@ -17,23 +18,113 @@ class TravelerInfo {
   final TextEditingController emailController;
   final bool isInfant;
 
+  // Country objects for better handling
+  final Rx<Country?> phoneCountry;
+  final Rx<Country?> nationalityCountry;
+
+  // Flag to prevent infinite loops when syncing
+  bool _isUpdatingTitleGender = false;
+
   TravelerInfo({required this.isInfant})
       : titleController = TextEditingController(),
         firstNameController = TextEditingController(),
         lastNameController = TextEditingController(),
-        passportController = TextEditingController(),
+        passportCnicController = TextEditingController(),
         nationalityController = TextEditingController(),
         dateOfBirthController = TextEditingController(),
         passportExpiryController = TextEditingController(),
         genderController = TextEditingController(),
         phoneController = TextEditingController(),
-        emailController = TextEditingController();
+        emailController = TextEditingController(),
+        phoneCountry = Rx<Country?>(Country.parse('PK')), // Default to Pakistan
+        nationalityCountry = Rx<Country?>(Country.parse('PK')) {
+
+    // Set initial values
+    nationalityController.text = nationalityCountry.value?.displayNameNoCountryCode ?? '';
+
+    // Listen to country changes
+    phoneCountry.listen((country) {
+      // Phone country changes are handled in the UI
+    });
+
+    nationalityCountry.listen((country) {
+      nationalityController.text = country?.displayNameNoCountryCode ?? '';
+    });
+
+    // Add listeners for title/gender synchronization
+    titleController.addListener(_onTitleChanged);
+    genderController.addListener(_onGenderChanged);
+  }
+
+  void _onTitleChanged() {
+    if (_isUpdatingTitleGender) return;
+
+    _isUpdatingTitleGender = true;
+    String title = titleController.text;
+
+    switch (title) {
+      case 'Mr':
+      case 'Mstr':
+        genderController.text = 'Male';
+        break;
+      case 'Mrs':
+      case 'Ms':
+      case 'Miss':
+        genderController.text = 'Female';
+        break;
+      case 'Inf':
+      // For infants, don't auto-set gender since it could be either
+        break;
+    }
+    _isUpdatingTitleGender = false;
+  }
+
+  void _onGenderChanged() {
+    if (_isUpdatingTitleGender) return;
+
+    _isUpdatingTitleGender = true;
+    String gender = genderController.text;
+    String currentTitle = titleController.text;
+
+    if (gender == 'Male') {
+      if (isInfant) {
+        titleController.text = 'Inf';
+      } else if (currentTitle.isEmpty || ['Mrs', 'Ms', 'Miss'].contains(currentTitle)) {
+        // Determine if child or adult based on existing title or default logic
+        bool isChild = currentTitle == 'Miss' ||
+            (currentTitle.isEmpty && !isInfant && isChildTraveler());
+        titleController.text = isChild ? 'Mstr' : 'Mr';
+      }
+    } else if (gender == 'Female') {
+      if (isInfant) {
+        titleController.text = 'Inf';
+      } else if (currentTitle.isEmpty || ['Mr', 'Mstr'].contains(currentTitle)) {
+        // Determine if child or adult based on existing title or default logic
+        bool isChild = currentTitle == 'Mstr' ||
+            (currentTitle.isEmpty && !isInfant && isChildTraveler());
+        titleController.text = isChild ? 'Miss' : 'Ms';
+      }
+    }
+    _isUpdatingTitleGender = false;
+  }
+
+  // Helper method to determine if this is a child traveler
+  // You might need to adjust this logic based on your app structure
+  bool isChildTraveler() {
+    // This is a simple heuristic - you might want to improve this
+    // by checking the traveler's position in the children list
+    return false; // Default to adult
+  }
 
   void dispose() {
+    // Remove listeners before disposing
+    titleController.removeListener(_onTitleChanged);
+    genderController.removeListener(_onGenderChanged);
+
     titleController.dispose();
     firstNameController.dispose();
     lastNameController.dispose();
-    passportController.dispose();
+    passportCnicController.dispose();
     nationalityController.dispose();
     dateOfBirthController.dispose();
     passportExpiryController.dispose();
@@ -47,39 +138,68 @@ class TravelerInfo {
       return titleController.text.isNotEmpty &&
           firstNameController.text.isNotEmpty &&
           lastNameController.text.isNotEmpty &&
-          dateOfBirthController.text.isNotEmpty;
+          dateOfBirthController.text.isNotEmpty &&
+          nationalityCountry.value != null;
     } else {
       return titleController.text.isNotEmpty &&
           firstNameController.text.isNotEmpty &&
           lastNameController.text.isNotEmpty &&
-          passportController.text.isNotEmpty &&
-          nationalityController.text.isNotEmpty;
+          passportCnicController.text.isNotEmpty &&
+          nationalityCountry.value != null &&
+          dateOfBirthController.text.isNotEmpty &&
+          passportExpiryController.text.isNotEmpty &&
+          genderController.text.isNotEmpty &&
+          phoneController.text.isNotEmpty &&
+          emailController.text.isNotEmpty &&
+          phoneCountry.value != null;
     }
   }
 
   Map<String, dynamic> toJson() {
-    if (isInfant) {
-      return {
-        'title': titleController.text,
-        'firstName': firstNameController.text,
-        'lastName': lastNameController.text,
-        'dateOfBirth': dateOfBirthController.text,
-      };
-    } else {
-      return {
-        'title': titleController.text,
-        'firstName': firstNameController.text,
-        'lastName': lastNameController.text,
-        'passportNumber': passportController.text,
-        'nationality': nationalityController.text,
-      };
+    Map<String, dynamic> data = {
+      'title': titleController.text,
+      'firstName': firstNameController.text,
+      'lastName': lastNameController.text,
+      'dateOfBirth': dateOfBirthController.text,
+      'nationality': nationalityCountry.value?.countryCode ?? '', // Only country code
+      'nationalityCode': nationalityCountry.value?.countryCode ?? '',
+      'gender': genderController.text,
+    };
+
+    if (!isInfant) {
+      data.addAll({
+        'passportNumber': passportCnicController.text,
+        'passportExpiry': passportExpiryController.text,
+        'phone': getFormattedPhoneNumber(), // Use formatted phone number
+        'phoneCountryCode': phoneCountry.value?.phoneCode ?? '',
+        'phoneCountry': phoneCountry.value?.countryCode ?? '',
+        'email': emailController.text,
+      });
     }
+
+    return data;
+  }
+
+// Update the helper method to format phone number correctly
+  String getFormattedPhoneNumber() {
+    String phone = phoneController.text.trim();
+    String countryCode = phoneCountry.value?.phoneCode ?? '92';
+
+    // Remove any non-digit characters
+    phone = phone.replaceAll(RegExp(r'[^0-9]'), '');
+
+    // Remove leading zero if present
+    if (phone.startsWith('0')) {
+      phone = phone.substring(1);
+    }
+
+    // Return formatted phone number with country code
+    return '+$countryCode$phone';
   }
 }
 
 class BookingFlightController extends GetxController {
-  final TravelersController travelersController =
-  Get.put(TravelersController());
+  final TravelersController travelersController = Get.put(TravelersController());
 
   // Travelers information
   final RxList<TravelerInfo> adults = <TravelerInfo>[].obs;
@@ -87,13 +207,14 @@ class BookingFlightController extends GetxController {
   final RxList<TravelerInfo> infants = <TravelerInfo>[].obs;
 
   // Booker Information
-  // Booker Information
-  final firstNameController = TextEditingController(); // Add this
-  final lastNameController = TextEditingController();  // Add this
+  final firstNameController = TextEditingController();
+  final lastNameController = TextEditingController();
   final emailController = TextEditingController();
   final phoneController = TextEditingController();
-  final addressController = TextEditingController();
-  final cityController = TextEditingController();
+  final remarksController = TextEditingController();
+
+  // Booker country information
+  final Rx<Country?> bookerPhoneCountry = Rx<Country?>(Country.parse('PK'));
 
   // Pricing information
   final totalAmount = 0.0.obs;
@@ -111,8 +232,6 @@ class BookingFlightController extends GetxController {
     ever(travelersController.childrenCount, (_) => updateChildren());
     ever(travelersController.infantCount, (_) => updateInfants());
   }
-
-
 
   void initializeTravelers() {
     updateAdults();
@@ -143,9 +262,12 @@ class BookingFlightController extends GetxController {
     final newCount = travelersController.childrenCount.value;
 
     if (newCount > currentCount) {
-      // Add new child travelers
+      // Add new child travelers with proper identification
       for (var i = currentCount; i < newCount; i++) {
-        children.add(TravelerInfo(isInfant: false));
+        final childTraveler = TravelerInfo(isInfant: false);
+        // Override the child check method to return true for children
+        // childTraveler.isChildTraveler = () => true;
+        children.add(childTraveler);
       }
     } else if (newCount < currentCount) {
       // Remove excess child travelers
@@ -174,22 +296,142 @@ class BookingFlightController extends GetxController {
     }
   }
 
+  bool get isDomesticFlight {
+    try {
+      return Get.find<FlightBookingController>().isDomesticFlight;
+    } catch (e) {
+      return false; // Default to international if controller not found
+    }
+  }
+
+// Helper method to format booker phone number with country code
+  String getFormattedBookerPhoneNumber() {
+    String phone = phoneController.text.trim();
+    String countryCode = bookerPhoneCountry.value?.phoneCode ?? '92';
+
+    // Remove any non-digit characters
+    phone = phone.replaceAll(RegExp(r'[^0-9]'), '');
+
+    // Remove leading zero if present
+    if (phone.startsWith('0')) {
+      phone = phone.substring(1);
+    }
+
+    // Return formatted phone number with country code
+    return '+$countryCode$phone';
+  }
+
+  // Country picker methods
+  void showPhoneCountryPicker(BuildContext context, TravelerInfo travelerInfo) {
+    showCountryPicker(
+      context: context,
+      // favorite: ['PK', 'US', 'AE', 'SA', 'IN'],
+      showPhoneCode: true,
+      onSelect: (Country country) {
+        travelerInfo.phoneCountry.value = country;
+      },
+      countryListTheme: CountryListThemeData(
+        flagSize: 25,
+        backgroundColor: Colors.white,
+        textStyle: const TextStyle(fontSize: 16, color: Colors.blueGrey),
+        bottomSheetHeight: MediaQuery.of(context).size.height*0.8,
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(20.0),
+          topRight: Radius.circular(20.0),
+        ),
+        inputDecoration: InputDecoration(
+          labelText: 'Search',
+          hintText: 'Start typing to search',
+          prefixIcon: const Icon(Icons.search),
+          border: OutlineInputBorder(
+            borderSide: BorderSide(
+              color: const Color(0xFF8C98A8).withOpacity(0.2),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void showBookerPhoneCountryPicker(BuildContext context) {
+    showCountryPicker(
+      context: context,
+      // favorite: ['PK', 'US', 'AE', 'SA', 'IN'],
+      showPhoneCode: true,
+      onSelect: (Country country) {
+        bookerPhoneCountry.value = country;
+      },
+      countryListTheme: CountryListThemeData(
+        flagSize: 25,
+        backgroundColor: Colors.white,
+        textStyle: const TextStyle(fontSize: 16, color: Colors.blueGrey),
+        bottomSheetHeight: MediaQuery.of(context).size.height*0.8,
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(20.0),
+          topRight: Radius.circular(20.0),
+        ),
+        inputDecoration: InputDecoration(
+          labelText: 'Search',
+          hintText: 'Start typing to search',
+          prefixIcon: const Icon(Icons.search),
+          border: OutlineInputBorder(
+            borderSide: BorderSide(
+              color: const Color(0xFF8C98A8).withOpacity(0.2),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void showNationalityPicker(BuildContext context, TravelerInfo travelerInfo) {
+    showCountryPicker(
+      context: context,
+      // favorite: ['PK', 'US', 'AE', 'SA', 'IN'],
+      showPhoneCode: false,
+      onSelect: (Country country) {
+        travelerInfo.nationalityCountry.value = country;
+      },
+      countryListTheme: CountryListThemeData(
+        flagSize: 25,
+        backgroundColor: Colors.white,
+        textStyle: const TextStyle(fontSize: 16, color: Colors.blueGrey),
+        bottomSheetHeight: 500,
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(20.0),
+          topRight: Radius.circular(20.0),
+        ),
+        inputDecoration: InputDecoration(
+          labelText: 'Search nationality',
+          hintText: 'Start typing to search',
+          prefixIcon: const Icon(Icons.search),
+          border: OutlineInputBorder(
+            borderSide: BorderSide(
+              color: const Color(0xFF8C98A8).withOpacity(0.2),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   // Validation methods
   bool isEmailValid(String email) {
     return GetUtils.isEmail(email);
   }
 
   bool isPhoneValid(String phone) {
-    return GetUtils.isPhoneNumber(phone);
+    return phone.isNotEmpty && phone.length >= 7;
   }
 
   bool validateBookerInfo() {
-    return emailController.text.isNotEmpty &&
+    return firstNameController.text.isNotEmpty &&
+        lastNameController.text.isNotEmpty &&
+        emailController.text.isNotEmpty &&
         isEmailValid(emailController.text) &&
         phoneController.text.isNotEmpty &&
         isPhoneValid(phoneController.text) &&
-        addressController.text.isNotEmpty &&
-        cityController.text.isNotEmpty;
+        bookerPhoneCountry.value != null;
   }
 
   bool validateAllTravelersInfo() {
@@ -204,13 +446,14 @@ class BookingFlightController extends GetxController {
     return validateBookerInfo() && validateAllTravelersInfo();
   }
 
-  // Create booking payload
   void resetForm() {
     // Reset booker information
+    firstNameController.clear();
+    lastNameController.clear();
     emailController.clear();
     phoneController.clear();
-    addressController.clear();
-    cityController.clear();
+    remarksController.clear();
+    bookerPhoneCountry.value = Country.parse('PK');
 
     // Reset all travelers
     adults.clear();
@@ -221,17 +464,14 @@ class BookingFlightController extends GetxController {
     initializeTravelers();
   }
 
-
-
   @override
   void onClose() {
     // Dispose booker information controllers
-    firstNameController.dispose(); // Add this
-    lastNameController.dispose();  // Add this
-    emailController.dispose();
-    phoneController.dispose();
-    addressController.dispose();
-    cityController.dispose();
+    // firstNameController.dispose();
+    // lastNameController.dispose();
+    // emailController.dispose();
+    // phoneController.dispose();
+    // remarksController.dispose();
 
     // Dispose all traveler controllers
     for (var adult in adults) {

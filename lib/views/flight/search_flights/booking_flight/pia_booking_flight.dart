@@ -298,7 +298,7 @@ class _PIAFlightBookingFormState extends State<PIAFlightBookingForm> {
                   _buildTextField(
                     hint: 'Passport Number',
                     prefixIcon: Icons.document_scanner_outlined,
-                    controller: travelerInfo.passportController,
+                    controller: travelerInfo.passportCnicController,
                   ),
                   const SizedBox(height: 16),
                   _buildDateField(
@@ -353,7 +353,7 @@ class _PIAFlightBookingFormState extends State<PIAFlightBookingForm> {
                   _buildTextField(
                     hint: 'Passport Number',
                     prefixIcon: Icons.document_scanner_outlined,
-                    controller: travelerInfo.passportController,
+                    controller: travelerInfo.passportCnicController,
                   ),
                   const SizedBox(height: 16),
                   _buildDateField(
@@ -408,7 +408,7 @@ class _PIAFlightBookingFormState extends State<PIAFlightBookingForm> {
                   _buildTextField(
                     hint: 'Passport Number',
                     prefixIcon: Icons.document_scanner_outlined,
-                    controller: travelerInfo.passportController,
+                    controller: travelerInfo.passportCnicController,
                   ),
                   const SizedBox(height: 16),
                   _buildDateField(
@@ -513,17 +513,17 @@ class _PIAFlightBookingFormState extends State<PIAFlightBookingForm> {
               controller: bookingController.phoneController,
             ),
             const SizedBox(height: 12),
-            _buildTextField(
-              hint: 'Address',
-              prefixIcon: Icons.location_on_outlined,
-              controller: bookingController.addressController,
-            ),
-            const SizedBox(height: 12),
-            _buildTextField(
-              hint: 'City',
-              prefixIcon: Icons.location_city_outlined,
-              controller: bookingController.cityController,
-            ),
+            // _buildTextField(
+            //   hint: 'Address',
+            //   prefixIcon: Icons.location_on_outlined,
+            //   controller: bookingController.addressController,
+            // ),
+            // const SizedBox(height: 12),
+            // _buildTextField(
+            //   hint: 'City',
+            //   prefixIcon: Icons.location_city_outlined,
+            //   controller: bookingController.cityController,
+            // ),
           ],
         ),
       ),
