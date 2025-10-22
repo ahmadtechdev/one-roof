@@ -243,16 +243,7 @@ class _AirArabiaBookingFlightState extends State<AirArabiaBookingFlight> {
       ),
       bottomNavigationBar: _buildBottomBar(),
     );
-
-
-
-
-
-
-    
   }
-
-  
   Widget _buildTravelersForm() {
     return Obx(() {
       final adults = List.generate(

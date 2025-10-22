@@ -37,12 +37,11 @@ class FlightBookingPage extends StatelessWidget {
         leading: const BackButton(),
         title: Obx(() {
           // Get total flight count
-          final totalFlights = controller.filteredFlights.length +
+          final totalFlights = 
               airBlueController.flights.length +
               piaController.filteredFlights.length +
               airArabiaController.flights.length;
-          final isLoading = controller.isLoading.value ||
-              airBlueController.isLoading.value ||
+          final isLoading = airBlueController.isLoading.value ||
               piaController.isLoading.value ||
               airArabiaController.isLoading.value;
 
@@ -181,34 +180,34 @@ class FlightBookingPage extends StatelessWidget {
   Widget _buildFlightList() {
     final airBlueController = Get.find<AirBlueFlightController>();
     final piaController = Get.put(PIAFlightController());
-    final flightController = Get.find<FlightController>();
+    // final flightController = Get.find<FlightController>();
 
     return Expanded(
       child: SingleChildScrollView(
         child: Column(
           children: [
             // Sabre flights section
-            Obx(() {
-              if (flightController.isLoading.value && flightController.filteredFlights.isEmpty) {
-                return const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 8.0),
-                  child: Center(child: CircularProgressIndicator()),
-                );
-              }
-              return ListView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: flightController.filteredFlights.length,
-                itemBuilder: (context, index) {
-                  final flight = flightController.filteredFlights[index];
-                  return GestureDetector(
-                    onTap: () { },
-                    // onTap: () => flightController.handleFlightSelection(flight),
-                    child: FlightCard(flight: flight),
-                  );
-                },
-              );
-            }),
+            // Obx(() {
+            //   if (flightController.isLoading.value && flightController.filteredFlights.isEmpty) {
+            //     return const Padding(
+            //       padding: EdgeInsets.symmetric(vertical: 8.0),
+            //       child: Center(child: CircularProgressIndicator()),
+            //     );
+            //   }
+            //   return ListView.builder(
+            //     shrinkWrap: true,
+            //     physics: const NeverScrollableScrollPhysics(),
+            //     itemCount: flightController.filteredFlights.length,
+            //     itemBuilder: (context, index) {
+            //       final flight = flightController.filteredFlights[index];
+            //       return GestureDetector(
+            //         onTap: () { },
+            //         // onTap: () => flightController.handleFlightSelection(flight),
+            //         child: FlightCard(flight: flight),
+            //       );
+            //     },
+            //   );
+            // }),
 
             // AirBlue flights section
             Obx(() {

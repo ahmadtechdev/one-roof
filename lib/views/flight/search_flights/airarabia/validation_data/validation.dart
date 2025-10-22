@@ -5,10 +5,10 @@ import 'package:oneroof/utility/colors.dart';
 import 'package:oneroof/views/flight/search_flights/airarabia/airarabia_flight_model.dart';
 import 'package:oneroof/views/flight/search_flights/airarabia/validation_data/validation_controller.dart';
 import 'package:oneroof/views/flight/search_flights/airarabia/validation_data/validation_model.dart';
+import 'package:oneroof/views/flight/search_flights/review_flight/airarabia_review_flight.dart';
 import 'dart:math' as math;
 
 import 'package:oneroof/views/flight/search_flights/review_flight/airarabia_review_flight.dart';
-
 
 class AirArabiaRevalidationScreen extends StatefulWidget {
   AirArabiaRevalidationScreen({super.key});
@@ -805,6 +805,7 @@ Widget _buildCompleteAircraftLayout(String segmentCode, AirArabiaRevalidationCon
             ),
           ],
         );
+
       }),
     );
   }
@@ -851,6 +852,7 @@ Widget _buildCompleteAircraftLayout(String segmentCode, AirArabiaRevalidationCon
     );
   }
 
+
   Widget _buildSeat(String seatNumber, List<SeatOption> apiSeats, SeatOption? selectedSeat,
                    AirArabiaRevalidationController controller, String segmentCode, String passengerId) {
     
@@ -888,7 +890,11 @@ Widget _buildCompleteAircraftLayout(String segmentCode, AirArabiaRevalidationCon
         controller.selectSeat(segmentCode, passengerId, apiSeat);
       },
       child: Container(
-        width: 35,
+        width: 35
+        
+        
+        
+        ,
         height: 28,
         margin: const EdgeInsets.symmetric(horizontal: 1),
         decoration: BoxDecoration(
@@ -1332,10 +1338,36 @@ Widget _buildCompleteAircraftLayout(String segmentCode, AirArabiaRevalidationCon
               else
                 // Collapsed state - just the button
                 Container(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                  child: SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
+    padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+    child: Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        // ADD THIS PRICE DISPLAY:
+        Obx(() => Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Total Amount',
+              style: TextStyle(
+                fontSize: 12,
+                color: TColors.grey,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            Text(
+              'PKR ${controller.totalPrice.toStringAsFixed(0)}',
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                color: TColors.primary,
+              ),
+            ),
+          ],
+        )),
+        const SizedBox(width: 12),
+       
+ Expanded(
+          child: ElevatedButton(
                       onPressed: () {
                          final arguments = Get.arguments as Map<String, dynamic>?;
                               final selectedFlight = arguments?['selectedFlight'] as AirArabiaFlight?;
@@ -1388,7 +1420,10 @@ Widget _buildCompleteAircraftLayout(String segmentCode, AirArabiaRevalidationCon
                       ),
                     ),
                   ),
-                ),
+       
+      ],
+    ),
+  ),
                 SizedBox(height: 10,)
             ],
           ),
@@ -1397,3 +1432,8 @@ Widget _buildCompleteAircraftLayout(String segmentCode, AirArabiaRevalidationCon
     );
   }
 }
+
+
+
+
+
