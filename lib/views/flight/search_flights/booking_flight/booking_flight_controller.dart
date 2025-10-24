@@ -188,7 +188,7 @@ class TravelerInfo {
 }
 
 class BookingFlightController extends GetxController {
-  final TravelersController travelersController = Get.put(TravelersController());
+  final TravelersController travelersController = Get.find<TravelersController>();
   final AuthController authController = Get.find<AuthController>();
 
   // Travelers information
@@ -217,10 +217,10 @@ class BookingFlightController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    _loadUserDataAndInitialize();
+    loadUserDataAndInitialize();
   }
 
-  Future<void> _loadUserDataAndInitialize() async {
+  Future<void> loadUserDataAndInitialize() async {
     isLoadingUserData.value = true;
     
     try {

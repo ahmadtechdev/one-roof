@@ -1,14 +1,14 @@
 // airarabia_revalidation_screen.dart
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:oneroof/utility/colors.dart';
-import 'package:oneroof/views/flight/search_flights/airarabia/airarabia_flight_model.dart';
-import 'package:oneroof/views/flight/search_flights/airarabia/validation_data/validation_controller.dart';
-import 'package:oneroof/views/flight/search_flights/airarabia/validation_data/validation_model.dart';
-import 'package:oneroof/views/flight/search_flights/review_flight/airarabia_review_flight.dart';
 import 'dart:math' as math;
 
-import 'package:oneroof/views/flight/search_flights/review_flight/airarabia_review_flight.dart';
+import '../../../../../utility/colors.dart';
+import '../../review_flight/airarabia_review_flight.dart';
+import '../airarabia_flight_model.dart';
+import 'validation_controller.dart';
+import 'validation_model.dart';
+
 
 class AirArabiaRevalidationScreen extends StatefulWidget {
   AirArabiaRevalidationScreen({super.key});
@@ -429,10 +429,11 @@ Widget _buildBaggageTab(AirArabiaRevalidationController controller) {
                           ? controller.passengerIds[_selectedPassengerIndex] 
                           : 'passenger_0';
                       
-                      // Get baggage options for this segment (filter by segment if needed)
-                      // For now, using all available baggage options
+                      // Get baggage options specific to this segment
+                      final segmentBaggage = controller.getBaggageForSegment(segmentCode);
+                      
                       return Column(
-                        children: controller.availableBaggage.map((baggage) {
+                        children: segmentBaggage.map((baggage) {
                           final isSelected = controller.getBaggageForPassenger(
                             passengerId, 
                             segmentCode: segmentCode
@@ -805,7 +806,6 @@ Widget _buildCompleteAircraftLayout(String segmentCode, AirArabiaRevalidationCon
             ),
           ],
         );
-
       }),
     );
   }
@@ -852,7 +852,6 @@ Widget _buildCompleteAircraftLayout(String segmentCode, AirArabiaRevalidationCon
     );
   }
 
-
   Widget _buildSeat(String seatNumber, List<SeatOption> apiSeats, SeatOption? selectedSeat,
                    AirArabiaRevalidationController controller, String segmentCode, String passengerId) {
     
@@ -890,11 +889,7 @@ Widget _buildCompleteAircraftLayout(String segmentCode, AirArabiaRevalidationCon
         controller.selectSeat(segmentCode, passengerId, apiSeat);
       },
       child: Container(
-        width: 35
-        
-        
-        
-        ,
+        width: 35,
         height: 28,
         margin: const EdgeInsets.symmetric(horizontal: 1),
         decoration: BoxDecoration(

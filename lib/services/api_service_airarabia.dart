@@ -66,7 +66,6 @@ class ApiServiceAirArabia {
       };
     }
   }
-
   // Helper method to calculate price with margin
   double calculatePriceWithMargin(double basePrice, Map<String, dynamic> marginData) {
     try {
@@ -130,7 +129,7 @@ class ApiServiceAirArabia {
       print("AirArabia Request *********************");
       print(data);
       final response = await _dio.request(
-        'https://readyflights.pk/api/new-air-arabia-flights',
+        'https://onerooftravel.net/api/new-air-arabia-flights',
         options: Options(
           method: 'POST',
           headers: headers,
@@ -179,10 +178,10 @@ class ApiServiceAirArabia {
 
       // Print full request details
       printFullRequest(
-        "GET FLIGHT PACKAGES", 
-        'https://readyflights.pk/api/get-air-arabia-package',
-        headers,
-        data
+          "GET FLIGHT PACKAGES",
+          'https://onerooftravel.net/api/get-air-arabia-package',
+          headers,
+          data
       );
 
       print("AirArabia Packages Request *********************");
@@ -196,7 +195,7 @@ class ApiServiceAirArabia {
       print("***************************************************");
 
       final response = await _dio.request(
-        'https://readyflights.pk/api/get-air-arabia-package',
+        'https://onerooftravel.net/api/get-air-arabia-package',
         options: Options(
           method: 'POST',
           headers: headers,
@@ -255,13 +254,10 @@ class ApiServiceAirArabia {
 
       // Print full request details
       printFullRequest(
-
-
-        
-        "REVALIDATE PACKAGE", 
-        'https://onerooftravel.net/api/air-arabia-package-revalidate',
-        headers,
-        data
+          "REVALIDATE PACKAGE",
+          'https://onerooftravel.net/api/air-arabia-package-revalidate',
+          headers,
+          data
       );
 
       print("AirArabia Package Revalidation Request *********************");
@@ -275,7 +271,7 @@ class ApiServiceAirArabia {
       print("*************************************************************");
 
       final response = await _dio.request(
-        'https://readyflights.pk/api/air-arabia-package-revalidate',
+        'https://onerooftravel.net/api/air-arabia-package-revalidate',
         options: Options(
           method: 'POST',
           headers: headers,

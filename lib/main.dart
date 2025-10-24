@@ -11,6 +11,9 @@ import 'package:oneroof/views/hotel/search_hotels/search_hotel_controller.dart';
 import 'package:oneroof/views/introduce.dart';
 import 'package:oneroof/views/users/login/login_api_service/login_api.dart';
 import 'package:oneroof/widgets/travelers_selection_bottom_sheet.dart';
+import 'package:oneroof/widgets/privacy_disclosure_dialog.dart';
+import 'package:oneroof/widgets/app_home.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'views/flight/search_flights/airblue/airblue_flight_controller.dart';
 import 'views/flight/search_flights/airarabia/airarabia_flight_controller.dart';
@@ -46,7 +49,7 @@ class MyApp extends StatelessWidget {
 
         colorScheme: ColorScheme.fromSeed(seedColor: TColors.background),
       ),
-      home: Introduce(),
+      home: const AppHome(),
     );
   }
 }

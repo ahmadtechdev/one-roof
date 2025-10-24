@@ -22,9 +22,12 @@ class AirBlueFlight {
   final String airlineName;
   final String airlineImg;
   final String rph; // Added RPH field
+  final String rphFareSegment; // Added RPH field
   final List<AirBlueFareOption>? fareOptions;
   final Map<String, dynamic> rawData;// Added for storing different fare options
   final List<AirBluePNRPricing>? pnrPricing;
+  final List<Map<String, dynamic>> changeFeeDetails;
+  final List<Map<String, dynamic>> refundFeeDetails;
 
   AirBlueFlight({
     required this.id,
@@ -42,6 +45,9 @@ class AirBlueFlight {
     required this.airlineName,
     required this.airlineImg,
     required this.rph, // Required RPH parameter
+    required this.rphFareSegment, // Required RPH parameter
+    required this.changeFeeDetails,
+    required this.refundFeeDetails,
     this.fareOptions,
     required this.rawData,
     this.pnrPricing,
@@ -54,7 +60,8 @@ class AirBlueFlight {
 
       // Extract RPH value from the OriginDestinationOption
       final originDestOption = json['AirItinerary']['OriginDestinationOptions']['OriginDestinationOption'] ?? {};
-      final rph = originDestOption['RPH']?.toString() ?? '0-0'; // Default value if RPH is not found
+      final rph = originDestOption['RPH']?.toString() ?? 'n/a'; // Default value if RPH is not found
+      final rphFareSegment = flightSegment['RPH']?.toString() ?? 'n/a'; // Default value if RPH is not found
 
       // Extract airline info
       final marketingAirline = flightSegment['MarketingAirline'] ?? {};
@@ -80,6 +87,11 @@ class AirBlueFlight {
       // Create flight segments
       final segmentInfo = _createSegmentInfo(json);
 
+
+      // Extract detailed fee information
+      final feeDetails = _extractFeeDetails(json);
+
+
       return AirBlueFlight(
         id: flightId,
         price: double.tryParse(totalFare['Amount']?.toString() ?? '0') ?? 0,
@@ -96,7 +108,10 @@ class AirBlueFlight {
         airlineName: airlineInfo.name,
         airlineImg: airlineInfo.logoPath,
         rph: rph,
+        rphFareSegment: rphFareSegment,
         rawData: json,// Set the RPH value
+        changeFeeDetails: feeDetails['changeFeeDetails']!,
+        refundFeeDetails: feeDetails['refundFeeDetails']!,
 
       );
     } catch (e, stackTrace) {
@@ -125,9 +140,10 @@ class AirBlueFlight {
       airlineName: airlineName,
       airlineImg: airlineImg,
       rph: rph,
+      rphFareSegment: rphFareSegment,
       fareOptions: options,
       rawData: rawData,
-      pnrPricing: pnrPricing, // Keep existing pnrPricing if any
+      pnrPricing: pnrPricing, changeFeeDetails: changeFeeDetails, refundFeeDetails: refundFeeDetails, // Keep existing pnrPricing if any
     );
   }
 
@@ -150,9 +166,10 @@ class AirBlueFlight {
       airlineName: airlineName,
       airlineImg: airlineImg,
       rph: rph,
+      rphFareSegment: rphFareSegment,
       fareOptions: fareOptions,
       rawData: rawData,
-      pnrPricing: pricing,
+      pnrPricing: pricing, changeFeeDetails: changeFeeDetails, refundFeeDetails: refundFeeDetails,
     );
   }
   static BaggageAllowance _getBaggageAllowance(Map<String, dynamic> pricingInfo) {
@@ -210,6 +227,149 @@ class AirBlueFlight {
     }
   }
 
+// Helper method to extract detailed fee information
+  static Map<String, List<Map<String, dynamic>>> _extractFeeDetails(Map<String, dynamic> data) {
+    final Map<String, List<Map<String, dynamic>>> feeDetails = {
+      'changeFeeDetails': [],
+      'refundFeeDetails': [],
+    };
+
+    try {
+      final pricingInfo = data['AirItineraryPricingInfo'];
+      if (pricingInfo == null) return feeDetails;
+
+      final ptcFareBreakdown = pricingInfo['PTC_FareBreakdowns']?['PTC_FareBreakdown'];
+      if (ptcFareBreakdown == null) return feeDetails;
+
+      // Handle both single breakdown and list of breakdowns
+      List<dynamic> fareBreakdowns = [];
+      if (ptcFareBreakdown is List) {
+        fareBreakdowns = ptcFareBreakdown;
+      } else {
+        fareBreakdowns = [ptcFareBreakdown];
+      }
+
+      // Iterate through all fare breakdowns
+      for (var breakdown in fareBreakdowns) {
+        final fareInfoList = breakdown['FareInfo'];
+
+        // Handle both single FareInfo and list of FareInfo
+        List<dynamic> fareInfos = [];
+        if (fareInfoList is List) {
+          fareInfos = fareInfoList;
+        } else if (fareInfoList != null) {
+          fareInfos = [fareInfoList];
+        }
+
+        // Look for RuleInfo in any of the FareInfo entries
+        for (var fareInfo in fareInfos) {
+          final ruleInfo = fareInfo['RuleInfo'];
+          if (ruleInfo != null) {
+            final chargesRules = ruleInfo['ChargesRules'];
+            if (chargesRules != null) {
+
+              // Extract change fees
+              final voluntaryChanges = chargesRules['VoluntaryChanges'];
+              if (voluntaryChanges != null) {
+                final changePenalties = voluntaryChanges['Penalty'];
+                if (changePenalties != null) {
+                  List<dynamic> penalties = [];
+                  if (changePenalties is List) {
+                    penalties = changePenalties;
+                  } else {
+                    penalties = [changePenalties];
+                  }
+
+                  for (var penalty in penalties) {
+                    feeDetails['changeFeeDetails']!.add({
+                      'condition': penalty['HoursBeforeDeparture']?.toString() ?? '',
+                      'amount': '${penalty['CurrencyCode']} ${penalty['Amount']}',
+                      'currencyCode': penalty['CurrencyCode']?.toString() ?? '',
+                      'penaltyAmount': penalty['Amount']?.toString() ?? '',
+                    });
+                  }
+                }
+              }
+
+              // Extract refund fees
+              final voluntaryRefunds = chargesRules['VoluntaryRefunds'];
+              if (voluntaryRefunds != null) {
+                final refundPenalties = voluntaryRefunds['Penalty'];
+                if (refundPenalties != null) {
+                  List<dynamic> penalties = [];
+                  if (refundPenalties is List) {
+                    penalties = refundPenalties;
+                  } else {
+                    penalties = [refundPenalties];
+                  }
+
+                  for (var penalty in penalties) {
+                    feeDetails['refundFeeDetails']!.add({
+                      'condition': penalty['HoursBeforeDeparture']?.toString() ?? '',
+                      'amount': '${penalty['CurrencyCode']} ${penalty['Amount']}',
+                      'currencyCode': penalty['CurrencyCode']?.toString() ?? '',
+                      'penaltyAmount': penalty['Amount']?.toString() ?? '',
+                    });
+                  }
+                }
+              }
+
+              // If we found rules, we can break out of the loops
+              if (feeDetails['changeFeeDetails']!.isNotEmpty || feeDetails['refundFeeDetails']!.isNotEmpty) {
+                break;
+              }
+            }
+          }
+        }
+
+        // If we found rules, break out of the outer loop too
+        if (feeDetails['changeFeeDetails']!.isNotEmpty || feeDetails['refundFeeDetails']!.isNotEmpty) {
+          break;
+        }
+      }
+
+    } catch (e, stackTrace) {
+      if (kDebugMode) {
+        print('Error extracting fee details: $e');
+        print('Stack trace: $stackTrace');
+      }
+    }
+
+    return feeDetails;
+  }
+
+// Additional helper method to get human-readable fee conditions
+  static String _formatFeeCondition(String condition) {
+    switch (condition) {
+      case '<0':
+        return 'After departure';
+      case '<48':
+        return 'Less than 48 hours before departure';
+      case '>48':
+        return 'More than 48 hours before departure';
+      default:
+        return '${condition.replaceAll('<', 'Less than ').replaceAll('>', 'More than ')} hours';
+    }
+  }
+
+// Method to get formatted fee details for display
+  static Map<String, List<Map<String, String>>> getFormattedFeeDetails(
+      List<Map<String, dynamic>> changeFees,
+      List<Map<String, dynamic>> refundFees,
+      ) {
+    return {
+      'changeFees': changeFees.map((fee) => {
+        'condition': _formatFeeCondition(fee['condition'] ?? ''),
+        'amount': fee['amount']?.toString() ?? '',
+        'description': 'Change fee ${_formatFeeCondition(fee['condition'] ?? '')}',
+      }).toList(),
+      'refundFees': refundFees.map((fee) => {
+        'condition': _formatFeeCondition(fee['condition'] ?? ''),
+        'amount': fee['amount']?.toString() ?? '',
+        'description': 'Refund fee ${_formatFeeCondition(fee['condition'] ?? '')}',
+      }).toList(),
+    };
+  }
   static bool _determineRefundable(Map<String, dynamic> json) {
     try {
       final pricingInfo = json['AirItineraryPricingInfo'] ?? {};
@@ -257,6 +417,10 @@ class AirBlueFlight {
       final arrival = flightSegment['ArrivalAirport'] ?? {};
       final departureDateTime = flightSegment['DepartureDateTime']?.toString() ?? '';
       final arrivalDateTime = flightSegment['ArrivalDateTime']?.toString() ?? '';
+
+      print("airblue time check");
+      print(departureDateTime);
+      print(arrivalDateTime);
 
       return [
         {
@@ -415,7 +579,7 @@ class AirBlueFlight {
     }
   }
 
-   static String _getCityName(String airportCode) {
+  static String _getCityName(String airportCode) {
     // Add more airport codes as needed
     const cityMap = {
       'LHE': 'Lahore',
@@ -446,9 +610,11 @@ class AirBlueFareOption {
   final String baggageAllowance;
   final Map<String, dynamic> rawData;
   final Map<String, dynamic> pricingInfo;
-  final String fareName; // Added to store fare name (Flexi, Extra, Value)
-  final String changeFee; // Added for change fee info
-  final String refundFee; // Added for refund fee info
+  final String fareName;
+  final String changeFee;
+  final String refundFee;
+  final String fareBasisCode; // Changed to lowercase for consistency
+  final Map<String, dynamic> fareInfoRawData; // New field for raw FareInfo data
 
   AirBlueFareOption({
     required this.cabinCode,
@@ -467,6 +633,8 @@ class AirBlueFareOption {
     required this.fareName,
     required this.changeFee,
     required this.refundFee,
+    required this.fareBasisCode,
+    required this.fareInfoRawData, // Add to constructor
   });
 
   factory AirBlueFareOption.fromFlight(AirBlueFlight flight, Map<String, dynamic> rawData) {
@@ -486,10 +654,13 @@ class AirBlueFareOption {
     final Map<String, String> fees = _extractFees(rawData);
     final Map<String, dynamic> pricingInfo = _getPricingInfo(rawData);
 
+    // Extract raw FareInfo data
+    final Map<String, dynamic> fareInfoRawData = _extractFareInfoRawData(rawData);
+
     return AirBlueFareOption(
       cabinCode: cabinCode,
       cabinName: cabinName,
-      brandName: fareName, // Using fareName as brandName
+      brandName: fareName,
       price: flight.price,
       basePrice: flight.basePrice,
       taxAmount: flight.taxAmount,
@@ -503,9 +674,54 @@ class AirBlueFareOption {
       fareName: fareName,
       changeFee: fees['changeFee'] ?? 'Restricted',
       refundFee: fees['refundFee'] ?? 'Restricted',
+      fareBasisCode: fareBasisCode,
+      fareInfoRawData: fareInfoRawData, // Pass the extracted FareInfo data
     );
   }
 
+  // New helper method to extract raw FareInfo data
+  // New helper method to extract raw FareInfo data for the specific fare basis code
+  static Map<String, dynamic> _extractFareInfoRawData(Map<String, dynamic> data) {
+    try {
+      final pricingInfo = data['AirItineraryPricingInfo'];
+      if (pricingInfo == null) return {};
+
+      final ptcFareBreakdown = pricingInfo['PTC_FareBreakdowns']?['PTC_FareBreakdown'];
+      if (ptcFareBreakdown == null) return {};
+
+      // Get the fare basis code we're looking for
+      final fareBasisCode = _extractFareBasisCode(data);
+      if (fareBasisCode.isEmpty) return {};
+
+      // Handle both list and single item cases
+      final List<dynamic> breakdowns = ptcFareBreakdown is List ? ptcFareBreakdown : [ptcFareBreakdown];
+
+      for (var breakdown in breakdowns) {
+        final fareInfos = breakdown['FareInfo'];
+        if (fareInfos == null) continue;
+
+        // Handle both single FareInfo and list of FareInfos
+        final List<dynamic> fareInfoList = fareInfos is List ? fareInfos : [fareInfos];
+
+        for (var fareInfo in fareInfoList) {
+          if (fareInfo is Map) {
+            // Check if this FareInfo contains the nested FareInfo with FareBasisCode
+            final nestedInfo = fareInfo['FareInfo'];
+            if (nestedInfo is Map &&
+                nestedInfo['FareBasisCode']?.toString().toUpperCase() == fareBasisCode.toUpperCase()) {
+              // Return the entire outer FareInfo object (which contains DepartureDate, DepartureAirport, etc.)
+              return Map<String, dynamic>.from(fareInfo);
+            }
+          }
+        }
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error extracting FareInfo raw data: $e');
+      }
+    }
+    return {};
+  }
   // Helper method to get fare name from code
   static String _getFareNameFromCode(String fareCode) {
     if (fareCode.contains('EV')) return 'Value';
@@ -513,13 +729,12 @@ class AirBlueFareOption {
     if (fareCode.contains('EX')) return 'Extra';
     return 'Standard';
   }
-  static Map<String, dynamic> _getPricingInfo(Map<String, dynamic> data) {
-  final pricingInfo = data['AirItineraryPricingInfo'];
 
-  return pricingInfo;
+  static Map<String, dynamic> _getPricingInfo(Map<String, dynamic> data) {
+    final pricingInfo = data['AirItineraryPricingInfo'];
+    return pricingInfo ?? {};
   }
 
-  // Updated helper method to extract fees
   static Map<String, String> _extractFees(Map<String, dynamic> data) {
     final Map<String, String> fees = {
       'changeFee': 'Restricted',
@@ -533,9 +748,11 @@ class AirBlueFareOption {
       final ptcFareBreakdown = pricingInfo['PTC_FareBreakdowns']?['PTC_FareBreakdown'];
       if (ptcFareBreakdown == null) return fees;
 
-      // Check if it's a list or single item
-      if (ptcFareBreakdown is List && ptcFareBreakdown.isNotEmpty) {
-        final fareInfo = ptcFareBreakdown[0]['FareInfo'];
+      // Handle both list and single item cases
+      final List<dynamic> breakdowns = ptcFareBreakdown is List ? ptcFareBreakdown : [ptcFareBreakdown];
+
+      if (breakdowns.isNotEmpty) {
+        final fareInfo = breakdowns[0]['FareInfo'];
         if (fareInfo is List && fareInfo.length > 1) {
           final ruleInfo = fareInfo[1]['RuleInfo'];
           if (ruleInfo != null) {
@@ -557,95 +774,86 @@ class AirBlueFareOption {
         }
       }
     } catch (e) {
+      // Error handling
     }
 
     return fees;
   }
 
-  // Update the _extractBaggageAllowance method to match web format
   static String _extractBaggageAllowance(Map<String, dynamic> data) {
     try {
       final pricingInfo = data['AirItineraryPricingInfo'];
-      if (pricingInfo == null) return '20 KGS'; // Default as per web
+      if (pricingInfo == null) return '20 KGS';
 
       final ptcFareBreakdown = pricingInfo['PTC_FareBreakdowns']?['PTC_FareBreakdown'];
-      if (ptcFareBreakdown == null) return '20 KGS';
+      if (ptcFareBreakdown == null) return 'No Baggage';
 
-      // Check if it's a list or single item
-      if (ptcFareBreakdown is List && ptcFareBreakdown.isNotEmpty) {
-        final fareInfo = ptcFareBreakdown[0]['FareInfo'];
+      // Handle both list and single item cases
+      final List<dynamic> breakdowns = ptcFareBreakdown is List ? ptcFareBreakdown : [ptcFareBreakdown];
+
+      if (breakdowns.isNotEmpty) {
+        final fareInfo = breakdowns[0]['FareInfo'];
         if (fareInfo is List && fareInfo.length > 1) {
           final baggage = fareInfo[1]['PassengerFare']?['FareBaggageAllowance'];
           if (baggage != null) {
-            final weight = baggage['UnitOfMeasureQuantity']?.toString() ?? '20';
-            final unit = baggage['UnitOfMeasure']?.toString() ?? 'KGS';
-            return '$weight $unit';
-          }
-        }
-      } else if (ptcFareBreakdown is Map) {
-        final fareInfo = ptcFareBreakdown['FareInfo'];
-        if (fareInfo is List && fareInfo.length > 1) {
-          final baggage = fareInfo[1]['PassengerFare']?['FareBaggageAllowance'];
-          if (baggage != null) {
-            final weight = baggage['UnitOfMeasureQuantity']?.toString() ?? '20';
-            final unit = baggage['UnitOfMeasure']?.toString() ?? 'KGS';
+            final weight = baggage['UnitOfMeasureQuantity']?.toString() ?? 'No';
+            final unit = baggage['UnitOfMeasure']?.toString() ?? 'Baggage';
             return '$weight $unit';
           }
         }
       }
     } catch (e) {
+      // Error handling
     }
 
-    return '20 KGS'; // Default as per web
+    return 'No Baggage';
   }
 
-  // Helper methods (_extractFareBasisCode, _extractCabinCode, etc.) go here
-  // Copy all the static helper methods from airblue_package_modal.dart
-  // Helper method to extract fare basis code
   static String _extractFareBasisCode(Map<String, dynamic> data) {
     try {
-      final airItinPricingInfo = data['AirItineraryPricingInfo'];
+      final pricingInfo = data['AirItineraryPricingInfo'];
+      if (pricingInfo == null) return '';
 
-      if (airItinPricingInfo == null) return '';
+      final ptcFareBreakdown = pricingInfo['PTC_FareBreakdowns']?['PTC_FareBreakdown'];
+      if (ptcFareBreakdown == null) return '';
 
-      final ptcFareBreakdowns = airItinPricingInfo['PTC_FareBreakdowns']?['PTC_FareBreakdown'];
+      // Handle both list and single item cases
+      final List<dynamic> breakdowns = ptcFareBreakdown is List ? ptcFareBreakdown : [ptcFareBreakdown];
 
-      if (ptcFareBreakdowns == null) return '';
-
-      // Check if it's a list or a single item
-
-        final fareInfos = ptcFareBreakdowns['FareInfo']?[0]['FareInfo'];
-
-        if (fareInfos is List && fareInfos.isNotEmpty) {
-          return fareInfos[0]['FareBasisCode'] ?? '';
-        } else if (fareInfos != null) {
-          return fareInfos['FareBasisCode'] ?? '';
+      if (breakdowns.isNotEmpty) {
+        final fareInfo = breakdowns[0]['FareInfo'];
+        if (fareInfo is List && fareInfo.isNotEmpty) {
+          return fareInfo[0]['FareInfo']?['FareBasisCode']?.toString() ?? '';
+        } else if (fareInfo is Map) {
+          return fareInfo['FareBasisCode']?.toString() ?? '';
         }
-
-      return '';
+      }
     } catch (e) {
-      return '';
+      // Error handling
     }
+
+    return '';
   }
 
-  // Helper method to extract cabin code
   static String _extractCabinCode(Map<String, dynamic> data) {
     try {
       final originDestOption = data['AirItinerary']?['OriginDestinationOptions']?['OriginDestinationOption'];
       if (originDestOption == null) return 'Y';
 
       final flightSegment = originDestOption['FlightSegment'];
-        return flightSegment['ResBookDesigCode'] ?? '';
-
+      if (flightSegment is List) {
+        return flightSegment[0]['ResBookDesigCode']?.toString() ?? 'Y';
+      } else if (flightSegment is Map) {
+        return flightSegment['ResBookDesigCode']?.toString() ?? 'Y';
+      }
     } catch (e) {
-      return '';
+      // Error handling
     }
+
+    return 'Y';
   }
 
-  // Helper method to get proper cabin name based on cabin code
   static String _getCabinName(String cabinCode) {
-
-    //  THiss shoudl update according to web
     switch (cabinCode.toUpperCase()) {
       case 'F': return 'First Class';
       case 'C': return 'Business Class';
@@ -656,6 +864,4 @@ class AirBlueFareOption {
       default: return 'Economy';
     }
   }
-
-
 }

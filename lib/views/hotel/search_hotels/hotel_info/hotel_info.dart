@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:oneroof/widgets/location_permission_dialog.dart';
+import 'package:oneroof/services/location_permission_service.dart';
 import 'package:oneroof/services/api_service_hotel.dart';
 import 'package:oneroof/utility/colors.dart';
 import 'package:oneroof/views/hotel/search_hotels/hotel_info/hotel_images.dart';
@@ -264,22 +266,27 @@ class _HotelInfoScreenState extends State<HotelInfoScreen> {
           Row(
             children: [
                GestureDetector(
-                      onTap: () {
-                        Get.to(
-                          () => MapScreen(
-                            latitude:
-                                double.tryParse(
-                                   controller.lat.toString()
-                                ) ??
-                                0.0,
-                            longitude:
-                                double.tryParse(
-                                  controller.lon.toString()
-                                ) ??
-                                0.0,
-                            hotelName: '${controller.hotelName.toString()} Hotel',
-                          ),
-                        );
+                      onTap: () async {
+                        // Handle location permission with prominent disclosure
+                        bool hasPermission = await LocationPermissionService.instance.handleLocationPermissionForMaps(Get.context!);
+                        
+                        if (hasPermission) {
+                          Get.to(
+                            () => MapScreen(
+                              latitude:
+                                  double.tryParse(
+                                     controller.lat.toString()
+                                  )            ??
+                                  0.0,
+                              longitude:
+                                  double.tryParse(
+                                    controller.lon.toString()
+                                  ) ??
+                                  0.0,
+                              hotelName: '${controller.hotelName.toString()} Hotel',
+                            ),
+                          );
+                        }
                       },
                       child: Icon(
                         Icons.location_on_rounded,

@@ -1,3 +1,5 @@
+// Updated airblue_flight_package.dart with proper multi-city support
+
 // ignore_for_file: dead_code, empty_catches
 
 import 'package:flutter/material.dart';
@@ -15,6 +17,8 @@ class AirBluePackageSelectionDialog extends StatelessWidget {
   final AirBlueFlight flight;
   final bool isReturnFlight;
   final RxBool isLoading = false.obs;
+  final int segmentIndex; // Which segment of the trip this is
+  final bool isMultiCity;
 
   // Cache for margin data and calculated prices
   final Rx<Map<String, dynamic>> marginData = Rx<Map<String, dynamic>>({});
@@ -24,19 +28,22 @@ class AirBluePackageSelectionDialog extends StatelessWidget {
     super.key,
     required this.flight,
     required this.isReturnFlight,
+    required this.segmentIndex,
+    required this.isMultiCity,
   });
 
   final PageController _pageController = PageController(viewportFraction: 0.9);
   final airBlueController = Get.find<AirBlueFlightController>();
-  // Instead, make it a late final variable initialized in build
   late final FlightBookingController flightBookingController;
-
 
   @override
   Widget build(BuildContext context) {
     // Pre-fetch margin data when dialog opens
     _prefetchMarginData();
     flightBookingController = Get.find<FlightBookingController>();
+
+    print("mulicity confition:");
+    print(isMultiCity);
 
     return Scaffold(
       backgroundColor: TColors.background,
@@ -48,9 +55,7 @@ class AirBluePackageSelectionDialog extends StatelessWidget {
           onPressed: () => Get.back(),
         ),
         title: Text(
-          isReturnFlight
-              ? 'Select Return Flight Package'
-              : 'Select Flight Package',
+          _getAppBarTitle(),
           style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
         ),
       ),
@@ -65,41 +70,55 @@ class AirBluePackageSelectionDialog extends StatelessWidget {
     );
   }
 
+  String _getAppBarTitle() {
+    if (isMultiCity) {
+      final bookingController = Get.find<FlightBookingController>();
+      if (segmentIndex < bookingController.cityPairs.length) {
+        final cityPair = bookingController.cityPairs[segmentIndex];
+        return 'Select: ${cityPair.fromCity.value} → ${cityPair.toCity.value}';
+      }
+      return 'Select Flight for Segment ${segmentIndex + 1}';
+    } else if (isReturnFlight) {
+      return 'Select Return Flight ';
+    } else {
+      return 'Select Flight ';
+    }
+  }
+
   Widget _buildFlightInfo() {
-    return AirBlueFlightCard(flight: flight, showReturnFlight: false);
+    return AirBlueFlightCard(flight: flight, showReturnFlight: false, );
   }
 
   Future<void> _prefetchMarginData() async {
     try {
-
       if (marginData.value.isEmpty) {
-
         final apiService = Get.find<ApiServiceSabre>();
         marginData.value = await apiService.getMargin();
-
       }
 
-      // Pre-calculate prices for all fare options
-      final fareOptions = airBlueController.getFareOptionsForFlight(flight);
+      // Get fare options using the controller method
+      final fareOptions = airBlueController.getFareOptionsForFlight(
+          flight,
+          segmentIndex: segmentIndex
+      );
+
+      print('DEBUG: Found ${fareOptions.length} fare options for flight ${flight.rph}');
+
       for (var option in fareOptions) {
         final String packageKey = '${option.cabinCode}-${option.brandName}';
 
         if (!finalPrices.containsKey(packageKey)) {
-
           final apiService = Get.find<ApiServiceSabre>();
-
           final marginedBasePrice = apiService.calculatePriceWithMargin(
             option.basePrice,
             marginData.value,
           );
-
           final totalPrice = marginedBasePrice + option.taxAmount + option.feeAmount;
-
-          finalPrices[packageKey] =totalPrice.obs;
-
+          finalPrices[packageKey] = totalPrice.obs;
         }
       }
     } catch (e) {
+      print('DEBUG: Error in _prefetchMarginData: $e');
     }
   }
 
@@ -136,7 +155,14 @@ class AirBluePackageSelectionDialog extends StatelessWidget {
 
   Widget _buildPackagesList() {
     // Get fare options for the selected flight based on RPH
-    final List<AirBlueFareOption> fareOptions = airBlueController.getFareOptionsForFlight(flight);
+    final List<AirBlueFareOption> fareOptions = airBlueController.getFareOptionsForFlight(
+        flight,
+        segmentIndex: segmentIndex
+    );
+
+    print('DEBUG: Getting packages for segment $segmentIndex');
+    print('DEBUG: Flight RPH: ${flight.rph}');
+    print('DEBUG: Expected fare key: segment_${segmentIndex}_${flight.rph}');
 
     // Handle empty state
     if (fareOptions.isEmpty) {
@@ -147,7 +173,7 @@ class AirBluePackageSelectionDialog extends StatelessWidget {
             Icon(Icons.warning_amber_rounded, size: 48, color: Colors.amber),
             SizedBox(height: 16),
             Text(
-              'No packages available for this flight',
+              'No flights available for this flight',
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
             ),
             SizedBox(height: 8),
@@ -164,207 +190,208 @@ class AirBluePackageSelectionDialog extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Padding(
-          padding: EdgeInsets.only(left: 16, top: 8, bottom: 8),
+          padding: EdgeInsets.only(left: 16, top: 8, bottom: 16),
           child: Text(
-            'Available Packages',
+            'Available ',
             style: TextStyle(
-              fontSize: 18,
+              fontSize: 20,
               fontWeight: FontWeight.bold,
               color: TColors.text,
             ),
           ),
         ),
         Expanded(
-          child: PageView.builder(
-            controller: _pageController,
-            padEnds: false,
+          child: ListView.builder(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
             itemCount: fareOptions.length,
             itemBuilder: (context, index) {
-              return AnimatedBuilder(
-                animation: _pageController,
-                builder: (context, child) {
-                  double value = 1.0;
-                  if (_pageController.position.haveDimensions) {
-                    value = _pageController.page! - index;
-                    value = (1 - (value.abs() * 0.3)).clamp(0.0, 1.0);
-                  }
-                  return Transform.scale(
-                    scale: Curves.easeOutQuint.transform(value),
-                    child: _buildPackageCard(fareOptions[index], index),
-                  );
-                },
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 16),
+                child: _buildVerticalPackageCard(fareOptions[index], flight, index),
               );
             },
-          ),
-        ),
-        SizedBox(
-          height: 50,
-          child: Center(
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: List.generate(
-                fareOptions.length,
-                    (index) => AnimatedBuilder(
-                  animation: _pageController,
-                  builder: (context, child) {
-                    double value = 0;
-                    if (_pageController.position.haveDimensions) {
-                      value = _pageController.page! - index;
-                    }
-                    return Container(
-                      margin: const EdgeInsets.symmetric(horizontal: 4),
-                      height: 8,
-                      width: value.abs() < 0.5 ? 24 : 8,
-                      decoration: BoxDecoration(
-                        color: value.abs() < 0.5
-                            ? TColors.primary
-                            : TColors.grey.withOpacity(0.3),
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                    );
-                  },
-                ),
-              ),
-            ),
           ),
         ),
       ],
     );
   }
 
-  Widget _buildPackageCard(AirBlueFareOption package, int index) {
+
+  Widget _buildVerticalPackageCard(AirBlueFareOption package, AirBlueFlight flight, int index) {
     final headerColor = TColors.primary;
     final isSoldOut = false;
     final price = finalPrices['${package.cabinCode}-${package.fareName}']?.value ?? package.price;
 
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: TColors.background,
-        borderRadius: BorderRadius.circular(24),
+        color: TColors.white,
+        borderRadius: BorderRadius.circular(16), // smaller radius
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 15,
-            offset: const Offset(0, 5),
+            color: Colors.black.withOpacity(0.08),
+            blurRadius: 12, // reduced
+            offset: const Offset(0, 4), // reduced
           ),
         ],
       ),
       child: Column(
         children: [
-          // Header with package name
+          // Header
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12), // reduced
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: [headerColor, headerColor.withOpacity(0.8)],
+                colors: [
+                  headerColor,
+                  headerColor.withOpacity(0.85),
+                ],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
               borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(24),
-                topRight: Radius.circular(24),
+                topLeft: Radius.circular(16),
+                topRight: Radius.circular(16),
               ),
             ),
-            child: Center(
-              child: Text(
-                package.fareName,
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: TColors.background,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        package.fareName,
+                        style: const TextStyle(
+                          fontSize: 16, // reduced
+                          fontWeight: FontWeight.bold,
+                          color: TColors.white,
+                        ),
+                      ),
+
+                    ],
+                  ),
                 ),
-              ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6), // reduced
+                  decoration: BoxDecoration(
+                    color: TColors.white.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: TColors.white.withOpacity(0.3),
+                      width: 1,
+                    ),
+                  ),
+                  child: Text(
+                    '${package.currency} ${price.toStringAsFixed(0)}',
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: TColors.white,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
 
           // Package details
-          Expanded(
-            child: SingleChildScrollView(
-              child: Padding(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  children: [
-                    _buildPackageDetail(
-                      Icons.luggage,
-                      'Hand Baggage',
-                      '7 KG', // Hardcoded as per web
-                    ),
-                    const SizedBox(height: 8),
-                    _buildPackageDetail(
-                      Icons.luggage,
-                      'Checked Baggage',
-                      package.baggageAllowance,
-                    ),
-                    const SizedBox(height: 8),
-                    _buildPackageDetail(
-                      Icons.restaurant,
-                      'Meal',
-                      'Yes', // Hardcoded as per web
-                    ),
-                    const SizedBox(height: 8),
-                    _buildPackageDetail(
-                      Icons.airline_seat_recline_normal,
-                      'Cabin Class',
-                      '${package.cabinCode} (${package.cabinCode})',
-                    ),
-                    const SizedBox(height: 8),
-                    _buildPackageDetail(
-                      Icons.change_circle,
-                      'Change Fee',
-                      package.changeFee,
-                    ),
-                    const SizedBox(height: 8),
-                    _buildPackageDetail(
-                      Icons.currency_exchange,
-                      'Refund Fee',
-                      package.refundFee,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-
-          // Price and button
           Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(14), // reduced
             child: Column(
               children: [
-                Text(
-                  '${package.currency} ${price.toStringAsFixed(2)}',
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: TColors.text,
-                  ),
+                // First row
+                _buildPackageDetail(
+                  Icons.work_outline_rounded,
+                  'Hand Baggage',
+                  '7 KG',
+
+                ),
+                const SizedBox(height: 12), // reduced
+                _buildPackageDetail(
+                  Icons.luggage,
+                  'Checked Baggage',
+                  package.baggageAllowance,
+
+                ),
+
+                const SizedBox(height: 12),
+
+                // Second row
+                _buildPackageDetail(
+                  Icons.restaurant_rounded,
+                  'Meal',
+                  'Included',
+
                 ),
                 const SizedBox(height: 12),
-                Obx(() => ElevatedButton(
-                  onPressed: isSoldOut || isLoading.value
-                      ? null
-                      : () => onSelectPackage(index),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: isSoldOut ?  Colors.grey : TColors.primary,
-                    minimumSize: const Size(double.infinity, 48),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(24),
+                _buildPackageDetail(
+                  Icons.airline_seat_recline_normal,
+                  'Cabin',
+                  // package.cabinCode,
+                  "Economy",
+
+                ),
+
+                const SizedBox(height: 12),
+
+                // Third row
+                _buildPackageDetail(
+                  Icons.swap_horiz_rounded,
+                  'Change Fee',
+                  package.changeFee,
+
+                  details: flight.changeFeeDetails,
+                ),
+                const SizedBox(height: 12),
+                _buildPackageDetail(
+                  Icons.money_off_rounded,
+                  'Refund Fee',
+                  package.refundFee,
+
+                  details: flight.refundFeeDetails,
+                ),
+
+                const SizedBox(height: 16),
+
+                // Button
+                Obx(() => SizedBox(
+                  width: double.infinity,
+                  height: 44, // reduced button height
+                  child: ElevatedButton(
+                    onPressed: isSoldOut || isLoading.value
+                        ? null
+                        : () => onSelectPackage(index),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: isSoldOut ? Colors.grey : TColors.primary,
+                      foregroundColor: TColors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      elevation: 0,
                     ),
-                    elevation: 2,
-                  ),
-                  child: isLoading.value
-                      ? const CircularProgressIndicator(
-                    strokeWidth: 3,
-                    valueColor: AlwaysStoppedAnimation<Color>(TColors.background),
-                  )
-                      : Text(
-                    isReturnFlight
-                        ? 'Select Return Package'
-                        : 'Select Package',
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: TColors.background,
+                    child: isLoading.value
+                        ? const SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(TColors.white),
+                      ),
+                    )
+                        : Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          _getButtonText(),
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        const Icon(Icons.arrow_forward_rounded, size: 18),
+                      ],
                     ),
                   ),
                 )),
@@ -376,12 +403,98 @@ class AirBluePackageSelectionDialog extends StatelessWidget {
     );
   }
 
-  Widget _buildPackageDetail(IconData icon, String title, String value) {
+  Widget _buildCompactDetail(
+      IconData icon,
+      String title,
+      String value,
+      Color iconColor, {
+        List<Map<String, dynamic>>? details,
+      }) {
+    final bool hasDetails = details != null && details.isNotEmpty;
+
+    return Container(
+      padding: const EdgeInsets.all(10), // reduced
+      decoration: BoxDecoration(
+        color: iconColor.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: iconColor.withOpacity(0.2),
+          width: 1,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(4), // reduced
+                decoration: BoxDecoration(
+                  color: iconColor.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Icon(icon, color: iconColor, size: 14), // smaller icon
+              ),
+              const Spacer(),
+              if (hasDetails)
+                GestureDetector(
+                  onTap: () => _showFeeDetailsDialog(title, details!),
+                  child: Icon(Icons.info_outline_rounded,
+                      size: 14, color: iconColor),
+                ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w500,
+              color: TColors.text.withOpacity(0.7),
+            ),
+          ),
+          const SizedBox(height: 1),
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.bold,
+              color: TColors.text,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _getButtonText() {
+    if (isMultiCity) {
+      final bookingController = Get.find<FlightBookingController>();
+      final isLastSegment = segmentIndex == bookingController.cityPairs.length - 1;
+      return isLastSegment ? 'Complete Selection' : 'Next Segment';
+    } else if (isReturnFlight) {
+      return 'Select Return Flight';
+    } else {
+      return 'Select';
+    }
+  }
+
+  Widget _buildPackageDetail(IconData icon, String title, String value,
+      {List<Map<String, dynamic>>? details, bool showInfoIcon = false}) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         children: [
-          Icon(icon, color: TColors.primary, size: 20),
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: TColors.secondary,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(icon, color: TColors.background, size: 18),
+          ),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -394,13 +507,28 @@ class AirBluePackageSelectionDialog extends StatelessWidget {
                     color: TColors.grey,
                   ),
                 ),
-                Text(
-                  value,
-                  style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: TColors.text,
-                  ),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        value,
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: TColors.text,
+                        ),
+                      ),
+                    ),
+                    if (showInfoIcon && details != null && details.isNotEmpty)
+                      GestureDetector(
+                        onTap: () => _showFeeDetailsDialog(title, details),
+                        child: const Icon(
+                          Icons.help_outline,
+                          size: 18,
+                          color: TColors.primary,
+                        ),
+                      ),
+                  ],
                 ),
               ],
             ),
@@ -409,60 +537,42 @@ class AirBluePackageSelectionDialog extends StatelessWidget {
       ),
     );
   }
-// Update in airblue_flight_package.dart
+
+  // ALSO FIX: In onSelectPackage method
   void onSelectPackage(int selectedPackageIndex) async {
     try {
+
       isLoading.value = true;
 
-      // Get all fare options for this flight
-      final List<AirBlueFareOption> fareOptions =
-      airBlueController.getFareOptionsForFlight(flight);
+      print('DEBUG: onSelectPackage called - isReturnFlight: $isReturnFlight, segmentIndex: $segmentIndex');
+
+      // FIXED: Get fare options with correct segment index
+      final List<AirBlueFareOption> fareOptions = airBlueController.getFareOptionsForFlight(
+        flight,
+        segmentIndex: segmentIndex,  // Pass the segment index here too
+      );
 
       // Get the selected fare option
       final selectedFareOption = fareOptions[selectedPackageIndex];
-
-      // Check if this is a one-way flight or we need to select a return flight
+      print("check abc 1");
+      print(isReturnFlight);
+      // Check trip type
       final tripType = flightBookingController.tripType.value;
 
-      if (tripType == TripType.oneWay || isReturnFlight) {
+      if (isMultiCity) {
+        // Handle multi-city selection
+        _handleMultiCitySelection(selectedFareOption);
+      } else if (tripType == TripType.oneWay || isReturnFlight) {
+        print("check abc 1");
         // For one-way trip or if this is already the return flight selection
-        Get.back(); // Close the package selection dialog
-
-        // Store the selected flight and package
-        if (isReturnFlight) {
-          airBlueController.selectedReturnFareOption = selectedFareOption;
-        } else {
-          airBlueController.selectedOutboundFareOption = selectedFareOption;
-        }
-
-
-        // TODO: Navigate to booking details page
-        Get.snackbar(
-          'Success',
-          isReturnFlight
-              ? 'Return flight package selected. Proceeding to booking details.'
-              : 'Flight package selected. Proceeding to booking details.',
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.green,
-          colorText: Colors.white,
-        );
-        Get.to(() => AirBlueReviewTripPage(
-         flight: flight,
-          // The full API response for this flight
-          isReturn: isReturnFlight,
-        ));
+        _handleOneWayOrReturnSelection(selectedFareOption);
       } else {
-        // For round trip, show return flights
-        Get.back(); // Close the package selection dialog
 
-        // Store the selected outbound flight and package
-        airBlueController.selectedOutboundFlight = flight;
-        airBlueController.selectedOutboundFareOption = selectedFareOption;
-
-        // Show return flights
-        _showReturnFlights();
+        // For round trip (only 2 segments: outbound and return)
+        _handleRoundTripSelection(selectedFareOption);
       }
     } catch (e) {
+      print('DEBUG: Error in onSelectPackage: $e');
       Get.snackbar(
         'Error',
         'This flight package is no longer available. Please select another option.',
@@ -473,6 +583,279 @@ class AirBluePackageSelectionDialog extends StatelessWidget {
       );
     } finally {
       isLoading.value = false;
+    }
+  }
+  // FIXED: Method in airblue_flight_package.dart
+
+// NEW: Dedicated method to handle multi-city selections
+  void _handleMultiCitySelection(AirBlueFareOption selectedFareOption) {
+    final bookingController = Get.find<FlightBookingController>();
+
+    print('DEBUG: _handleMultiCitySelection for segment $segmentIndex');
+    print('DEBUG: Total segments: ${bookingController.cityPairs.length}');
+
+    // FIXED: Store the selection for this segment using the controller method
+    airBlueController.handleMultiCityPackageSelection(
+        selectedFareOption,
+        segmentIndex
+    );
+
+    // Get.back(); // Close the package selection dialog
+
+    // The rest of the logic is now handled in the controller
+    // No need to duplicate the logic here
+  }
+  // NEW: Dedicated method to handle one-way or return flight selections
+  void _handleOneWayOrReturnSelection(AirBlueFareOption selectedFareOption) {
+
+    // Store the selected flight and package
+    if (isReturnFlight) {
+      airBlueController.selectedReturnFareOption = selectedFareOption;
+    } else {
+      airBlueController.selectedOutboundFareOption = selectedFareOption;
+    }
+    Get.back(); // Close the package selection dialog
+
+    // Navigate to review page
+    Get.snackbar(
+      'Success',
+      isReturnFlight
+          ? 'Return flight package selected. Proceeding to booking details.'
+          : 'Flight package selected. Proceeding to booking details.',
+      snackPosition: SnackPosition.BOTTOM,
+      backgroundColor: Colors.green,
+      colorText: Colors.white,
+      duration: const Duration(seconds: 2),
+    );
+
+    // FIXED: Use a small delay to ensure the dialog is fully closed before navigation
+    Future.delayed(Duration(milliseconds: 300), () {
+      Get.to(() => AirBlueReviewTripPage(
+        flight: flight,
+        isReturn: isReturnFlight,
+      ));
+    });
+  }
+
+  // NEW: Dedicated method to handle round trip selections
+  void _handleRoundTripSelection(AirBlueFareOption selectedFareOption) {
+
+    print('DEBUG: Return flight selected - ${flight.legSchedules.first['departure']['airport']} -> ${flight.legSchedules.last['arrival']['airport']}');
+
+
+    Get.back(); // Close the package selection dialog
+
+    // Store the selected outbound flight and package
+    airBlueController.selectedOutboundFlight = flight;
+    airBlueController.selectedOutboundFareOption = selectedFareOption;
+
+    // Show return flights
+    _showReturnFlights();
+  }
+
+  // NEW: Method to proceed to multi-city review
+  void _proceedToMultiCityReview() {
+    // You can create a dedicated multi-city review page or
+    // modify the existing review page to handle multi-city
+    Get.snackbar(
+      'Multi-City Review',
+      'This will navigate to multi-city review page',
+      snackPosition: SnackPosition.BOTTOM,
+      backgroundColor: Colors.orange,
+      colorText: Colors.white,
+    );
+
+    // TODO: Navigate to multi-city review page
+    Get.to(() => AirBlueReviewTripPage(
+      flight: airBlueController.selectedMultiCityFlights.where((f) => f != null).cast<AirBlueFlight>().toList().first,
+      multicityFlights: airBlueController.selectedMultiCityFlights.where((f) => f != null).cast<AirBlueFlight>().toList(),
+      isMulticity: true,
+      multicityFareOptions: airBlueController.selectedMultiCityFareOptions,
+    ));
+  }
+
+  void _showFeeDetailsDialog(String title, List<Map<String, dynamic>> details) {
+    Get.dialog(
+      Dialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        elevation: 0,
+        backgroundColor: Colors.transparent,
+        child: Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: TColors.white,
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 20,
+                offset: const Offset(0, 10),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Header
+              Container(
+                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                decoration: BoxDecoration(
+                  color: TColors.primary.withOpacity(0.05),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      title.toLowerCase().contains('change')
+                          ? Icons.swap_horiz_rounded
+                          : Icons.money_off_rounded,
+                      color: TColors.primary,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                        color: TColors.primary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 20),
+
+              // Fee details list
+              Container(
+                constraints: const BoxConstraints(maxHeight: 250),
+                child: SingleChildScrollView(
+                  child: Column(
+                    children: details.map((detail) {
+                      return Container(
+                        margin: const EdgeInsets.only(bottom: 12),
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: TColors.background3.withOpacity(0.3),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: TColors.primary.withOpacity(0.1),
+                            width: 1,
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            // Time icon and condition
+                            Expanded(
+                              flex: 3,
+                              child: Row(
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.all(8),
+                                    decoration: BoxDecoration(
+                                      color: TColors.primary.withOpacity(0.1),
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Icon(
+                                      Icons.access_time_rounded,
+                                      color: TColors.primary,
+                                      size: 16,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Text(
+                                      _formatConditionText(detail['condition'] ?? ''),
+                                      style: const TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w500,
+                                        color: TColors.text,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+
+                            // Amount
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: TColors.primary,
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Text(
+                                detail['amount'] ?? '',
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  color: TColors.white,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 20),
+
+              // Close button
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () => Get.back(),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: TColors.primary,
+                    foregroundColor: TColors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    elevation: 0,
+                  ),
+                  child: const Text(
+                    'Close',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+      barrierDismissible: true,
+    );
+  }
+
+  // Helper function to format condition text in a user-friendly way
+  String _formatConditionText(String condition) {
+    switch (condition.toLowerCase()) {
+      case '<0':
+        return 'Time is <0 hour(s)';
+      case '<48':
+        return 'Time is <48 hour(s)';
+      case '>48':
+        return 'Time is >48 hour(s)';
+      default:
+        if (condition.contains('<')) {
+          final hours = condition.replaceAll('<', '').trim();
+          return 'Time is <$hours hour(s)';
+        } else if (condition.contains('>')) {
+          final hours = condition.replaceAll('>', '').trim();
+          return 'Time is >$hours hour(s)';
+        }
+        return condition;
     }
   }
 
@@ -487,6 +870,12 @@ class AirBluePackageSelectionDialog extends StatelessWidget {
         backgroundColor: Colors.red,
         colorText: Colors.white,
       );
+
+      // Debug information
+      final bookingController = Get.find<FlightBookingController>();
+      print('DEBUG: No return flights found for trip type: ${bookingController.tripType.value}');
+      print('DEBUG: Available segments: ${airBlueController.flightsBySegment.keys.toList()}');
+      print('DEBUG: Available fare keys: ${airBlueController.fareOptionsByRPH.keys.toList()}');
       return;
     }
 

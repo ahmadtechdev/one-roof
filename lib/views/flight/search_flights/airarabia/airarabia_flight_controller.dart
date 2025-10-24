@@ -8,7 +8,7 @@ import '../flight_package/airarabia/airarabia_flight_package.dart';
 import 'airarabia_flight_model.dart';
 
 class AirArabiaFlightController extends GetxController {
-  
+
   final ApiServiceAirArabia apiService = Get.find<ApiServiceAirArabia>();
   int selectedPackageIndex = 0;
 
@@ -36,11 +36,11 @@ class AirArabiaFlightController extends GetxController {
   Future<void> _fetchMarginData() async {
     try {
       isLoadingMargin.value = true;
-      
+
       // Check if user is logged in
       final authController = Get.find<AuthController>();
       final isLoggedIn = await authController.isLoggedIn();
-      
+
       String? userEmail;
       if (isLoggedIn) {
         final userData = await authController.getUserData();
@@ -53,17 +53,17 @@ class AirArabiaFlightController extends GetxController {
       // Fetch margin data
       final margin = await apiService.getAirArabiaMargin(userEmail);
       marginData.value = margin;
-      
+
       print('Air Arabia Margin Data: $margin');
-      
+
       // Validate margin data
       final marginVal = double.tryParse(margin['margin_val']?.toString() ?? '0') ?? 0.0;
       final marginPer = double.tryParse(margin['margin_per']?.toString() ?? '0') ?? 0.0;
-      
+
       if (marginVal == 0 && marginPer == 0) {
         print('Warning: Both margin values are zero');
       }
-      
+
     } catch (e) {
       print('Error fetching Air Arabia margin: $e');
       // Set default margin on error
@@ -144,7 +144,7 @@ class AirArabiaFlightController extends GetxController {
     for (int i = 0; i < flights.length; i++) {
       final flight = flights[i];
       final priceWithMargin = calculateFlightPriceWithMargin(flight.price);
-      
+
       // Update flight price with margin
       flights[i] = AirArabiaFlight(
         id: flight.id,
@@ -162,7 +162,7 @@ class AirArabiaFlightController extends GetxController {
         inboundFlight: flight.inboundFlight,
       );
     }
-    
+
     print('Applied margin to ${flights.length} flights');
   }
 
@@ -188,7 +188,7 @@ class AirArabiaFlightController extends GetxController {
   void _processRoundTripFlights(Map<String, dynamic> ondWiseFlights) {
     final routes = ondWiseFlights.keys.toList();
     final outboundRoute = routes[1];
-    
+
     final outboundFlights = <Map<String, dynamic>>[];
     final inboundFlights = <Map<String, dynamic>>[];
 
@@ -233,7 +233,7 @@ class AirArabiaFlightController extends GetxController {
   AirArabiaFlight _createRoundTripPackage(
       Map<String, dynamic> outbound,
       Map<String, dynamic> inbound
-  ) {
+      ) {
     final combinedSegments = [
       ...outbound['flightSegments'],
       ...inbound['flightSegments']
@@ -262,7 +262,7 @@ class AirArabiaFlightController extends GetxController {
 
   void handleAirArabiaFlightSelection(AirArabiaFlight flight) {
     Get.to(
-      () => AirArabiaPackageSelectionDialog(
+          () => AirArabiaPackageSelectionDialog(
         flight: flight,
         isReturnFlight: false,
       ),
@@ -289,7 +289,7 @@ class AirArabiaFlightController extends GetxController {
     if (airlines != null && !airlines.contains('all')) {
       filtered = filtered.where((flight) {
         return airlines.any((airlineCode) =>
-            flight.airlineCode.toUpperCase() == airlineCode.toUpperCase()
+        flight.airlineCode.toUpperCase() == airlineCode.toUpperCase()
         );
       }).toList();
     }

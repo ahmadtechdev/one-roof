@@ -754,9 +754,9 @@ class _AirArabiaPackageSelectionDialogState extends State<AirArabiaPackageSelect
 
       Get.to(() => AirArabiaRevalidationScreen(), arguments: {
         'type': tripType,
-        'adult': bookingController.adults.length,
-        'child': bookingController.children.length,
-        'infant': bookingController.infants.length,
+        'adult': flightBookingController.adultCount.value,
+        'child': flightBookingController.childrenCount.value,
+        'infant': flightBookingController.infantCount.value,
         'sector': sector,
         'fare': fare,
         'csId': 15,

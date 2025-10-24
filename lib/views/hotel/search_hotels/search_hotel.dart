@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:get/get.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:oneroof/widgets/location_permission_dialog.dart';
+import 'package:oneroof/services/location_permission_service.dart';
 import 'package:oneroof/utility/colors.dart' show TColors;
 import 'package:oneroof/views/hotel/hotel/hotel_date_controller.dart';
 import 'package:oneroof/views/hotel/search_hotels/hotel_info/hotel_info.dart';
@@ -512,22 +514,27 @@ class HotelCard extends StatelessWidget {
                       ),
                     ),
                     GestureDetector(
-                      onTap: () {
-                        Get.to(
-                          () => MapScreen(
-                            latitude:
-                                double.tryParse(
-                                  hotel['latitude']?.toString() ?? '',
-                                ) ??
-                                0.0,
-                            longitude:
-                                double.tryParse(
-                                  hotel['longitude']?.toString() ?? '',
-                                ) ??
-                                0.0,
-                            hotelName: hotel['name'] ?? 'Unknown Hotel',
-                          ),
-                        );
+                      onTap: () async {
+                        // Handle location permission with prominent disclosure
+                        bool hasPermission = await LocationPermissionService.instance.handleLocationPermissionForMaps(Get.context!);
+                        
+                        if (hasPermission) {
+                          Get.to(
+                            () => MapScreen(
+                              latitude:
+                                  double.tryParse(
+                                    hotel['latitude']?.toString() ?? '',
+                                  ) ??
+                                  0.0,
+                              longitude:
+                                  double.tryParse(
+                                    hotel['longitude']?.toString() ?? '',
+                                  ) ??
+                                  0.0,
+                              hotelName: hotel['name'] ?? 'Unknown Hotel',
+                            ),
+                          );
+                        }
                       },
                       child: const Icon(
                         Icons.location_on_rounded,

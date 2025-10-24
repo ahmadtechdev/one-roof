@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../utility/colors.dart';
+import '../form/flight_form.dart';
 import 'airarabia/airarabia_flight_controller.dart';
 import 'airblue/airblue_flight_controller.dart';
 import 'filters/flight_filter_service.dart';
@@ -34,16 +35,30 @@ class FlightBookingPage extends StatelessWidget {
       appBar: AppBar(
         surfaceTintColor: TColors.background,
         backgroundColor: TColors.background,
-        leading: const BackButton(),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            Get.offAll(() => FlightBookingScreen());
+          },
+        ),
+
         title: Obx(() {
           // Get total flight count
           final totalFlights = 
               airBlueController.flights.length +
-              piaController.filteredFlights.length +
               airArabiaController.flights.length;
-          final isLoading = airBlueController.isLoading.value ||
-              piaController.isLoading.value ||
-              airArabiaController.isLoading.value;
+          
+          // Show loading until we have at least one flight from either provider
+          final hasFlights = airBlueController.flights.isNotEmpty || 
+                            airArabiaController.flights.isNotEmpty;
+          final isLoading = (airBlueController.isLoading.value || 
+                            airArabiaController.isLoading.value) && 
+                           !hasFlights;
+          
+          // Check if both APIs have completed and no flights found
+          final bothCompleted = !airBlueController.isLoading.value && 
+                               !airArabiaController.isLoading.value;
+          final noFlightsFound = bothCompleted && totalFlights == 0;
 
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -53,6 +68,15 @@ class FlightBookingPage extends StatelessWidget {
                   if (isLoading)
                     const Text(
                       'Searching flights...',
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: TColors.text,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    )
+                  else if (noFlightsFound)
+                    const Text(
+                      'No flights found',
                       style: TextStyle(
                         fontSize: 16,
                         color: TColors.text,
@@ -211,12 +235,6 @@ class FlightBookingPage extends StatelessWidget {
 
             // AirBlue flights section
             Obx(() {
-              if (airBlueController.isLoading.value && airBlueController.filteredFlights.isEmpty) {
-                return const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 8.0),
-                  child: Center(child: CircularProgressIndicator()),
-                );
-              }
               return ListView.builder(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
@@ -232,37 +250,31 @@ class FlightBookingPage extends StatelessWidget {
               );
             }),
 
-            // PIA flights section
-            Obx(() {
-              if (piaController.isLoading.value && piaController.filteredFlights.isEmpty) {
-                return const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 8.0),
-                  child: Center(child: CircularProgressIndicator()),
-                );
-              }
-              return ListView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: piaController.filteredFlights.length,
-                itemBuilder: (context, index) {
-                  final flight = piaController.filteredFlights[index];
-                  return GestureDetector(
-                    onTap: () { },
-                    // onTap: () => piaController.handlePIAFlightSelection(flight),
-                    child: PIAFlightCard(flight: flight),
-                  );
-                },
-              );
-            }),
+            // // PIA flights section
+            // Obx(() {
+            //   if (piaController.isLoading.value && piaController.filteredFlights.isEmpty) {
+            //     return const Padding(
+            //       padding: EdgeInsets.symmetric(vertical: 8.0),
+            //       child: Center(child: CircularProgressIndicator()),
+            //     );
+            //   }
+            //   return ListView.builder(
+            //     shrinkWrap: true,
+            //     physics: const NeverScrollableScrollPhysics(),
+            //     itemCount: piaController.filteredFlights.length,
+            //     itemBuilder: (context, index) {
+            //       final flight = piaController.filteredFlights[index];
+            //       return GestureDetector(
+            //         onTap: () { },
+            //         // onTap: () => piaController.handlePIAFlightSelection(flight),
+            //         child: PIAFlightCard(flight: flight),
+            //       );
+            //     },
+            //   );
+            // }),
 
             // Air Arabia flights section
             Obx(() {
-              if (airArabiaController.isLoading.value && airArabiaController.filteredFlights.isEmpty) {
-                return const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 8.0),
-                  child: Center(child: CircularProgressIndicator()),
-                );
-              }
               return ListView.builder(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
