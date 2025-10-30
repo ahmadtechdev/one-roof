@@ -355,6 +355,7 @@ class _AgentDashboardState extends State<AgentDashboard> {
 
   Widget _buildDrawer() {
     return Drawer(
+      width: MediaQuery.of(context).size.width/1.4,
       child: Container(
         color: TColors.secondary,
         child: ListView(
@@ -395,6 +396,9 @@ class _AgentDashboardState extends State<AgentDashboard> {
               ),
             ),
             _buildDrawerItem(Icons.dashboard, 'Dashboard', true, () {}),
+            _buildDrawerItem(Icons.home, 'Home', false, () {
+              Get.to(() => HomeScreen());
+            }),
             _buildDrawerItem(Icons.flight, 'All Flight Bookings', false, () {
               Get.to(() => AllFlightBookingScreen());
             }),
@@ -421,11 +425,11 @@ class _AgentDashboardState extends State<AgentDashboard> {
     Function()? onTapFunction,
   ]) {
     return ListTile(
-      leading: Icon(icon, color: isSelected ? TColors.third : TColors.white),
+      leading: Icon(icon, color: isSelected ? TColors.primary : TColors.white),
       title: Text(
         title,
         style: TextStyle(
-          color: isSelected ? TColors.third : TColors.white,
+          color: isSelected ? TColors.primary : TColors.white,
           fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
         ),
       ),

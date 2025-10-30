@@ -20,55 +20,77 @@ class AllFlightBookingScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: TColors.background,
+      backgroundColor: const Color(0xFFF5F7FA),
       appBar: AppBar(
         foregroundColor: Colors.white,
         backgroundColor: TColors.background4,
+        elevation: 0,
         title: const Text(
           'All Flights Booking',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.w600,
+            fontSize: 18,
+          ),
         ),
-        elevation: 0,
         actions: [
           Obx(
-            () =>
-                controller.isLoading.value
-                    ? const Padding(
-                      padding: EdgeInsets.all(16.0),
-                      child: SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(
-                          color: Colors.white,
-                          strokeWidth: 2,
-                        ),
+            () => controller.isLoading.value
+                ? const Padding(
+                    padding: EdgeInsets.all(16.0),
+                    child: SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        color: Colors.white,
+                        strokeWidth: 2,
                       ),
-                    )
-                    : IconButton(
-                      icon: const Icon(Icons.refresh),
-                      onPressed: controller.loadBookings,
-                      tooltip: 'Refresh data',
                     ),
+                  )
+                : IconButton(
+                    icon: const Icon(Icons.refresh_rounded),
+                    onPressed: controller.loadBookings,
+                    tooltip: 'Refresh data',
+                  ),
           ),
         ],
       ),
       body: Column(
         children: [
+          // Fixed date filter at top
           _buildDateFilter(),
-          _buildSearchBar(),
-          _buildStatCards(),
+          // Scrollable content area with stats and search
           Expanded(
-            child: Obx(() {
-              if (controller.isLoading.value) {
-                return const Center(child: CircularProgressIndicator());
-              } else if (controller.hasError.value) {
-                return _buildErrorWidget();
-              } else if (controller.filteredBookings.isEmpty) {
-                return _buildEmptyStateWidget();
-              } else {
-                return _buildBookingCards();
-              }
-            }),
+            child: CustomScrollView(
+              slivers: [
+                // Stat cards section
+                SliverToBoxAdapter(
+                  child: _buildStatCards(),
+                ),
+                // Search bar section
+                SliverToBoxAdapter(
+                  child: _buildSearchBar(),
+                ),
+                // Booking cards section
+                Obx(() {
+                  if (controller.isLoading.value) {
+                    return const SliverFillRemaining(
+                      child: Center(child: CircularProgressIndicator()),
+                    );
+                  } else if (controller.hasError.value) {
+                    return SliverFillRemaining(
+                      child: _buildErrorWidget(),
+                    );
+                  } else if (controller.filteredBookings.isEmpty) {
+                    return SliverFillRemaining(
+                      child: _buildEmptyStateWidget(),
+                    );
+                  } else {
+                    return _buildBookingCards();
+                  }
+                }),
+              ],
+            ),
           ),
         ],
       ),
@@ -77,101 +99,81 @@ class AllFlightBookingScreen extends StatelessWidget {
 
   Widget _buildDateFilter() {
     return Container(
-      padding: const EdgeInsets.all(16),
-      color: Colors.blue,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: TColors.background4,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
         children: [
-          Row(
+          Expanded(
+            child: _buildDateSelector(
+              label: 'From',
+              date: controller.fromDate,
+              onTap: () => controller.selectFromDate(Get.context!),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: _buildDateSelector(
+              label: 'To',
+              date: controller.toDate,
+              onTap: () => controller.selectToDate(Get.context!),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDateSelector({
+    required String label,
+    required Rx<DateTime> date,
+    required VoidCallback onTap,
+  }) {
+    return Obx(
+      () => GestureDetector(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: Colors.white.withOpacity(0.2)),
+          ),
+          child: Row(
             children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Date From',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Obx(
-                      () => GestureDetector(
-                        onTap: () => controller.selectFromDate(Get.context!),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 8,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.black87,
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                DateFormat(
-                                  'dd/MM/yyyy',
-                                ).format(controller.fromDate.value),
-                                style: const TextStyle(color: Colors.white),
-                              ),
-                              const Icon(
-                                Icons.calendar_today,
-                                color: Colors.white,
-                                size: 16,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+              Icon(
+                Icons.calendar_today_rounded,
+                size: 16,
+                color: TColors.primary,
               ),
-              const SizedBox(width: 16),
+              const SizedBox(width: 8),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'Date To',
+                    Text(
+                      label,
                       style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
+                        fontSize: 10,
+                        color: TColors.grey.withOpacity(0.7),
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
-                    const SizedBox(height: 8),
-                    Obx(
-                      () => GestureDetector(
-                        onTap: () => controller.selectToDate(Get.context!),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 8,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.black87,
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                DateFormat(
-                                  'dd/MM/yyyy',
-                                ).format(controller.toDate.value),
-                                style: const TextStyle(color: Colors.white),
-                              ),
-                              const Icon(
-                                Icons.calendar_today,
-                                color: Colors.white,
-                                size: 16,
-                              ),
-                            ],
-                          ),
-                        ),
+                    const SizedBox(height: 2),
+                    Text(
+                      DateFormat('dd/MM/yyyy').format(date.value),
+                      style: TextStyle(
+                        color: TColors.text,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ],
@@ -179,29 +181,6 @@ class AllFlightBookingScreen extends StatelessWidget {
               ),
             ],
           ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSearchBar() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      color: Colors.blue.shade700,
-      child: TextField(
-        controller: controller.searchController,
-        style: const TextStyle(color: Colors.white),
-        decoration: InputDecoration(
-          hintText: 'Search bookings...',
-          hintStyle: TextStyle(color: Colors.white.withOpacity(0.7)),
-          prefixIcon: const Icon(Icons.search, color: Colors.white),
-          filled: true,
-          fillColor: Colors.blue.shade900,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10),
-            borderSide: BorderSide.none,
-          ),
-          contentPadding: const EdgeInsets.symmetric(vertical: 0),
         ),
       ),
     );
@@ -210,85 +189,63 @@ class AllFlightBookingScreen extends StatelessWidget {
   Widget _buildStatCards() {
     return Container(
       padding: const EdgeInsets.all(16),
-      color: Colors.black87,
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: Obx(
-          () => Row(
-            children: [
-              _buildStatCard(
-                'Total Bookings',
-                controller.totalBookings.value,
-                Colors.blue,
-              ),
-              _buildStatCard(
-                'Confirmed',
-                controller.confirmedBookings.value,
-                Colors.green,
-              ),
-              _buildStatCard(
-                'On Hold',
-                controller.onHoldBookings.value,
-                Colors.amber,
-              ),
-              _buildStatCard(
-                'Cancelled',
-                controller.cancelledBookings.value,
-                Colors.red,
-              ),
-              _buildStatCard(
-                'Error',
-                controller.errorBookings.value,
-                Colors.blueGrey,
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildStatCard(String title, int count, Color color) {
-    return Container(
-      width: 100,
-      margin: const EdgeInsets.only(right: 12),
-      decoration: BoxDecoration(
-        color: color,
-        borderRadius: BorderRadius.circular(8),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.2),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+      child: Obx(
+        () => Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Text(
-                title,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 12,
+            // First row - 2 cards
+            Row(
+              children: [
+                Expanded(
+                  child: _buildStatCard(
+                    'Total',
+                    controller.totalBookings.value,
+                    const Color(0xFF6366F1),
+                    Icons.flight_takeoff_rounded,
+                  ),
                 ),
-                textAlign: TextAlign.center,
-              ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _buildStatCard(
+                    'Confirmed',
+                    controller.confirmedBookings.value,
+                    const Color(0xFF10B981),
+                    Icons.check_circle_rounded,
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 8),
-            Text(
-              count.toString(),
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-                fontSize: 20,
-              ),
-              textAlign: TextAlign.center,
+            const SizedBox(height: 12),
+            // Second row - 3 cards
+            Row(
+              children: [
+                Expanded(
+                  child: _buildStatCard(
+                    'On Hold',
+                    controller.onHoldBookings.value,
+                    const Color(0xFFF59E0B),
+                    Icons.pause_circle_rounded,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _buildStatCard(
+                    'Cancelled',
+                    controller.cancelledBookings.value,
+                    const Color(0xFFEF4444),
+                    Icons.cancel_rounded,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _buildStatCard(
+                    'Error',
+                    controller.errorBookings.value,
+                    const Color(0xFF6B7280),
+                    Icons.error_outline_rounded,
+                  ),
+                ),
+              ],
             ),
           ],
         ),
@@ -296,282 +253,548 @@ class AllFlightBookingScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildErrorWidget() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Icon(Icons.error_outline, color: Colors.red, size: 60),
-          const SizedBox(height: 16),
-          Text(
-            'Error loading bookings',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: TColors.text,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 40),
-            child: Text(
-              controller.errorMessage.value,
-              textAlign: TextAlign.center,
-              style: TextStyle(color: TColors.grey),
-            ),
-          ),
-          const SizedBox(height: 24),
-          ElevatedButton(
-            onPressed: controller.retryLoading,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: TColors.primary,
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-            ),
-            child: const Text('Try Again'),
+  Widget _buildStatCard(String title, int count, Color color, IconData icon) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: color.withOpacity(0.1),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
           ),
         ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(icon, color: color, size: 20),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: TColors.grey,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  count.toString(),
+                  style: TextStyle(
+                    fontSize: 18,
+                    color: color,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSearchBar() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: TextField(
+        controller: controller.searchController,
+        style: const TextStyle(color: TColors.text),
+        decoration: InputDecoration(
+          hintText: 'Search by booking ID, PNR, passenger...',
+          hintStyle: TextStyle(
+            color: TColors.grey.withOpacity(0.6),
+            fontSize: 14,
+          ),
+          prefixIcon: Icon(
+            Icons.search_rounded,
+            color: TColors.primary,
+            size: 20,
+          ),
+          filled: true,
+          fillColor: Colors.white,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(
+              color: Colors.grey.withOpacity(0.2),
+            ),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(
+              color: Colors.grey.withOpacity(0.2),
+            ),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(
+              color: TColors.primary,
+              width: 2,
+            ),
+          ),
+          contentPadding: const EdgeInsets.symmetric(vertical: 12),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildErrorWidget() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Colors.red.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.error_outline_rounded,
+                color: Colors.red,
+                size: 60,
+              ),
+            ),
+            const SizedBox(height: 24),
+            Text(
+              'Error loading bookings',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: TColors.text,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 40),
+              child: Text(
+                controller.errorMessage.value,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: TColors.grey,
+                  fontSize: 14,
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton.icon(
+              onPressed: controller.retryLoading,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: TColors.primary,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 12,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              icon: const Icon(Icons.refresh_rounded, color: Colors.white),
+              label: const Text(
+                'Try Again',
+                style: TextStyle(color: Colors.white),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildEmptyStateWidget() {
     return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.flight_takeoff, color: TColors.grey, size: 60),
-          const SizedBox(height: 16),
-          Text(
-            'No flight bookings found',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: TColors.text,
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: TColors.primary.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.flight_takeoff_rounded,
+                color: TColors.primary,
+                size: 60,
+              ),
             ),
-          ),
-          const SizedBox(height: 8),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 40),
-            child: Text(
-              'Try changing the date range or search criteria',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: TColors.grey),
+            const SizedBox(height: 24),
+            Text(
+              'No flight bookings found',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: TColors.text,
+              ),
             ),
-          ),
-        ],
+            const SizedBox(height: 8),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 40),
+              child: Text(
+                'Try changing the date range or search criteria',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: TColors.grey,
+                  fontSize: 14,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildBookingCards() {
-    return ListView.builder(
+    return SliverPadding(
       padding: const EdgeInsets.all(16),
-      itemCount: controller.filteredBookings.length,
-      itemBuilder: (context, index) {
-        final booking = controller.filteredBookings[index];
-        return _buildBookingCard(booking);
-      },
+      sliver: SliverList(
+        delegate: SliverChildBuilderDelegate(
+          (context, index) {
+            final booking = controller.filteredBookings[index];
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: _buildCollapsibleBookingCard(booking),
+            );
+          },
+          childCount: controller.filteredBookings.length,
+        ),
+      ),
     );
   }
 
-  Widget _buildBookingCard(BookingModel booking) {
-    Color statusColor;
+  Widget _buildCollapsibleBookingCard(BookingModel booking) {
+    return _CollapsibleBookingCard(booking: booking, controller: controller);
+  }
+}
 
-    switch (booking.status) {
+class _CollapsibleBookingCard extends StatefulWidget {
+  final BookingModel booking;
+  final AllFlightBookingController controller;
+
+  const _CollapsibleBookingCard({
+    required this.booking,
+    required this.controller,
+  });
+
+  @override
+  State<_CollapsibleBookingCard> createState() =>
+      _CollapsibleBookingCardState();
+}
+
+class _CollapsibleBookingCardState extends State<_CollapsibleBookingCard> {
+  bool _isExpanded = false;
+
+  Color _getStatusColor() {
+    switch (widget.booking.status) {
       case 'Confirmed':
-        statusColor = Colors.green;
-        break;
+        return const Color(0xFF10B981);
       case 'On Hold':
       case 'On Request':
-        statusColor = Colors.orange;
-        break;
+        return const Color(0xFFF59E0B);
       case 'Cancelled':
-        statusColor = Colors.red;
-        break;
+        return const Color(0xFFEF4444);
       default:
-        statusColor = Colors.grey;
+        return const Color(0xFF6B7280);
     }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final statusColor = _getStatusColor();
 
     return Card(
-      elevation: 4,
-      margin: const EdgeInsets.only(bottom: 16),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Column(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: TColors.background4,
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(12),
-                topRight: Radius.circular(12),
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(
+          color: Colors.grey.withOpacity(0.2),
+          width: 1,
+        ),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: Column(
+          children: [
+            // Header - always visible
+            InkWell(
+              onTap: () {
+                setState(() {
+                  _isExpanded = !_isExpanded;
+                });
+              },
+              child: Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      TColors.background4,
+                      TColors.background4.withOpacity(0.9),
+                    ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    // Booking ID and basic info
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            widget.booking.bookingId,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.flight_rounded,
+                                size: 14,
+                                color: Colors.white.withOpacity(0.7),
+                              ),
+                              const SizedBox(width: 4),
+                              Expanded(
+                                child: Text(
+                                  widget.booking.trip,
+                                  style: TextStyle(
+                                    color: Colors.white.withOpacity(0.8),
+                                    fontSize: 12,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    // Status badge
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: statusColor,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        widget.booking.status,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 11,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    // Expand/collapse icon
+                    Icon(
+                      _isExpanded
+                          ? Icons.keyboard_arrow_up_rounded
+                          : Icons.keyboard_arrow_down_rounded,
+                      color: Colors.white,
+                      size: 24,
+                    ),
+                  ],
+                ),
               ),
             ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+            // Expanded content
+            AnimatedSize(
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeInOut,
+              child: _isExpanded
+                  ? Container(
+                color: Colors.white,
+                padding: const EdgeInsets.all(16),
+                child: Column(
                   children: [
-                    const Text(
-                      'Booking ID',
-                      style: TextStyle(color: Colors.white70, fontSize: 12),
+                    _buildInfoRow(
+                      'Booking Date',
+                      DateFormat('E, dd MMM yyyy HH:mm')
+                          .format(widget.booking.creationDate),
+                      Icons.calendar_today_rounded,
                     ),
-                    Text(
-                      booking.bookingId,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
+                    const Divider(height: 24),
+                    _buildInfoRow(
+                      'PNR',
+                      widget.booking.pnr,
+                      Icons.confirmation_number_rounded,
+                    ),
+                    const Divider(height: 24),
+                    _buildInfoRow(
+                      'Supplier',
+                      widget.booking.supplier,
+                      Icons.airlines_rounded,
+                    ),
+                    const Divider(height: 24),
+                    _buildInfoRow(
+                      'Passenger',
+                      widget.booking.passengerNames,
+                      Icons.person_rounded,
+                    ),
+                    const Divider(height: 24),
+                    _buildInfoRow(
+                      'Travel Date',
+                      DateFormat('E, dd MMM yyyy')
+                          .format(widget.booking.departureDate),
+                      Icons.flight_takeoff_rounded,
+                    ),
+                    const Divider(height: 24),
+                    _buildInfoRow(
+                      'Total Price',
+                      '${widget.booking.currency.isNotEmpty ? widget.booking.currency : "PKR"} ${widget.booking.totalSell.toStringAsFixed(0)}',
+                      Icons.attach_money_rounded,
+                      isHighlighted: true,
+                    ),
+                    if (widget.booking.deadlineTime != null) ...[
+                      const Divider(height: 24),
+                      _buildInfoRow(
+                        'Deadline',
+                        DateFormat('E, dd MMM yyyy HH:mm')
+                            .format(widget.booking.deadlineTime!),
+                        Icons.access_time_rounded,
+                        isHighlighted: true,
                       ),
+                    ],
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            onPressed: () => widget.controller
+                                .viewBookingDetails(widget.booking),
+                            style: OutlinedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(
+                                vertical: 12,
+                              ),
+                              side: BorderSide(color: TColors.primary),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                            icon: Icon(
+                              Icons.visibility_rounded,
+                              color: TColors.primary,
+                              size: 18,
+                            ),
+                            label: Text(
+                              'View',
+                              style: TextStyle(
+                                color: TColors.primary,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            onPressed: () => widget.controller.printTicket(
+                              widget.booking,
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: TColors.primary,
+                              padding: const EdgeInsets.symmetric(
+                                vertical: 12,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                            icon: const Icon(
+                              Icons.print_rounded,
+                              color: Colors.white,
+                              size: 18,
+                            ),
+                            label: const Text(
+                              'Print',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: statusColor,
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(
-                    booking.status,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 12,
-                    ),
-                  ),
-                ),
-              ],
+              )
+                  : const SizedBox.shrink(),
             ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              children: [
-                _buildInfoRow(
-                  'Booking Date',
-                  DateFormat(
-                    'E, dd MMM yyyy\nHH:mm:ss',
-                  ).format(booking.creationDate),
-                ),
-                const Divider(),
-                _buildInfoRow('PNR', booking.pnr),
-                const Divider(),
-                _buildInfoRow('Supplier', booking.supplier),
-                const Divider(),
-                _buildInfoRow('Trip', booking.trip),
-                const Divider(),
-                _buildInfoRow('Passenger', booking.passengerNames),
-                const Divider(),
-                _buildInfoRow(
-                  'Travel Date',
-                  DateFormat('E, dd MMM yyyy').format(booking.departureDate),
-                ),
-                const Divider(),
-                _buildInfoRow(
-                  'Total Price',
-                  '${booking.currency.isNotEmpty ? booking.currency : "PKR"} ${booking.totalSell.toStringAsFixed(0)}',
-                ),
-
-                if (booking.deadlineTime != null) ...[
-                  const Divider(),
-                  _buildInfoRow(
-                    'Deadline',
-                    DateFormat(
-                      'E, dd MMM yyyy HH:mm',
-                    ).format(booking.deadlineTime!),
-                    isHighlighted: true,
-                  ),
-                ],
-
-                const SizedBox(height: 16),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    ElevatedButton.icon(
-                      onPressed: () => controller.viewBookingDetails(booking),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.blue,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 10,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                      icon: const Icon(Icons.visibility, color: Colors.white),
-                      label: const Text(
-                        'View',
-                        style: TextStyle(color: Colors.white),
-                      ),
-                    ),
-                    ElevatedButton.icon(
-                      onPressed: () => controller.printTicket(booking),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: TColors.primary,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 10,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                      icon: const Icon(Icons.print, color: Colors.white),
-                      label: const Text(
-                        'Print Ticket',
-                        style: TextStyle(color: Colors.white),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildInfoRow(
     String label,
-    String value, {
+    String value,
+    IconData icon, {
     bool isHighlighted = false,
   }) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 100,
-            child: Text(
-              label,
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: TColors.grey,
-                fontSize: 13,
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(
+          icon,
+          size: 18,
+          color: isHighlighted ? TColors.primary : TColors.grey,
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 11,
+                  color: TColors.grey,
+                  fontWeight: FontWeight.w500,
+                  letterSpacing: 0.5,
+                ),
               ),
-            ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Text(
-              value,
-              style: TextStyle(
-                fontWeight: isHighlighted ? FontWeight.bold : FontWeight.normal,
-                color: isHighlighted ? TColors.third : TColors.text,
-                fontSize: 14,
+              const SizedBox(height: 4),
+              Text(
+                value,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: isHighlighted ? FontWeight.bold : FontWeight.w500,
+                  color: isHighlighted ? TColors.primary : TColors.text,
+                ),
               ),
-            ),
+            ],
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

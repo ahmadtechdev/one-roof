@@ -1,6 +1,7 @@
 // controllers/all_hotel_booking_controller.dart
 // ignore_for_file: prefer_typing_uninitialized_variables
 
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:oneroof/b2b/all_hotel_booking/model.dart';
@@ -10,11 +11,22 @@ class AllHotelBookingController extends GetxController {
   final AuthController _authController = Get.find<AuthController>();
 
   var bookings = <HotelBookingModel>[].obs;
+  var filteredBookings = <HotelBookingModel>[].obs;
   var isLoading = true.obs;
   var errorMessage = ''.obs;
 
   var fromDate = DateTime.now().subtract(Duration(days: 30)).obs;
   var toDate = DateTime.now().obs;
+  var selectedStatus = 'All'.obs;
+  var selectedDestination = 'All'.obs;
+
+  // Search functionality
+  final searchController = TextEditingController();
+  final searchTerm = ''.obs;
+
+  // Status and destination options
+  final statusOptions = <String>['All', 'Confirmed', 'Cancelled', 'On Request', 'Pending'].obs;
+  final destinationOptions = <String>['All'].obs;
 
   var totalReceipt = "0.00".obs;
   var totalPayment = "0.00".obs;
@@ -24,6 +36,12 @@ class AllHotelBookingController extends GetxController {
   void onInit() {
     super.onInit();
     fetchHotelBookings();
+    
+    // Add listener to search controller
+    searchController.addListener(() {
+      searchTerm.value = searchController.text;
+      filterBookings();
+    });
   }
 
   Future<void> fetchHotelBookings() async {
@@ -169,6 +187,13 @@ class AllHotelBookingController extends GetxController {
 
         // Update the bookings list and financial summary
         bookings.assignAll(processedBookings);
+        
+        // Update destination options
+        final uniqueDestinations = processedBookings
+            .map((b) => b.destination)
+            .toSet()
+            .toList();
+        destinationOptions.value = ['All', ...uniqueDestinations];
 
         // Format financial summary
         final formatter = NumberFormat('#,##0.00', 'en_US');
@@ -177,6 +202,9 @@ class AllHotelBookingController extends GetxController {
         closingBalance.value = formatter.format(
           totalReceiptValue - totalPaymentValue,
         );
+        
+        // Apply filters
+        filterBookings();
       } else {
         errorMessage.value =
             result['message'] ?? 'Failed to load hotel bookings';
@@ -192,16 +220,48 @@ class AllHotelBookingController extends GetxController {
   void updateDateRange(DateTime from, DateTime to) {
     fromDate.value = from;
     toDate.value = to;
-    // You could implement date filtering here
-    // For now, we'll just refresh the data
     fetchHotelBookings();
   }
 
-  // Helper method to filter bookings by date if needed
-  List<HotelBookingModel> getFilteredBookings() {
-    // This would filter the bookings based on from/to dates
-    // For now, we'll return all bookings
-    return bookings;
+  void updateStatus(String status) {
+    selectedStatus.value = status;
+    filterBookings();
+  }
+
+  void updateDestination(String destination) {
+    selectedDestination.value = destination;
+    filterBookings();
+  }
+
+  void filterBookings() {
+    String term = searchTerm.value.toLowerCase();
+    
+    filteredBookings.value = bookings.where((booking) {
+      // Check if booking matches search term (if any)
+      bool matchesSearch = term.isEmpty ||
+          booking.bookingNumber.toLowerCase().contains(term) ||
+          booking.hotel.toLowerCase().contains(term) ||
+          booking.destination.toLowerCase().contains(term) ||
+          booking.bookerName.toLowerCase().contains(term) ||
+          booking.guestName.toLowerCase().contains(term) ||
+          booking.status.toLowerCase().contains(term);
+
+      // Check status filter
+      bool matchesStatus = selectedStatus.value == 'All' ||
+          booking.status.toLowerCase() == selectedStatus.value.toLowerCase();
+
+      // Check destination filter
+      bool matchesDestination = selectedDestination.value == 'All' ||
+          booking.destination == selectedDestination.value;
+
+      return matchesSearch && matchesStatus && matchesDestination;
+    }).toList();
+  }
+
+  @override
+  void onClose() {
+    searchController.dispose();
+    super.onClose();
   }
 
   // Add to all_hotel_booking_controller.dart

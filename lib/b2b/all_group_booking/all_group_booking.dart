@@ -15,66 +15,206 @@ class AllGroupBooking extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[100],
+      backgroundColor: const Color(0xFFF5F7FA),
       appBar: AppBar(
         foregroundColor: Colors.white,
         backgroundColor: TColors.background4,
-        title: const Text(
-          'Booking Reports',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-        ),
         elevation: 0,
+        title: const Text(
+          'Group Booking Reports',
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.w600,
+            fontSize: 18,
+          ),
+        ),
+        actions: [
+          Obx(
+            () => controller.isLoading.value
+                ? const Padding(
+                    padding: EdgeInsets.all(16.0),
+                    child: SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        color: Colors.white,
+                        strokeWidth: 2,
+                      ),
+                    ),
+                  )
+                : IconButton(
+                    icon: const Icon(Icons.refresh_rounded),
+                    onPressed: controller.fetchBookings,
+                    tooltip: 'Refresh data',
+                  ),
+          ),
+        ],
       ),
       body: Column(
         children: [
-          _buildFilterSection(),
-          Expanded(child: _buildBookingsList()),
+          // Collapsible filter section
+          _buildCollapsibleFilterSection(),
+          // Scrollable content area with stats and search
+          Expanded(
+            child: CustomScrollView(
+              slivers: [
+                // Stat cards section
+                SliverToBoxAdapter(
+                  child: _buildStatCards(),
+                ),
+                // Search bar section
+                SliverToBoxAdapter(
+                  child: _buildSearchBar(),
+                ),
+                // Booking cards section
+                Obx(() {
+                  if (controller.isLoading.value) {
+                    return const SliverFillRemaining(
+                      child: Center(child: CircularProgressIndicator()),
+                    );
+                  } else if (controller.hasError.value) {
+                    return SliverFillRemaining(
+                      child: _buildErrorWidget(),
+                    );
+                  } else if (controller.filteredBookings.isEmpty) {
+                    return SliverFillRemaining(
+                      child: _buildEmptyStateWidget(),
+                    );
+                  } else {
+                    return _buildBookingCards();
+                  }
+                }),
+              ],
+            ),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildFilterSection() {
+  Widget _buildCollapsibleFilterSection() {
+    return _CollapsibleFilterSection(controller: controller);
+  }
+
+  Widget _buildStatCards() {
     return Container(
-      color: TColors.background4,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      child: Column(
+      padding: const EdgeInsets.all(16),
+      child: Obx(
+        () => Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+            // First row - 2 cards
           Row(
             children: [
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Date From',
-                      style: TextStyle(color: Colors.white, fontSize: 12),
-                    ),
-                    const SizedBox(height: 4),
-                    Obx(
-                      () => _buildDatePicker(
-                        controller.fromDate.value,
-                        (date) => controller.updateFromDate(date),
+                  child: _buildStatCard(
+                    'Total Bookings',
+                    controller.filteredBookings.length,
+                    const Color(0xFF6366F1),
+                    Icons.group_rounded,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _buildStatCard(
+                    'Confirmed',
+                    controller.filteredBookings
+                        .where((b) => b.status.toUpperCase() == 'CONFIRMED')
+                        .length,
+                    const Color(0xFF10B981),
+                    Icons.check_circle_rounded,
                       ),
                     ),
                   ],
+            ),
+            const SizedBox(height: 12),
+            // Second row - 3 cards
+            Row(
+              children: [
+                Expanded(
+                  child: _buildStatCard(
+                    'On Hold',
+                    controller.filteredBookings
+                        .where((b) => b.status.toUpperCase() == 'HOLD')
+                        .length,
+                    const Color(0xFFF59E0B),
+                    Icons.pause_circle_rounded,
                 ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                  child: _buildStatCard(
+                    'Cancelled',
+                    controller.filteredBookings
+                        .where((b) => b.status.toUpperCase() == 'CANCELLED')
+                        .length,
+                    const Color(0xFFEF4444),
+                    Icons.cancel_rounded,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _buildStatCard(
+                    'UAE',
+                    controller.filteredBookings
+                        .where((b) => b.country == 'UAE')
+                        .length,
+                    const Color(0xFF8B5CF6),
+                    Icons.flag_rounded,
+                      ),
+                    ),
+                  ],
+              ),
+            ],
+          ),
+      ),
+    );
+  }
+
+  Widget _buildStatCard(String title, int count, Color color, IconData icon) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: color.withOpacity(0.1),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(icon, color: color, size: 20),
               ),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'Date To',
-                      style: TextStyle(color: Colors.white, fontSize: 12),
-                    ),
-                    const SizedBox(height: 4),
-                    Obx(
-                      () => _buildDatePicker(
-                        controller.toDate.value,
-                        (date) => controller.updateToDate(date),
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: TColors.grey,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  count.toString(),
+                  style: TextStyle(
+                    fontSize: 18,
+                    color: color,
+                    fontWeight: FontWeight.bold,
                       ),
                     ),
                   ],
@@ -82,397 +222,493 @@ class AllGroupBooking extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Group Category',
-                      style: TextStyle(color: Colors.white, fontSize: 12),
-                    ),
-                    const SizedBox(height: 4),
-                    Obx(
-                      () => _buildDropdown(
-                        controller.groupCategories,
-                        controller.selectedGroupCategory.value,
-                        (value) => controller.updateGroupCategory(value!),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Status',
-                      style: TextStyle(color: Colors.white, fontSize: 12),
-                    ),
-                    const SizedBox(height: 4),
-                    Obx(
-                      () => _buildDropdown(
-                        controller.statusOptions,
-                        controller.selectedStatus.value,
-                        (value) => controller.updateStatus(value!),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
+    );
+  }
+
+  Widget _buildSearchBar() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: TextField(
+        controller: controller.searchController,
+        style: const TextStyle(color: TColors.text),
+        decoration: InputDecoration(
+          hintText: 'Search by booking ID, PNR, airline, country...',
+          hintStyle: TextStyle(
+            color: TColors.grey.withOpacity(0.6),
+            fontSize: 14,
           ),
-          const SizedBox(height: 16),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: () {
-                controller.fetchBookings();
-              },
+          prefixIcon: Icon(
+            Icons.search_rounded,
+            color: TColors.primary,
+            size: 20,
+          ),
+          filled: true,
+          fillColor: Colors.white,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(
+              color: Colors.grey.withOpacity(0.2),
+            ),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(
+              color: Colors.grey.withOpacity(0.2),
+            ),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(
+              color: TColors.primary,
+              width: 2,
+            ),
+          ),
+          contentPadding: const EdgeInsets.symmetric(vertical: 12),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildErrorWidget() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Colors.red.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.error_outline_rounded,
+                color: Colors.red,
+                size: 60,
+              ),
+            ),
+            const SizedBox(height: 24),
+            Text(
+              'Error loading bookings',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: TColors.text,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 40),
+              child: Text(
+                controller.errorMessage.value,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: TColors.grey,
+                  fontSize: 14,
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton.icon(
+              onPressed: controller.fetchBookings,
               style: ElevatedButton.styleFrom(
                 backgroundColor: TColors.primary,
-                padding: const EdgeInsets.symmetric(vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 12,
+                ),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
               ),
-              child: const Text(
-                'FILTER',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
+              icon: const Icon(Icons.refresh_rounded, color: Colors.white),
+              label: const Text(
+                'Try Again',
+                style: TextStyle(color: Colors.white),
               ),
             ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDatePicker(
-    DateTime selectedDate,
-    Function(DateTime) onDateSelected,
-  ) {
-    return InkWell(
-      onTap: () async {
-        final DateTime? picked = await showDatePicker(
-          context: Get.context!,
-          initialDate: selectedDate,
-          firstDate: DateTime(2020),
-          lastDate: DateTime(2030),
-          builder: (context, child) {
-            return Theme(
-              data: Theme.of(context).copyWith(
-                colorScheme: const ColorScheme.light(primary: TColors.primary),
-              ),
-              child: child!,
-            );
-          },
-        );
-
-        if (picked != null) {
-          onDateSelected(picked);
-        }
-      },
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              DateFormat('dd/MM/yyyy').format(selectedDate),
-              style: const TextStyle(fontSize: 14),
-            ),
-            const Icon(Icons.calendar_today, size: 16),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildDropdown(
-    List<String> items,
-    String value,
-    Function(String?) onChanged,
-  ) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<String>(
-          value: value,
-          isExpanded: true,
-          icon: const Icon(Icons.keyboard_arrow_down),
-          items:
-              items.map((String item) {
-                return DropdownMenuItem<String>(value: item, child: Text(item));
-              }).toList(),
-          onChanged: onChanged,
+  Widget _buildEmptyStateWidget() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: TColors.primary.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.group_rounded,
+                color: TColors.primary,
+                size: 60,
+              ),
+            ),
+            const SizedBox(height: 24),
+            Text(
+              'No group bookings found',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: TColors.text,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 40),
+              child: Text(
+                'Try changing the date range or filter criteria',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: TColors.grey,
+                  fontSize: 14,
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildBookingsList() {
-    return Obx(() {
-      if (controller.isLoading.value) {
-        return const Center(child: CircularProgressIndicator());
-      }
-
-      if (controller.hasError.value) {
-        return Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(Icons.error_outline, color: Colors.red, size: 48),
-              const SizedBox(height: 16),
-              Text(
-                controller.errorMessage.value,
-                textAlign: TextAlign.center,
-                style: const TextStyle(color: Colors.red),
-              ),
-              const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: controller.fetchBookings,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: TColors.primary,
-                ),
-                child: const Text('Retry'),
-              ),
-            ],
-          ),
-        );
-      }
-
-      if (controller.bookings.isEmpty) {
-        return Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.flight, color: Colors.grey[400], size: 64),
-              const SizedBox(height: 16),
-              Text(
-                'No bookings found for the selected criteria',
-                style: TextStyle(color: Colors.grey[600]),
-              ),
-            ],
-          ),
-        );
-      }
-
-      return ListView.builder(
-        padding: const EdgeInsets.all(16),
-        itemCount: controller.bookings.length,
-        itemBuilder: (context, index) {
-          final booking = controller.bookings[index];
-          return _buildBookingCard(booking);
-        },
-      );
-    });
-  }
-
-  Widget _buildBookingCard(BookingModel booking) {
-    Color statusColor;
-    if (booking.status.toUpperCase() == 'CONFIRMED') {
-      statusColor = Colors.green;
-    } else if (booking.status.toUpperCase() == 'CANCELLED') {
-      statusColor = Colors.red;
-    } else if (booking.status.toUpperCase() == 'HOLD') {
-      statusColor = Colors.orange;
-    } else {
-      statusColor = Colors.grey;
-    }
-
-    return Card(
-      margin: const EdgeInsets.only(bottom: 16),
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Column(
-        children: [
-          // Header with booking details
-          _buildCardHeader(booking, statusColor),
-
-          // Body with flight details
-          _buildCardBody(booking),
-
-          // Footer with passenger details and price
-          _buildCardFooter(booking),
-        ],
+  Widget _buildBookingCards() {
+    return SliverPadding(
+      padding: const EdgeInsets.all(16),
+      sliver: SliverList(
+        delegate: SliverChildBuilderDelegate(
+          (context, index) {
+            final booking = controller.filteredBookings[index];
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: _buildCollapsibleBookingCard(booking),
+            );
+          },
+          childCount: controller.filteredBookings.length,
+        ),
       ),
     );
   }
 
-  Widget _buildCardHeader(BookingModel booking, Color statusColor) {
+  Widget _buildCollapsibleBookingCard(BookingModel booking) {
+    return _CollapsibleBookingCard(booking: booking);
+  }
+
+}
+
+// Collapsible Filter Section Widget
+class _CollapsibleFilterSection extends StatefulWidget {
+  final AllGroupBookingController controller;
+
+  const _CollapsibleFilterSection({required this.controller});
+
+  @override
+  State<_CollapsibleFilterSection> createState() =>
+      _CollapsibleFilterSectionState();
+}
+
+class _CollapsibleFilterSectionState extends State<_CollapsibleFilterSection> {
+  bool _isExpanded = false;
+
+  @override
+  Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: TColors.background4,
-        borderRadius: const BorderRadius.only(
-          topLeft: Radius.circular(12),
-          topRight: Radius.circular(12),
-        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
-      child: Row(
+      child: Column(
         children: [
-          Text(
-            '#${booking.id}',
-            style: const TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-              fontSize: 18,
-            ),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              booking.pnr,
-              style: const TextStyle(color: Colors.white, fontSize: 12),
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
+          // Always visible status filter
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-            decoration: BoxDecoration(
-              color: statusColor,
-              borderRadius: BorderRadius.circular(20),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            child: Row(
+              children: [
+                Expanded(
+                  child: _buildStatusFilter(),
+                ),
+                const SizedBox(width: 12),
+                // Expand/collapse button
+                GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      _isExpanded = !_isExpanded;
+                    });
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(
+                      _isExpanded
+                          ? Icons.keyboard_arrow_up_rounded
+                          : Icons.filter_list_rounded,
+              color: Colors.white,
+                      size: 20,
+                    ),
+                  ),
+                ),
+              ],
             ),
-            child: Text(
-              booking.status,
-              style: const TextStyle(
+          ),
+          // Expandable filters
+          AnimatedSize(
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeInOut,
+            child: _isExpanded
+                ? Container(
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                    child: Column(
+                      children: [
+                        const Divider(color: Colors.white24),
+                        const SizedBox(height: 12),
+                        // Date filters
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _buildDateSelector(
+                                label: 'From',
+                                date: widget.controller.fromDate,
+                                onTap: () => _selectFromDate(),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+          Expanded(
+                              child: _buildDateSelector(
+                                label: 'To',
+                                date: widget.controller.toDate,
+                                onTap: () => _selectToDate(),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        // Group category filter
+                        _buildGroupCategoryFilter(),
+                        const SizedBox(height: 16),
+                        // Filter button
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton.icon(
+                            onPressed: widget.controller.fetchBookings,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: TColors.primary,
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                            icon: const Icon(Icons.search_rounded, color: Colors.white),
+                            label: const Text(
+                              'Apply Filters',
+                              style: TextStyle(
                 color: Colors.white,
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
               ),
             ),
+                      ],
+                    ),
+                  )
+                : const SizedBox.shrink(),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildCardBody(BookingModel booking) {
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Booking codes
-          Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      booking.bkf,
-                      style: const TextStyle(fontSize: 14, color: TColors.grey),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      booking.agt,
-                      style: const TextStyle(fontSize: 14, color: TColors.grey),
-                    ),
-                  ],
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 6,
-                ),
-                decoration: BoxDecoration(
-                  color: _getCountryColor(booking.country),
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: Text(
-                  booking.country,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 12,
-                  ),
-                ),
-              ),
-            ],
+  Widget _buildStatusFilter() {
+    return Obx(
+      () => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: DropdownButtonHideUnderline(
+          child: DropdownButton<String>(
+            value: widget.controller.selectedStatus.value,
+            isExpanded: true,
+            icon: const Icon(Icons.keyboard_arrow_down, size: 16),
+            style: const TextStyle(color: TColors.text, fontSize: 13),
+            items: widget.controller.statusOptions.map((String item) {
+              return DropdownMenuItem<String>(
+                value: item,
+                child: Text(item),
+              );
+            }).toList(),
+            onChanged: (value) => widget.controller.updateStatus(value!),
           ),
-          const SizedBox(height: 12),
-
-          // Divider
-          const Divider(height: 1),
-          const SizedBox(height: 12),
-
-          // Flight information
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: TColors.background,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Icon(Icons.flight, color: TColors.primary),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      booking.airline,
-                      style: const TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      booking.route,
-                      style: const TextStyle(color: TColors.grey, fontSize: 13),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-
-          // Date and Creation
-          Row(
-            children: [
-              Expanded(
-                child: Row(
-                  children: [
-                    const Icon(
-                      Icons.calendar_today,
-                      color: TColors.primary,
-                      size: 18,
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      DateFormat('EEE dd MMM yyyy').format(booking.flightDate),
-                      style: const TextStyle(fontWeight: FontWeight.w500),
-                    ),
-                  ],
-                ),
-              ),
-              Text(
-                'Created: ${DateFormat('dd MMM HH:mm').format(booking.createdDate)}',
-                style: const TextStyle(fontSize: 12, color: TColors.grey),
-              ),
-            ],
-          ),
-        ],
+        ),
       ),
     );
+  }
+
+  Widget _buildDateSelector({
+    required String label,
+    required Rx<DateTime> date,
+    required VoidCallback onTap,
+  }) {
+    return Obx(
+      () => GestureDetector(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Row(
+            children: [
+              Icon(
+                Icons.calendar_today_rounded,
+                size: 16,
+                color: TColors.primary,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      label,
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: TColors.grey,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      DateFormat('dd/MM/yyyy').format(date.value),
+                      style: const TextStyle(
+                        color: TColors.text,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildGroupCategoryFilter() {
+    return Obx(
+      () => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: DropdownButtonHideUnderline(
+          child: DropdownButton<String>(
+            value: widget.controller.selectedGroupCategory.value,
+            isExpanded: true,
+            icon: const Icon(Icons.keyboard_arrow_down, size: 16),
+            style: const TextStyle(color: TColors.text, fontSize: 14),
+            items: widget.controller.groupCategories.map((String item) {
+              return DropdownMenuItem<String>(
+                value: item,
+                child: Text(item),
+              );
+            }).toList(),
+            onChanged: (value) => widget.controller.updateGroupCategory(value!),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _selectFromDate() async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: widget.controller.fromDate.value,
+      firstDate: DateTime(2020),
+      lastDate: DateTime(2030),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.light(primary: TColors.primary),
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (picked != null) {
+      widget.controller.updateFromDate(picked);
+    }
+  }
+
+  Future<void> _selectToDate() async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: widget.controller.toDate.value,
+      firstDate: DateTime(2020),
+      lastDate: DateTime(2030),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.light(primary: TColors.primary),
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (picked != null) {
+      widget.controller.updateToDate(picked);
+    }
+  }
+}
+
+// Collapsible Booking Card Widget
+class _CollapsibleBookingCard extends StatefulWidget {
+  final BookingModel booking;
+
+  const _CollapsibleBookingCard({required this.booking});
+
+  @override
+  State<_CollapsibleBookingCard> createState() =>
+      _CollapsibleBookingCardState();
+}
+
+class _CollapsibleBookingCardState extends State<_CollapsibleBookingCard> {
+  bool _isExpanded = false;
+
+  Color _getStatusColor() {
+    switch (widget.booking.status.toUpperCase()) {
+      case 'CONFIRMED':
+        return const Color(0xFF10B981);
+      case 'HOLD':
+        return const Color(0xFFF59E0B);
+      case 'CANCELLED':
+        return const Color(0xFFEF4444);
+      default:
+        return const Color(0xFF6B7280);
+    }
   }
 
   Color _getCountryColor(String country) {
@@ -492,72 +728,240 @@ class AllGroupBooking extends StatelessWidget {
     }
   }
 
-  Widget _buildCardFooter(BookingModel booking) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: const BoxDecoration(
-        color: TColors.background,
-        borderRadius: BorderRadius.only(
-          bottomLeft: Radius.circular(12),
-          bottomRight: Radius.circular(12),
+  @override
+  Widget build(BuildContext context) {
+    final statusColor = _getStatusColor();
+
+    return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(
+          color: Colors.grey.withOpacity(0.2),
+          width: 1,
         ),
       ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(12),
       child: Column(
         children: [
-          // Price and View button row
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            // Header - always visible
+            InkWell(
+              onTap: () {
+                setState(() {
+                  _isExpanded = !_isExpanded;
+                });
+              },
+              child: Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      TColors.background4,
+                      TColors.background4.withOpacity(0.9),
+                    ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                ),
+                child: Row(
             children: [
-              Column(
+                    // Booking ID and basic info
+                    Expanded(
+                      child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Total Price',
-                    style: TextStyle(fontSize: 12, color: TColors.grey),
-                  ),
-                ],
-              ),
-              Text(
-                'PKR ${NumberFormat('#,###').format(booking.price)}',
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: TColors.primary,
+                          Text(
+                            '#${widget.booking.id}',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.group_rounded,
+                                size: 14,
+                                color: Colors.white.withOpacity(0.7),
+                              ),
+                              const SizedBox(width: 4),
+                              Expanded(
+                                child: Text(
+                                  widget.booking.route,
+                                  style: TextStyle(
+                                    color: Colors.white.withOpacity(0.8),
+                                    fontSize: 12,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    // Country badge
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: _getCountryColor(widget.booking.country),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        widget.booking.country,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 10,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    // Status badge
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: statusColor,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        widget.booking.status,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 11,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    // Expand/collapse icon
+                    Icon(
+                      _isExpanded
+                          ? Icons.keyboard_arrow_up_rounded
+                          : Icons.keyboard_arrow_down_rounded,
+                      color: Colors.white,
+                      size: 24,
+                    ),
+                  ],
                 ),
               ),
-            ],
-          ),
-
-          // Expandable passenger status (initially collapsed)
-          ExpansionTile(
-            title: const Text(
-              'Passenger Status',
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
             ),
-            tilePadding: EdgeInsets.zero,
-            childrenPadding: EdgeInsets.zero,
-            expandedCrossAxisAlignment: CrossAxisAlignment.start,
-            children: [_buildPassengerStatusTable(booking.passengerStatus)],
-          ),
-        ],
+            // Expanded content
+            AnimatedSize(
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeInOut,
+              child: _isExpanded
+                  ? Container(
+                      color: Colors.white,
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        children: [
+                          _buildInfoRow(
+                            'Booking Codes',
+                            '${widget.booking.bkf}\n${widget.booking.agt}',
+                            Icons.confirmation_number_rounded,
+                          ),
+                          const Divider(height: 24),
+                          _buildInfoRow(
+                            'Airline',
+                            widget.booking.airline,
+                            Icons.airlines_rounded,
+                          ),
+                          const Divider(height: 24),
+                          _buildInfoRow(
+                            'Flight Date',
+                            DateFormat('EEE, dd MMM yyyy')
+                                .format(widget.booking.flightDate),
+                            Icons.flight_takeoff_rounded,
+                          ),
+                          const Divider(height: 24),
+                          _buildInfoRow(
+                            'Created',
+                            DateFormat('dd MMM yyyy HH:mm')
+                                .format(widget.booking.createdDate),
+                            Icons.calendar_today_rounded,
+                          ),
+                          const Divider(height: 24),
+                          _buildInfoRow(
+                    'Total Price',
+                            'PKR ${NumberFormat('#,###').format(widget.booking.price)}',
+                            Icons.attach_money_rounded,
+                            isHighlighted: true,
+                          ),
+                          const SizedBox(height: 16),
+                          // Passenger status table
+                          _buildPassengerStatusTable(widget.booking.passengerStatus),
+                        ],
+                      ),
+                    )
+                  : const SizedBox.shrink(),
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildPassengerStatusTable(PassengerStatus passengerStatus) {
-    final TextStyle headerStyle = const TextStyle(
-      fontWeight: FontWeight.bold,
-      fontSize: 12,
+  Widget _buildInfoRow(
+    String label,
+    String value,
+    IconData icon, {
+    bool isHighlighted = false,
+  }) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(
+          icon,
+          size: 18,
+          color: isHighlighted ? TColors.primary : TColors.grey,
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 11,
+                  color: TColors.grey,
+                  fontWeight: FontWeight.w500,
+                  letterSpacing: 0.5,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                value,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: isHighlighted ? FontWeight.bold : FontWeight.w500,
+                  color: isHighlighted ? TColors.primary : TColors.text,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
+  }
 
-    final TextStyle cellStyle = const TextStyle(fontSize: 12);
-
+  Widget _buildPassengerStatusTable(PassengerStatus passengerStatus) {
     return Container(
-      margin: const EdgeInsets.only(top: 8),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Colors.grey.shade50,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.grey.shade300),
+        border: Border.all(color: Colors.grey.shade200),
       ),
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
@@ -569,47 +973,41 @@ class AllGroupBooking extends StatelessWidget {
             TableRow(
               decoration: BoxDecoration(color: Colors.grey.shade100),
               children: [
-                _buildTableCell('Status', headerStyle),
-                _buildTableCell('Adults', headerStyle),
-                _buildTableCell('Child', headerStyle),
-                _buildTableCell('Infant', headerStyle),
-                _buildTableCell('Total', headerStyle),
+                _buildTableCell('Status', const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                _buildTableCell('Adults', const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                _buildTableCell('Child', const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                _buildTableCell('Infant', const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                _buildTableCell('Total', const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
               ],
             ),
             // Hold row
             TableRow(
               children: [
-                _buildTableCell('Hold', cellStyle, textColor: Colors.orange),
-                _buildTableCell('${passengerStatus.holdAdults}', cellStyle),
-                _buildTableCell('${passengerStatus.holdChild}', cellStyle),
-                _buildTableCell('${passengerStatus.holdInfant}', cellStyle),
-                _buildTableCell('${passengerStatus.holdTotal}', cellStyle),
+                _buildTableCell('Hold', const TextStyle(fontSize: 12), textColor: Colors.orange),
+                _buildTableCell('${passengerStatus.holdAdults}', const TextStyle(fontSize: 12)),
+                _buildTableCell('${passengerStatus.holdChild}', const TextStyle(fontSize: 12)),
+                _buildTableCell('${passengerStatus.holdInfant}', const TextStyle(fontSize: 12)),
+                _buildTableCell('${passengerStatus.holdTotal}', const TextStyle(fontSize: 12)),
               ],
             ),
             // Confirm row
             TableRow(
               children: [
-                _buildTableCell('Confirm', cellStyle, textColor: Colors.green),
-                _buildTableCell('${passengerStatus.confirmAdults}', cellStyle),
-                _buildTableCell('${passengerStatus.confirmChild}', cellStyle),
-                _buildTableCell('${passengerStatus.confirmInfant}', cellStyle),
-                _buildTableCell('${passengerStatus.confirmTotal}', cellStyle),
+                _buildTableCell('Confirm', const TextStyle(fontSize: 12), textColor: Colors.green),
+                _buildTableCell('${passengerStatus.confirmAdults}', const TextStyle(fontSize: 12)),
+                _buildTableCell('${passengerStatus.confirmChild}', const TextStyle(fontSize: 12)),
+                _buildTableCell('${passengerStatus.confirmInfant}', const TextStyle(fontSize: 12)),
+                _buildTableCell('${passengerStatus.confirmTotal}', const TextStyle(fontSize: 12)),
               ],
             ),
             // Cancelled row
             TableRow(
               children: [
-                _buildTableCell('Cancelled', cellStyle, textColor: Colors.red),
-                _buildTableCell(
-                  '${passengerStatus.cancelledAdults}',
-                  cellStyle,
-                ),
-                _buildTableCell('${passengerStatus.cancelledChild}', cellStyle),
-                _buildTableCell(
-                  '${passengerStatus.cancelledInfant}',
-                  cellStyle,
-                ),
-                _buildTableCell('${passengerStatus.cancelledTotal}', cellStyle),
+                _buildTableCell('Cancelled', const TextStyle(fontSize: 12), textColor: Colors.red),
+                _buildTableCell('${passengerStatus.cancelledAdults}', const TextStyle(fontSize: 12)),
+                _buildTableCell('${passengerStatus.cancelledChild}', const TextStyle(fontSize: 12)),
+                _buildTableCell('${passengerStatus.cancelledInfant}', const TextStyle(fontSize: 12)),
+                _buildTableCell('${passengerStatus.cancelledTotal}', const TextStyle(fontSize: 12)),
               ],
             ),
           ],

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:introduction_screen/introduction_screen.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:oneroof/views/home/home_screen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../sizes_helpers.dart';
 import '../utility/colors.dart';
@@ -18,8 +19,12 @@ class Introduce extends StatefulWidget {
 class _IntroduceState extends State<Introduce> {
   final introKey = GlobalKey<IntroductionScreenState>();
 
-  void _onIntroEnd(context) {
-    Navigator.of(context).push(
+  void _onIntroEnd(context) async {
+    // Save that intro has been shown
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('intro_shown', true);
+    
+    Navigator.of(context).pushReplacement(
       MaterialPageRoute(builder: (_) => HomeScreen()),
     );
   }

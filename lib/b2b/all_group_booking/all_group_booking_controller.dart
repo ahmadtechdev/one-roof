@@ -1,5 +1,6 @@
 // ignore_for_file: empty_catches
 
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:oneroof/b2b/all_group_booking/model.dart';
@@ -20,13 +21,24 @@ class AllGroupBookingController extends GetxController {
 
   final isLoading = false.obs;
   final bookings = <BookingModel>[].obs;
+  final filteredBookings = <BookingModel>[].obs;
   final hasError = false.obs;
   final errorMessage = ''.obs;
+  
+  // Search functionality
+  final searchController = TextEditingController();
+  final searchTerm = ''.obs;
 
   @override
   void onInit() {
     super.onInit();
     fetchBookings();
+    
+    // Add listener to search controller
+    searchController.addListener(() {
+      searchTerm.value = searchController.text;
+      filterBookings();
+    });
   }
 
   void updateFromDate(DateTime date) {
@@ -252,27 +264,33 @@ class AllGroupBookingController extends GetxController {
   //   for (var booking in List<BookingModel>.from(bookings)) {
   //     bool matchesCountry = selectedGroupCategory.value == 'All' ||
   void filterBookings() {
-    if (selectedGroupCategory.value == 'All' && selectedStatus.value == 'All') {
-      return; // No filtering needed
-    }
+    String term = searchTerm.value.toLowerCase();
+    
+    filteredBookings.value = bookings.where((booking) {
+      // Check if booking matches search term (if any)
+      bool matchesSearch = term.isEmpty ||
+          booking.id.toString().toLowerCase().contains(term) ||
+          booking.pnr.toLowerCase().contains(term) ||
+          booking.airline.toLowerCase().contains(term) ||
+          booking.country.toLowerCase().contains(term) ||
+          booking.route.toLowerCase().contains(term) ||
+          booking.status.toLowerCase().contains(term);
 
-    final filteredBookings = <BookingModel>[];
-
-    for (var booking in List<BookingModel>.from(bookings)) {
-      bool matchesCountry =
-          selectedGroupCategory.value == 'All' ||
+      // Check category filter
+      bool matchesCountry = selectedGroupCategory.value == 'All' ||
           booking.country == selectedGroupCategory.value;
 
-      bool matchesStatus =
-          selectedStatus.value == 'All' ||
+      // Check status filter
+      bool matchesStatus = selectedStatus.value == 'All' ||
           booking.status.toUpperCase() == selectedStatus.value.toUpperCase();
 
-      if (matchesCountry && matchesStatus) {
-        filteredBookings.add(booking);
-      }
-    }
+      return matchesSearch && matchesCountry && matchesStatus;
+    }).toList();
+  }
 
-    // Update the bookings list with filtered results
-    bookings.value = filteredBookings;
+  @override
+  void onClose() {
+    searchController.dispose();
+    super.onClose();
   }
 }

@@ -43,305 +43,1009 @@ class AllHotelBooking extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: TColors.background,
+      backgroundColor: const Color(0xFFF5F7FA),
       appBar: AppBar(
         foregroundColor: Colors.white,
-
         backgroundColor: TColors.background4,
-        title: Text(
-          'International Bookings',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        elevation: 0,
+        title: const Text(
+          'Hotel Bookings',
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.w600,
+            fontSize: 18,
+          ),
         ),
         actions: [
-          IconButton(
-            icon: Icon(Icons.refresh, color: Colors.white),
-            onPressed: () => bookingController.fetchHotelBookings(),
-          ),
-          IconButton(
-            icon: Icon(Icons.print, color: Colors.white),
-            onPressed: () {
-              // Handle print action
-            },
+          Obx(
+            () => bookingController.isLoading.value
+                ? const Padding(
+                    padding: EdgeInsets.all(16.0),
+                    child: SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        color: Colors.white,
+                        strokeWidth: 2,
+                      ),
+                    ),
+                  )
+                : IconButton(
+                    icon: const Icon(Icons.refresh_rounded),
+                    onPressed: bookingController.fetchHotelBookings,
+                    tooltip: 'Refresh data',
+                  ),
           ),
         ],
       ),
       body: Column(
         children: [
-          // _buildDateFilter(),
-          Expanded(child: _buildBookingsList()),
+          // Collapsible filter section
+          _buildCollapsibleFilterSection(),
+          // Scrollable content area with stats and search
+          Expanded(
+            child: CustomScrollView(
+              slivers: [
+                // Stat cards section
+                SliverToBoxAdapter(
+                  child: _buildStatCards(),
+                ),
+                // Search bar section
+                SliverToBoxAdapter(
+                  child: _buildSearchBar(),
+                ),
+                // Booking cards section
+                Obx(() {
+                  if (bookingController.isLoading.value) {
+                    return const SliverFillRemaining(
+                      child: Center(child: CircularProgressIndicator()),
+                    );
+                  } else if (bookingController.errorMessage.value.isNotEmpty) {
+                    return SliverFillRemaining(
+                      child: _buildErrorWidget(),
+                    );
+                  } else if (bookingController.filteredBookings.isEmpty) {
+                    return SliverFillRemaining(
+                      child: _buildEmptyStateWidget(),
+                    );
+                  } else {
+                    return _buildBookingCards();
+                  }
+                }),
+              ],
+            ),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildBookingsList() {
-    return Obx(() {
-      // Show loading indicator
-      if (bookingController.isLoading.value) {
-        return Center(child: CircularProgressIndicator());
-      }
-
-      // Show error message if any
-      if (bookingController.errorMessage.value.isNotEmpty) {
-        return Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.error_outline, color: Colors.red, size: 48),
-              SizedBox(height: 16),
-              Text(
-                bookingController.errorMessage.value,
-                textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.red),
-              ),
-              SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: () => bookingController.fetchHotelBookings(),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: TColors.primary,
-                  foregroundColor: Colors.white,
-                ),
-                child: Text('Retry'),
-              ),
-            ],
-          ),
-        );
-      }
-
-      // Show empty state
-      if (bookingController.bookings.isEmpty) {
-        return Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.hotel_outlined, color: TColors.grey, size: 64),
-              SizedBox(height: 16),
-              Text(
-                'No bookings found for the selected date range',
-                textAlign: TextAlign.center,
-                style: TextStyle(color: TColors.grey),
-              ),
-            ],
-          ),
-        );
-      }
-
-      // Show bookings list
-      return ListView.builder(
-        padding: EdgeInsets.all(16),
-        itemCount: bookingController.bookings.length,
-        itemBuilder: (context, index) {
-          final booking = bookingController.bookings[index];
-          return _buildBookingCard(booking);
-        },
-      );
-    });
+  Widget _buildCollapsibleFilterSection() {
+    return _CollapsibleFilterSection(controller: bookingController);
   }
 
-  Widget _buildBookingCard(HotelBookingModel booking) {
-    Color statusColor;
-
-    switch (booking.status.toLowerCase()) {
-      case 'confirmed':
-        statusColor = Colors.green;
-        break;
-      case 'on request':
-        statusColor = Colors.orange;
-        break;
-      case 'cancelled':
-        statusColor = Colors.red;
-        break;
-      default:
-        statusColor = Colors.blue;
-    }
-
-    // Determine booking source color based on booking number prefix
-    String portalCode = booking.bookingNumber.split('-')[0];
-    Color portalColor;
-
-    switch (portalCode) {
-      case 'ONETRVL':
-        portalColor = Colors.blue;
-        break;
-      case 'TOCBK':
-        portalColor = Colors.teal;
-        break;
-      case 'TDBK':
-        portalColor = Colors.red;
-        break;
-      default:
-        portalColor = Colors.purple;
-    }
-
-    return Card(
-      elevation: 4,
-      margin: EdgeInsets.only(bottom: 16),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Column(
-        children: [
-          // Header with Serial Number and Booking Number
-          Container(
-            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            decoration: BoxDecoration(
-              color: portalColor.withOpacity(0.2),
-              borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(12),
-                topRight: Radius.circular(12),
-              ),
-            ),
-            child: Row(
+  Widget _buildStatCards() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      child: Obx(
+        () => Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // First row - 2 cards
+            Row(
               children: [
-                CircleAvatar(
-                  backgroundColor: portalColor,
-                  radius: 14,
-                  child: Text(
-                    booking.serialNumber,
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 12,
-                    ),
+                Expanded(
+                  child: _buildStatCard(
+                    'Total Bookings',
+                    bookingController.filteredBookings.length,
+                    const Color(0xFF6366F1),
+                    Icons.hotel_rounded,
                   ),
                 ),
-                SizedBox(width: 8),
-                Text(
-                  booking.bookingNumber,
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: TColors.text,
-                  ),
-                ),
-                Spacer(),
-                Container(
-                  padding: EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: statusColor.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    booking.status,
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                      color: statusColor,
-                    ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _buildStatCard(
+                    'Confirmed',
+                    bookingController.filteredBookings
+                        .where((b) => b.status.toLowerCase() == 'confirmed')
+                        .length,
+                    const Color(0xFF10B981),
+                    Icons.check_circle_rounded,
                   ),
                 ),
               ],
             ),
+            const SizedBox(height: 12),
+            // Second row - 3 cards
+            Row(
+              children: [
+                Expanded(
+                  child: _buildStatCard(
+                    'On Request',
+                    bookingController.filteredBookings
+                        .where((b) => b.status.toLowerCase() == 'on request')
+                        .length,
+                    const Color(0xFFF59E0B),
+                    Icons.pending_rounded,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _buildStatCard(
+                    'Cancelled',
+                    bookingController.filteredBookings
+                        .where((b) => b.status.toLowerCase() == 'cancelled')
+                        .length,
+                    const Color(0xFFEF4444),
+                    Icons.cancel_rounded,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _buildStatCard(
+                    'Pending',
+                    bookingController.filteredBookings
+                        .where((b) => b.status.toLowerCase() == 'pending')
+                        .length,
+                    const Color(0xFF8B5CF6),
+                    Icons.schedule_rounded,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatCard(String title, int count, Color color, IconData icon) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: color.withOpacity(0.1),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
           ),
-          // Booking Details
-          Padding(
-            padding: EdgeInsets.all(16),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(icon, color: color, size: 20),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Date
-                _buildInfoRow(Icons.event, "Date", booking.date),
-                SizedBox(height: 12),
-
-                // Booker and Guest
-                _buildInfoRow(Icons.person, "Booker", booking.bookerName),
-                SizedBox(height: 8),
-                _buildInfoRow(Icons.people, "Guest", booking.guestName),
-                SizedBox(height: 12),
-
-                // Hotel and Location
-                _buildInfoRow(Icons.hotel, "Hotel", booking.hotel),
-                SizedBox(height: 8),
-                _buildInfoRow(
-                  Icons.location_on,
-                  "Destination",
-                  booking.destination,
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: TColors.grey,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
-                SizedBox(height: 12),
-
-                // Check-in/Check-out
-                _buildInfoRow(
-                  Icons.calendar_month,
-                  "Check-in/Check-out",
-                  booking.checkinCheckout,
-                ),
-                SizedBox(height: 12),
-
-                Divider(),
-                SizedBox(height: 12),
-
-                // Bottom Row with Price and Cancellation
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: _buildInfoRow(
-                        Icons.attach_money,
-                        "Price",
-                        booking.price,
-                      ),
-                    ),
-                    Expanded(
-                      child: _buildInfoRow(
-                        Icons.event_busy,
-                        "Cancellation",
-                        booking.cancellationDeadline,
-                        valueColor:
-                            booking.cancellationDeadline.contains(
-                                  "Non-Refundable",
-                                )
-                                ? Colors.red
-                                : null,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          // Print Button
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                ElevatedButton.icon(
-                  icon: Icon(Icons.print),
-                  label: Text('Print'),
-                  onPressed: () => _handlePrintAction(booking),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: TColors.primary,
-                    foregroundColor: Colors.white,
+                const SizedBox(height: 2),
+                Text(
+                  count.toString(),
+                  style: TextStyle(
+                    fontSize: 18,
+                    color: color,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
               ],
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildSearchBar() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: TextField(
+        controller: bookingController.searchController,
+        style: const TextStyle(color: TColors.text),
+        decoration: InputDecoration(
+          hintText: 'Search by booking number, hotel, destination, guest...',
+          hintStyle: TextStyle(
+            color: TColors.grey.withOpacity(0.6),
+            fontSize: 14,
+          ),
+          prefixIcon: Icon(
+            Icons.search_rounded,
+            color: TColors.primary,
+            size: 20,
+          ),
+          filled: true,
+          fillColor: Colors.white,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(
+              color: Colors.grey.withOpacity(0.2),
+            ),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(
+              color: Colors.grey.withOpacity(0.2),
+            ),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(
+              color: TColors.primary,
+              width: 2,
+            ),
+          ),
+          contentPadding: const EdgeInsets.symmetric(vertical: 12),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildErrorWidget() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Colors.red.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.error_outline_rounded,
+                color: Colors.red,
+                size: 60,
+              ),
+            ),
+            const SizedBox(height: 24),
+            Text(
+              'Error loading bookings',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: TColors.text,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 40),
+              child: Text(
+                bookingController.errorMessage.value,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: TColors.grey,
+                  fontSize: 14,
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton.icon(
+              onPressed: bookingController.fetchHotelBookings,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: TColors.primary,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 12,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              icon: const Icon(Icons.refresh_rounded, color: Colors.white),
+              label: const Text(
+                'Try Again',
+                style: TextStyle(color: Colors.white),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyStateWidget() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: TColors.primary.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.hotel_rounded,
+                color: TColors.primary,
+                size: 60,
+              ),
+            ),
+            const SizedBox(height: 24),
+            Text(
+              'No hotel bookings found',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: TColors.text,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 40),
+              child: Text(
+                'Try changing the date range or filter criteria',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: TColors.grey,
+                  fontSize: 14,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBookingCards() {
+    return SliverPadding(
+      padding: const EdgeInsets.all(16),
+      sliver: SliverList(
+        delegate: SliverChildBuilderDelegate(
+          (context, index) {
+            final booking = bookingController.filteredBookings[index];
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: _buildCollapsibleBookingCard(booking),
+            );
+          },
+          childCount: bookingController.filteredBookings.length,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCollapsibleBookingCard(HotelBookingModel booking) {
+    return _CollapsibleBookingCard(booking: booking, controller: bookingController);
+  }
+
+}
+
+// Collapsible Filter Section Widget
+class _CollapsibleFilterSection extends StatefulWidget {
+  final AllHotelBookingController controller;
+
+  const _CollapsibleFilterSection({required this.controller});
+
+  @override
+  State<_CollapsibleFilterSection> createState() =>
+      _CollapsibleFilterSectionState();
+}
+
+class _CollapsibleFilterSectionState extends State<_CollapsibleFilterSection> {
+  bool _isExpanded = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: TColors.background4,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          // Always visible status filter
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            child: Row(
+              children: [
+                Expanded(
+                  child: _buildStatusFilter(),
+                ),
+                const SizedBox(width: 12),
+                // Expand/collapse button
+                GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      _isExpanded = !_isExpanded;
+                    });
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(
+                      _isExpanded
+                          ? Icons.keyboard_arrow_up_rounded
+                          : Icons.filter_list_rounded,
+                      color: Colors.white,
+                      size: 20,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // Expandable filters
+          AnimatedSize(
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeInOut,
+            child: _isExpanded
+                ? Container(
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                    child: Column(
+                      children: [
+                        const Divider(color: Colors.white24),
+                        const SizedBox(height: 12),
+                        // Date filters
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _buildDateSelector(
+                                label: 'From',
+                                date: widget.controller.fromDate,
+                                onTap: () => _selectFromDate(),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: _buildDateSelector(
+                                label: 'To',
+                                date: widget.controller.toDate,
+                                onTap: () => _selectToDate(),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        // Destination filter
+                        _buildDestinationFilter(),
+                        const SizedBox(height: 16),
+                        // Filter button
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton.icon(
+                            onPressed: widget.controller.fetchHotelBookings,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: TColors.primary,
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                            icon: const Icon(Icons.search_rounded, color: Colors.white),
+                            label: const Text(
+                              'Apply Filters',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                : const SizedBox.shrink(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatusFilter() {
+    return Obx(
+      () => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: DropdownButtonHideUnderline(
+          child: DropdownButton<String>(
+            value: widget.controller.selectedStatus.value,
+            isExpanded: true,
+            icon: const Icon(Icons.keyboard_arrow_down, size: 16),
+            style: const TextStyle(color: TColors.text, fontSize: 13),
+            items: widget.controller.statusOptions.map((String item) {
+              return DropdownMenuItem<String>(
+                value: item,
+                child: Text(item),
+              );
+            }).toList(),
+            onChanged: (value) => widget.controller.updateStatus(value!),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDateSelector({
+    required String label,
+    required Rx<DateTime> date,
+    required VoidCallback onTap,
+  }) {
+    return Obx(
+      () => GestureDetector(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Row(
+            children: [
+              Icon(
+                Icons.calendar_today_rounded,
+                size: 16,
+                color: TColors.primary,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      label,
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: TColors.grey,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      DateFormat('dd/MM/yyyy').format(date.value),
+                      style: const TextStyle(
+                        color: TColors.text,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDestinationFilter() {
+    return Obx(
+      () => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: DropdownButtonHideUnderline(
+          child: DropdownButton<String>(
+            value: widget.controller.selectedDestination.value,
+            isExpanded: true,
+            icon: const Icon(Icons.keyboard_arrow_down, size: 16),
+            style: const TextStyle(color: TColors.text, fontSize: 14),
+            items: widget.controller.destinationOptions.map((String item) {
+              return DropdownMenuItem<String>(
+                value: item,
+                child: Text(item),
+              );
+            }).toList(),
+            onChanged: (value) => widget.controller.updateDestination(value!),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _selectFromDate() async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: widget.controller.fromDate.value,
+      firstDate: DateTime(2020),
+      lastDate: DateTime(2030),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.light(primary: TColors.primary),
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (picked != null) {
+      widget.controller.updateDateRange(picked, widget.controller.toDate.value);
+    }
+  }
+
+  Future<void> _selectToDate() async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: widget.controller.toDate.value,
+      firstDate: DateTime(2020),
+      lastDate: DateTime(2030),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.light(primary: TColors.primary),
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (picked != null) {
+      widget.controller.updateDateRange(widget.controller.fromDate.value, picked);
+    }
+  }
+}
+
+// Collapsible Booking Card Widget
+class _CollapsibleBookingCard extends StatefulWidget {
+  final HotelBookingModel booking;
+  final AllHotelBookingController controller;
+
+  const _CollapsibleBookingCard({
+    required this.booking,
+    required this.controller,
+  });
+
+  @override
+  State<_CollapsibleBookingCard> createState() =>
+      _CollapsibleBookingCardState();
+}
+
+class _CollapsibleBookingCardState extends State<_CollapsibleBookingCard> {
+  bool _isExpanded = false;
+
+  Color _getStatusColor() {
+    switch (widget.booking.status.toLowerCase()) {
+      case 'confirmed':
+        return const Color(0xFF10B981);
+      case 'on request':
+        return const Color(0xFFF59E0B);
+      case 'cancelled':
+        return const Color(0xFFEF4444);
+      case 'pending':
+        return const Color(0xFF8B5CF6);
+      default:
+        return const Color(0xFF6B7280);
+    }
+  }
+
+  Color _getPortalColor() {
+    String portalCode = widget.booking.bookingNumber.split('-')[0];
+    switch (portalCode) {
+      case 'ONETRVL':
+        return Colors.blue;
+      case 'TOCBK':
+        return Colors.teal;
+      case 'TDBK':
+        return Colors.red;
+      default:
+        return Colors.purple;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final statusColor = _getStatusColor();
+    final portalColor = _getPortalColor();
+
+    return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(
+          color: Colors.grey.withOpacity(0.2),
+          width: 1,
+        ),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: Column(
+          children: [
+            // Header - always visible
+            InkWell(
+              onTap: () {
+                setState(() {
+                  _isExpanded = !_isExpanded;
+                });
+              },
+              child: Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      portalColor.withOpacity(0.1),
+                      portalColor.withOpacity(0.05),
+                    ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    // Serial number and booking info
+                    CircleAvatar(
+                      backgroundColor: portalColor,
+                      radius: 16,
+                      child: Text(
+                        widget.booking.serialNumber,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            widget.booking.bookingNumber,
+                            style: const TextStyle(
+                              color: TColors.text,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.hotel_rounded,
+                                size: 14,
+                                color: TColors.grey,
+                              ),
+                              const SizedBox(width: 4),
+                              Expanded(
+                                child: Text(
+                                  widget.booking.hotel,
+                                  style: TextStyle(
+                                    color: TColors.grey,
+                                    fontSize: 12,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    // Status badge
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: statusColor,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        widget.booking.status,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 11,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    // Expand/collapse icon
+                    Icon(
+                      _isExpanded
+                          ? Icons.keyboard_arrow_up_rounded
+                          : Icons.keyboard_arrow_down_rounded,
+                      color: TColors.grey,
+                      size: 24,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            // Expanded content
+            AnimatedSize(
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeInOut,
+              child: _isExpanded
+                  ? Container(
+                      color: Colors.white,
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        children: [
+                          _buildInfoRow(
+                            'Booking Date',
+                            widget.booking.date,
+                            Icons.calendar_today_rounded,
+                          ),
+                          const Divider(height: 24),
+                          _buildInfoRow(
+                            'Booker',
+                            widget.booking.bookerName,
+                            Icons.person_rounded,
+                          ),
+                          const Divider(height: 24),
+                          _buildInfoRow(
+                            'Guest',
+                            widget.booking.guestName,
+                            Icons.people_rounded,
+                          ),
+                          const Divider(height: 24),
+                          _buildInfoRow(
+                            'Destination',
+                            widget.booking.destination,
+                            Icons.location_on_rounded,
+                          ),
+                          const Divider(height: 24),
+                          _buildInfoRow(
+                            'Check-in/Check-out',
+                            widget.booking.checkinCheckout,
+                            Icons.calendar_month_rounded,
+                          ),
+                          const Divider(height: 24),
+                          _buildInfoRow(
+                            'Price',
+                            widget.booking.price,
+                            Icons.attach_money_rounded,
+                            isHighlighted: true,
+                          ),
+                          const Divider(height: 24),
+                          _buildInfoRow(
+                            'Cancellation',
+                            widget.booking.cancellationDeadline,
+                            Icons.event_busy_rounded,
+                            valueColor: widget.booking.cancellationDeadline
+                                    .contains("Non-Refundable")
+                                ? Colors.red
+                                : null,
+                          ),
+                          const SizedBox(height: 16),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: ElevatedButton.icon(
+                                  onPressed: () => _handlePrintAction(widget.booking),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: TColors.primary,
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 12,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                  ),
+                                  icon: const Icon(
+                                    Icons.print_rounded,
+                                    color: Colors.white,
+                                    size: 18,
+                                  ),
+                                  label: const Text(
+                                    'Print Voucher',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    )
+                  : const SizedBox.shrink(),
+            ),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildInfoRow(
-    IconData icon,
     String label,
-    String value, {
+    String value,
+    IconData icon, {
+    bool isHighlighted = false,
     Color? valueColor,
   }) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, size: 18, color: TColors.grey),
-        SizedBox(width: 8),
+        Icon(
+          icon,
+          size: 18,
+          color: isHighlighted ? TColors.primary : TColors.grey,
+        ),
+        const SizedBox(width: 12),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(label, style: TextStyle(fontSize: 12, color: TColors.grey)),
-              SizedBox(height: 2),
-              Text(value, style: TextStyle(color: valueColor ?? TColors.text)),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 11,
+                  color: TColors.grey,
+                  fontWeight: FontWeight.w500,
+                  letterSpacing: 0.5,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                value,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: isHighlighted ? FontWeight.bold : FontWeight.w500,
+                  color: valueColor ?? (isHighlighted ? TColors.primary : TColors.text),
+                ),
+              ),
             ],
           ),
         ),
       ],
     );
+  }
+
+  void _handlePrintAction(HotelBookingModel booking) async {
+    try {
+      final bookingData = await widget.controller.getBookingDataForPdf(
+        booking.bookingNumber,
+      );
+
+      final pdfGenerator = HotelBookingPdfGenerator();
+      final pdfBytes = await pdfGenerator.generatePdf(bookingData);
+
+      await Printing.layoutPdf(
+        onLayout: (PdfPageFormat format) async => pdfBytes,
+        name: 'Booking_Voucher_${booking.bookingNumber}',
+      );
+    } catch (e) {
+      Get.snackbar(
+        'Error',
+        'Failed to generate PDF: $e',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+    }
   }
 }
 
