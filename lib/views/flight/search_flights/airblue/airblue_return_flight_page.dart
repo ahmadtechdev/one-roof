@@ -50,7 +50,7 @@ class AirblueReturnFlightsPage extends StatelessWidget {
     }
 
     return ListView.builder(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 16),
       itemCount: flights.length,
       itemBuilder: (context, index) {
         final flight = flights[index];
@@ -64,13 +64,7 @@ class AirblueReturnFlightsPage extends StatelessWidget {
           },
           child: Container(
             margin: const EdgeInsets.only(bottom: 16),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: TColors.grey.withOpacity(0.2),
-                width: 1,
-              ),
-            ),
+
             child: AirBlueFlightCard(flight: flight, showReturnFlight: true,),
           ),
         );

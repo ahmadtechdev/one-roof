@@ -82,19 +82,23 @@ class _AirArabiaPackageSelectionDialogState extends State<AirArabiaPackageSelect
           onPressed: () => Get.back(),
         ),
         title: Text(
-          widget.isReturnFlight
-              ? 'Select Return Flight Package'
-              : 'Select Flight Package',
+          widget.isReturnFlight ? 'Select Return Flight Package' : 'Select Flight Package',
           style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
         ),
       ),
-      body: Column(
-        children: [
-          _buildFlightInfo(),
-          Expanded(
-            child: _buildPackagesList(),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.only(bottom: 24.0), // Extra padding at bottom
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildFlightInfo(),
+                _buildPackagesList(),
+              ],
+            ),
           ),
-        ],
+        ),
       ),
     );
   }
@@ -481,33 +485,40 @@ class _AirArabiaPackageSelectionDialogState extends State<AirArabiaPackageSelect
       final dynamicPackages = packageResponse.value?.packages ?? [];
       final allPackages = [staticBasicPackage, ...dynamicPackages];
 
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Padding(
-            padding: EdgeInsets.only(left: 16, top: 8, bottom: 16),
-            child: Text(
-              'Available Packages',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: TColors.text,
+      return SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Padding(
+              padding: EdgeInsets.only(left: 16, top: 8, bottom: 16),
+              child: Text(
+                'Available Packages',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: TColors.text,
+                ),
               ),
             ),
-          ),
-          Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              itemCount: allPackages.length,
-              itemBuilder: (context, index) {
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 16),
-                  child: _buildPackageCard(allPackages[index], index),
-                );
-              },
+            SizedBox(
+              height: 510, // Keep a fixed height for horizontal cards (adjust if needed)
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                itemCount: allPackages.length,
+                itemBuilder: (context, index) {
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 16),
+                    child: SizedBox(
+                      width: 300,
+                      child: _buildPackageCard(allPackages[index], index),
+                    ),
+                  );
+                },
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       );
     });
   }
@@ -593,7 +604,7 @@ class _AirArabiaPackageSelectionDialogState extends State<AirArabiaPackageSelect
           ),
 
           Padding(
-            padding: const EdgeInsets.all(14),
+            padding: const EdgeInsets.all(6),
             child: Column(
               children: [
                 _buildPackageDetail(Icons.work_outline_rounded, 'Hand Baggage', '7 Kg'),
@@ -669,9 +680,12 @@ class _AirArabiaPackageSelectionDialogState extends State<AirArabiaPackageSelect
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(title, style: const TextStyle(fontSize: 14, color: TColors.grey)),
-                Text(
-                  value,
-                  style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: TColors.text),
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Text(
+                    value,
+                    style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: TColors.text),
+                  ),
                 ),
               ],
             ),

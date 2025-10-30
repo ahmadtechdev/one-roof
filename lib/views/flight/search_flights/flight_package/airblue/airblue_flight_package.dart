@@ -59,13 +59,19 @@ class AirBluePackageSelectionDialog extends StatelessWidget {
           style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
         ),
       ),
-      body: Column(
-        children: [
-          _buildFlightInfo(),
-          Expanded(
-            child: _buildPackagesList(),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.only(bottom: 24.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildFlightInfo(),
+                _buildPackagesList(),
+              ],
+            ),
           ),
-        ],
+        ),
       ),
     );
   }
@@ -200,14 +206,19 @@ class AirBluePackageSelectionDialog extends StatelessWidget {
             ),
           ),
         ),
-        Expanded(
+        SizedBox(
+          height: 510, // Give enough height for horizontal cards
           child: ListView.builder(
+            scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 16),
             itemCount: fareOptions.length,
             itemBuilder: (context, index) {
               return Padding(
-                padding: const EdgeInsets.only(bottom: 16),
-                child: _buildVerticalPackageCard(fareOptions[index], flight, index),
+                padding: const EdgeInsets.only(right: 16),
+                child: SizedBox(
+                  width: 300,
+                  child: _buildVerticalPackageCard(fareOptions[index], flight, index),
+                ),
               );
             },
           ),
@@ -507,28 +518,16 @@ class AirBluePackageSelectionDialog extends StatelessWidget {
                     color: TColors.grey,
                   ),
                 ),
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        value,
-                        style: const TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                          color: TColors.text,
-                        ),
-                      ),
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Text(
+                    value,
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: TColors.text,
                     ),
-                    if (showInfoIcon && details != null && details.isNotEmpty)
-                      GestureDetector(
-                        onTap: () => _showFeeDetailsDialog(title, details),
-                        child: const Icon(
-                          Icons.help_outline,
-                          size: 18,
-                          color: TColors.primary,
-                        ),
-                      ),
-                  ],
+                  ),
                 ),
               ],
             ),
