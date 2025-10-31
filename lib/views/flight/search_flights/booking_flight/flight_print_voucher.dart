@@ -2182,148 +2182,67 @@ class _FlightBookingDetailsScreenState extends State<FlightBookingDetailsScreen>
     required bool isReturn,
     int? flightNumber,
   }) {
-    final firstLeg = flight.legSchedules.first;
-    final lastLeg = flight.legSchedules.last;
-    final departureDateTime = DateTime.parse(firstLeg['departure']['dateTime']);
-    final arrivalDateTime = DateTime.parse(lastLeg['arrival']['dateTime']);
-    final duration = arrivalDateTime.difference(departureDateTime);
-    final hours = duration.inHours;
-    final minutes = duration.inMinutes.remainder(60);
+    final List<dynamic> legs = flight.legSchedules;
+    return pw.Column(
+      crossAxisAlignment: pw.CrossAxisAlignment.start,
+      children: [
+        ...legs.map((leg) {
+          final dep = leg['departure'];
+          final arr = leg['arrival'];
+          // Fallbacks for missing fare info
+          final _cabin = fareOption?.cabinName ?? 'N/A';
+          final _meal = (fareOption?.mealCode == 'M') ? 'Included' : (fareOption == null ? 'N/A' : 'Not Included');
+          final _handBag = dep['handBaggage'] ?? 'N/A';
+          final _checkedBag = dep['checkedBaggage'] ?? flight.baggageAllowance?.weight?.toString() ?? 'N/A';
+          final _extraBag = 'N/A'; // If you have extra policy, map here.
+          final _fareName = fareOption?.fareName ?? 'N/A';
+          final classType = _cabin;
 
-    return pw.Container(
-      padding: const pw.EdgeInsets.all(10),
-      decoration: pw.BoxDecoration(
-        border: pw.Border.all(color: PdfColors.grey300),
-        borderRadius: const pw.BorderRadius.all(pw.Radius.circular(8)),
-      ),
-      child: pw.Column(
-        crossAxisAlignment: pw.CrossAxisAlignment.start,
-        children: [
-          pw.Row(
-            mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-            children: [
-              pw.Text(
-                // Update title based on flight type
-                flightNumber != null
-                    ? 'Flight $flightNumber: ${flight.airlineName} (${flight.id.split('-').first})'
-                    : isReturn
-                    ? 'Return Flight: ${flight.airlineName} (${flight.id.split('-').first})'
-                    : 'Outbound Flight: ${flight.airlineName} (${flight.id.split('-').first})',
-                style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
-              ),
-              pw.Text(
-                fareOption?.cabinName ?? 'ECONOMY',
-                style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
-              ),
-            ],
-          ),
-          pw.SizedBox(height: 8),
-          pw.Text(
-            '${firstLeg['departure']['airport']} → ${lastLeg['arrival']['airport']}',
-            style: pw.TextStyle(fontSize: 12),
-          ),
-          pw.SizedBox(height: 8),
-          pw.Row(
-            mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-            children: [
-              pw.Text(
-                'Departure: ${departureDateTime.day}-${departureDateTime.month}-${departureDateTime.year} ${departureDateTime.hour.toString().padLeft(2, '0')}:${departureDateTime.minute.toString().padLeft(2, '0')}',
-              ),
-              pw.Text('Duration: ${hours}h ${minutes}m'),
-              pw.Text(
-                'Arrival: ${arrivalDateTime.day}-${arrivalDateTime.month}-${arrivalDateTime.year} ${arrivalDateTime.hour.toString().padLeft(2, '0')}:${arrivalDateTime.minute.toString().padLeft(2, '0')}',
-              ),
-            ],
-          ),
-          pw.SizedBox(height: 8),
-          pw.Row(
-            children: [
-              pw.Expanded(
-                child: pw.Column(
-                  crossAxisAlignment: pw.CrossAxisAlignment.start,
-                  children: [
-                    pw.Text(
-                      'Hand Baggage:',
-                      style: const pw.TextStyle(
-                        fontSize: 10,
-                        color: PdfColors.grey700,
-                      ),
-                    ),
-                    pw.Text('7 Kg'),
-                  ],
-                ),
-              ),
-              pw.Expanded(
-                child: pw.Column(
-                  crossAxisAlignment: pw.CrossAxisAlignment.start,
-                  children: [
-                    pw.Text(
-                      'Checked Baggage:',
-                      style: const pw.TextStyle(
-                        fontSize: 10,
-                        color: PdfColors.grey700,
-                      ),
-                    ),
-                    pw.Text(
-                      '${flight.baggageAllowance.weight} ${flight.baggageAllowance.unit}',
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          pw.SizedBox(height: 8),
-          pw.Divider(),
-          pw.SizedBox(height: 8),
-          if (fareOption != null)
-            pw.Row(
-              mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+          return pw.Container(
+            decoration: pw.BoxDecoration(
+              border: pw.Border.all(color: PdfColors.grey400, width: 0.7),
+              borderRadius: pw.BorderRadius.circular(8),
+              color: PdfColors.white,
+            ),
+            margin: const pw.EdgeInsets.only(bottom: 10),
+            padding: const pw.EdgeInsets.symmetric(vertical: 13, horizontal: 13),
+            child: pw.Row(
+              crossAxisAlignment: pw.CrossAxisAlignment.start,
               children: [
-                pw.Column(
-                  crossAxisAlignment: pw.CrossAxisAlignment.start,
-                  children: [
-                    pw.Text(
-                      'Fare Type:',
-                      style: pw.TextStyle(
-                        fontSize: 10,
-                        color: PdfColors.grey700,
-                      ),
-                    ),
-                    pw.Text(fareOption.fareName),
-                  ],
+                // LEFT: Flight/route details
+                pw.Expanded(
+                  flex: 3,
+                  child: pw.Column(
+                    crossAxisAlignment: pw.CrossAxisAlignment.start,
+                    children: [
+                      pw.Text('${flight.airlineName} - ${flight.id.split('-').first}', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 11)),
+                      pw.SizedBox(height: 2),
+                      pw.Text('${dep['airport']} (${dep['terminal'] ?? '-'})  →  ${arr['airport']} (${arr['terminal'] ?? '-'})', style: pw.TextStyle(fontSize:10)),
+                      pw.Text('${DateFormat('HH:mm').format(DateTime.parse(dep['dateTime']))} (${DateFormat('d MMM').format(DateTime.parse(dep['dateTime']))})  →  ${DateFormat('HH:mm').format(DateTime.parse(arr['dateTime']))} (${DateFormat('d MMM').format(DateTime.parse(arr['dateTime']))})', style: pw.TextStyle(fontSize:9)),
+                    ],
+                  ),
                 ),
-                pw.Column(
-                  crossAxisAlignment: pw.CrossAxisAlignment.start,
-                  children: [
-                    pw.Text(
-                      'Meal:',
-                      style: pw.TextStyle(
-                        fontSize: 10,
-                        color: PdfColors.grey700,
-                      ),
-                    ),
-                    pw.Text(
-                      fareOption.mealCode == 'M' ? 'Included' : 'Not Included',
-                    ),
-                  ],
-                ),
-                pw.Column(
-                  crossAxisAlignment: pw.CrossAxisAlignment.start,
-                  children: [
-                    pw.Text(
-                      'Refundable:',
-                      style: pw.TextStyle(
-                        fontSize: 10,
-                        color: PdfColors.grey700,
-                      ),
-                    ),
-                    pw.Text(fareOption.isRefundable ? 'Yes' : 'No'),
-                  ],
-                ),
+                pw.SizedBox(width: 12),
+                // RIGHT: Fare info block
+                pw.Expanded(
+                  flex: 2,
+                  child: pw.Column(
+                    crossAxisAlignment: pw.CrossAxisAlignment.start,
+                    children: [
+                      pw.Text('Class: $classType', style: pw.TextStyle(fontSize: 9)),
+                      pw.Text('Meal: $_meal', style: pw.TextStyle(fontSize: 9)),
+                      pw.Text('Hand Baggage: $_handBag', style: pw.TextStyle(fontSize: 9)),
+                      pw.Text('Check Baggage: $_checkedBag', style: pw.TextStyle(fontSize: 9)),
+                      pw.Text('Extra Baggage: $_extraBag', style: pw.TextStyle(fontSize: 9)),
+                      pw.Text('Fare Name: $_fareName', style: pw.TextStyle(fontSize: 9)),
+                    ],
+                  ),
+                )
               ],
             ),
-        ],
-      ),
+          );
+        }),
+      ],
     );
   }
 

@@ -1578,228 +1578,240 @@ class _AirArabiaBookingConfirmationState extends State<AirArabiaBookingConfirmat
   Future<void> _generatePDF() async {
     final bookingData = widget.bookingResponse['data'];
     final pdf = pw.Document();
-
-    // Add page
+    final airarabiaLogo = await imageFromAssetBundle('assets/images/img.png');
+    final List flightSegments = widget.flight.flightSegments;
+    final firstSegment = flightSegments.first;
+    final lastSegment = flightSegments.last;
+    final departureDateTime = DateTime.parse(firstSegment['departure']['dateTime']);
+    final arrivalDateTime = DateTime.parse(lastSegment['arrival']['dateTime']);
+    String formatDate(DateTime dt) =>
+      '${dt.day.toString().padLeft(2, '0')} ${DateFormat('M', 'en_US').format(dt)} (${DateFormat('D', 'en_US').format(dt)})';
+    String dateDeadline = '';
+    if (_expiryDateTime != null) {
+      dateDeadline = DateFormat("yyyy-MM-dd HH:mm:ss").format(_expiryDateTime!);
+    }
+    // Fake agent/company info or use bookingController vars
+    final agencyName =  'Air Arabia';
+    // final agencyName = bookingController.agentCompanyName ?? 'Air Arabia';
+    // final agencyCountry = bookingController.agentCountry ?? '';
+    final agencyCountry = 'Pakistan';
+    final agencyMobile = bookingController.phoneController.text ?? '';
     pdf.addPage(
       pw.MultiPage(
-        build: (pw.Context context) {
-          return [
-            // Header
-            pw.Row(
-              mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-              children: [
-                pw.Column(
+        margin: const pw.EdgeInsets.symmetric(horizontal: 18, vertical: 20),
+        build: (pw.Context context) => [
+          // Agency/Logo Row
+          pw.Row(
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+            children: [
+              pw.Container(
+                width: 145,
+                child: pw.Image(airarabiaLogo, fit: pw.BoxFit.contain),
+              ),
+              pw.Column(
+                crossAxisAlignment: pw.CrossAxisAlignment.end,
+                children: [
+                  pw.Text('$agencyName', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 11)),
+                  if (agencyCountry.isNotEmpty)...[
+                    pw.Text(agencyCountry, style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 10)),
+                  ],
+                  pw.Text(agencyMobile, style: pw.TextStyle(fontSize: 10)),
+                ],
+              ),
+            ],
+          ),
+          pw.SizedBox(height: 6),
+          pw.Divider(thickness: 1, color: PdfColors.grey600),
+          pw.SizedBox(height: 6),
+          // Receipt Title/Booking Info
+          pw.Row(
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+            children: [
+              pw.Expanded(
+                flex: 2,
+                child: pw.Column(
                   crossAxisAlignment: pw.CrossAxisAlignment.start,
                   children: [
-                    pw.Text(
-                      'One Roof',
-                      style: pw.TextStyle(
-                        fontSize: 18,
-                        fontWeight: pw.FontWeight.bold,
-                      ),
-                    ),
-                    pw.SizedBox(height: 4),
-                    pw.Text(
-                      'Air Arabia Flight Booking',
-                      style: pw.TextStyle(
-                        fontSize: 12,
-                        color: PdfColors.grey700,
-                      ),
-                    ),
+                    pw.Text('ITINERARY RECEIPT', style: pw.TextStyle(fontSize: 17, fontWeight: pw.FontWeight.bold)),
+                    pw.Text('Below are the details of your electronic ticket. Note: All timings are local', style: pw.TextStyle(fontSize: 8)),
                   ],
                 ),
-                pw.Column(
+              ),
+              pw.Expanded(
+                flex: 2,
+                child: pw.Column(
                   crossAxisAlignment: pw.CrossAxisAlignment.end,
                   children: [
-                    pw.Text(
-                      'Agent: ${bookingController.firstNameController.text} ${bookingController.lastNameController.text}',
-                      style: pw.TextStyle(
-                        fontWeight: pw.FontWeight.bold,
-                        fontSize: 10,
-                      ),
-                    ),
-                    pw.Text(
-                      bookingController.emailController.text,
-                      style: pw.TextStyle(
-                        fontSize: 10,
-                        color: PdfColors.grey700,
-                      ),
-                    ),
-                    pw.Text(
-                      'Phone: +${bookingController.bookerPhoneCountry.value?.phoneCode ?? '92'} ${bookingController.phoneController.text}',
-                      style: pw.TextStyle(
-                        fontSize: 10,
-                        color: PdfColors.grey700,
-                      ),
-                    ),
-                    pw.SizedBox(height: 4),
-                    pw.Text(
-                      'Booking ID: ${bookingData['booking_id']} | PNR: ${bookingData['pnr']}',
-                      style: pw.TextStyle(
-                        fontWeight: pw.FontWeight.bold,
-                        fontSize: 10,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-            pw.SizedBox(height: 20),
-
-            // Add expiry notice to PDF
-            if (_expiryDateTime != null) ...[
-              pw.Container(
-                padding: const pw.EdgeInsets.all(10),
-                decoration: pw.BoxDecoration(
-                  border: pw.Border.all(color: PdfColors.red, width: 1),
-                  borderRadius: const pw.BorderRadius.all(
-                    pw.Radius.circular(8),
-                  ),
-                ),
-                child: pw.Row(
-                  children: [
-                    pw.Icon(
-                      const pw.IconData(0xe8b5), // schedule icon
-                      color: PdfColors.red,
-                      size: 16,
-                    ),
-                    pw.SizedBox(width: 8),
-                    pw.Expanded(
-                      child: pw.Text(
-                        _expiryMessage,
-                        style: pw.TextStyle(
-                          fontSize: 12,
-                          fontWeight: pw.FontWeight.bold,
-                          color: PdfColors.red,
-                        ),
-                      ),
-                    ),
+                    pw.Text('Booking Reference: BK-${bookingData['booking_id']?.toString() ?? '-'}', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 10)),
+                    pw.Text('Agency PNR: ${bookingData['pnr']?.toString() ?? '-'}', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 10)),
                   ],
                 ),
               ),
-              pw.SizedBox(height: 15),
             ],
-
-            // Flight Details
-            pw.Text(
-              'Flight Details',
-              style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold),
+          ),
+          pw.SizedBox(height: 10),
+          // FLIGHT INFO heading
+          pw.Container(
+            color: PdfColors.grey300,
+            padding: const pw.EdgeInsets.symmetric(horizontal: 7, vertical: 4),
+            child: pw.Text(
+              'FLIGHT INFORMATION',
+              style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 13, letterSpacing: 0.7),
             ),
-            pw.Divider(),
-            _buildPdfFlightSection(),
-            pw.SizedBox(height: 20),
-
-            // Passenger Details
-            pw.Text(
-              'Passenger Details',
-              style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold),
-            ),
-            pw.Divider(),
-            pw.TableHelper.fromTextArray(
-              context: context,
-              border: pw.TableBorder.all(color: PdfColors.grey300),
-              headerDecoration: pw.BoxDecoration(color: PdfColors.grey200),
-              headerStyle: pw.TextStyle(fontWeight: pw.FontWeight.bold),
-              headers: ['Sr', 'Name', 'Type', 'Passport#', 'Status'],
-              data: [
-                ...bookingController.adults.map(
-                  (adult) => [
-                    '${bookingController.adults.indexOf(adult) + 1}',
-                    '${adult.firstNameController.text} ${adult.lastNameController.text}',
-                    'Adult',
-                    adult.passportCnicController.text,
-                    bookingData['status'] ?? 'Hold',
-                  ],
+          ),
+          pw.SizedBox(height: 6),
+          ...flightSegments.map((seg) {
+            final dep = seg['departure'];
+            final arr = seg['arrival'];
+            return pw.Container(
+              decoration: pw.BoxDecoration(
+                border: pw.Border.all(color: PdfColors.grey400, width: 0.7),
+                borderRadius: pw.BorderRadius.circular(8),
+                color: PdfColors.white,
+              ),
+              margin: const pw.EdgeInsets.only(bottom: 10),
+              padding: const pw.EdgeInsets.symmetric(vertical: 10, horizontal: 10),
+              child: pw.Row(
+                crossAxisAlignment: pw.CrossAxisAlignment.start,
+                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                children: [
+                  // LEFT: Flight and airport/times
+                  pw.Expanded(
+                    flex: 3,
+                    child: pw.Column(
+                      crossAxisAlignment: pw.CrossAxisAlignment.start,
+                      children: [
+                        pw.Text('${seg['flightNumber'] ?? ''} - ${widget.flight.airlineName}', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 11)),
+                        pw.SizedBox(height: 2),
+                        pw.Text('${dep['airport'] ?? ''} (${dep['terminal'] ?? '-'})  →  ${arr['airport'] ?? ''} (${arr['terminal'] ?? '-'})', style: pw.TextStyle(fontSize:10)),
+                        pw.Text('${DateFormat('HH:mm').format(DateTime.parse(dep['dateTime']))} (${DateFormat('d MMM').format(DateTime.parse(dep['dateTime']))})  →  ${DateFormat('HH:mm').format(DateTime.parse(arr['dateTime']))} (${DateFormat('d MMM').format(DateTime.parse(arr['dateTime']))})', style: pw.TextStyle(fontSize:9)),
+                      ],
+                    ),
+                  ),
+                  pw.SizedBox(width: 12),
+                  // RIGHT: Fare info
+                  pw.Expanded(
+                    flex: 2,
+                    child: pw.Column(
+                      crossAxisAlignment: pw.CrossAxisAlignment.start,
+                      children: [
+                        pw.Text('Class: ${widget.selectedPackage.cabinClass}', style: pw.TextStyle(fontSize: 9)),
+                        pw.Text('Meal: ${widget.selectedPackage.mealInfo}', style: pw.TextStyle(fontSize: 9)),
+                        pw.Text('Hand Baggage: ${widget.selectedPackage.baggageAllowance}', style: pw.TextStyle(fontSize: 9)),
+                        pw.Text('Check Baggage: ${widget.selectedPackage.baggageAllowance}', style: pw.TextStyle(fontSize: 9)),
+                        pw.Text('Extra Baggage: 30 Kg Total in 2 Piece Free', style: pw.TextStyle(fontSize: 9)),
+                        pw.Text('Fare Name: ${widget.selectedPackage.packageName}', style: pw.TextStyle(fontSize: 9)),
+                      ],
+                    ),
+                  )
+                ],
+              ),
+            );
+          }),
+          
+          // PASSENGER section
+          pw.Container(
+            color: PdfColors.grey300,
+            margin: const pw.EdgeInsets.only(top: 17),
+            padding: const pw.EdgeInsets.symmetric(horizontal: 7, vertical: 4),
+            child: pw.Text('PASSENGER & TICKET DETAILS', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 13, letterSpacing: 0.7)),
+          ),
+          pw.Table(
+            border: pw.TableBorder.all(color: PdfColors.grey400, width: 0.6),
+            defaultColumnWidth: const pw.FlexColumnWidth(),
+            children: [
+              pw.TableRow(
+                decoration: pw.BoxDecoration(color: PdfColors.grey200),
+                children: [
+                  pw.Padding(
+                    padding: const pw.EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+                    child: pw.Text('TRAVELLER NAME', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 9)),
+                  ),
+                  pw.Padding(
+                    padding: const pw.EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+                    child: pw.Text('FREQUENT FLYER', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 9)),
+                  ),
+                  pw.Padding(
+                    padding: const pw.EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+                    child: pw.Text('TICKET NO.', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 9)),
+                  ),
+                ],
+              ),
+              ...[
+                ...bookingController.adults.map((p) =>
+                  pw.TableRow(children: [
+                    pw.Padding(
+                      padding: const pw.EdgeInsets.symmetric(vertical: 4, horizontal: 4),
+                      child: pw.Text('${p.firstNameController.text} ${p.lastNameController.text} (A)', style: pw.TextStyle(fontSize: 9)),
+                    ),
+                    pw.Padding(
+                      padding: const pw.EdgeInsets.symmetric(vertical: 4, horizontal: 4),
+                      child: pw.Center(child: pw.Text('-', style: pw.TextStyle(fontSize: 9))),
+                    ),
+                    pw.Padding(
+                      padding: const pw.EdgeInsets.symmetric(vertical: 4, horizontal: 4),
+                      child: pw.Text('', style: pw.TextStyle(fontSize: 9)),
+                    ),
+                  ])
                 ),
-                ...bookingController.children.map(
-                  (child) => [
-                    '${bookingController.adults.length + bookingController.children.indexOf(child) + 1}',
-                    '${child.firstNameController.text} ${child.lastNameController.text}',
-                    'Child',
-                    child.passportCnicController.text,
-                    bookingData['status'] ?? 'Hold',
-                  ],
+                ...bookingController.children.map((p) =>
+                  pw.TableRow(children: [
+                    pw.Padding(
+                      padding: const pw.EdgeInsets.symmetric(vertical: 4, horizontal: 4),
+                      child: pw.Text('${p.firstNameController.text} ${p.lastNameController.text} (C)', style: pw.TextStyle(fontSize: 9)),
+                    ),
+                    pw.Padding(
+                      padding: const pw.EdgeInsets.symmetric(vertical: 4, horizontal: 4),
+                      child: pw.Center(child: pw.Text('-', style: pw.TextStyle(fontSize: 9))),
+                    ),
+                    pw.Padding(
+                      padding: const pw.EdgeInsets.symmetric(vertical: 4, horizontal: 4),
+                      child: pw.Text('', style: pw.TextStyle(fontSize: 9)),
+                    ),
+                  ])
                 ),
-                ...bookingController.infants.map(
-                  (infant) => [
-                    '${bookingController.adults.length + bookingController.children.length + bookingController.infants.indexOf(infant) + 1}',
-                    '${infant.firstNameController.text} ${infant.lastNameController.text}',
-                    'Infant',
-                    infant.passportCnicController.text.isNotEmpty ? infant.passportCnicController.text : 'N/A',
-                    bookingData['status'] ?? 'Hold',
-                  ],
+                ...bookingController.infants.map((p) =>
+                  pw.TableRow(children: [
+                    pw.Padding(
+                      padding: const pw.EdgeInsets.symmetric(vertical: 4, horizontal: 4),
+                      child: pw.Text('${p.firstNameController.text} ${p.lastNameController.text} (I)', style: pw.TextStyle(fontSize: 9)),
+                    ),
+                    pw.Padding(
+                      padding: const pw.EdgeInsets.symmetric(vertical: 4, horizontal: 4),
+                      child: pw.Center(child: pw.Text('-', style: pw.TextStyle(fontSize: 9))),
+                    ),
+                    pw.Padding(
+                      padding: const pw.EdgeInsets.symmetric(vertical: 4, horizontal: 4),
+                      child: pw.Text('', style: pw.TextStyle(fontSize: 9)),
+                    ),
+                  ])
                 ),
               ],
-            ),
-            pw.SizedBox(height: 20),
-
-            // Price Breakdown
-            pw.Text(
-              'Price Breakdown',
-              style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold),
-            ),
-            pw.Divider(),
-            _buildPdfPriceRow(
-              'Package Type',
-              widget.selectedPackage.packageName,
-            ),
-            _buildPdfPriceRow(
-              'Adults (${bookingController.adults.length})',
-              '${widget.currency} ${(widget.totalPrice * bookingController.adults.length / (bookingController.adults.length + bookingController.children.length + bookingController.infants.length)).toStringAsFixed(2)}',
-            ),
-            if (bookingController.children.isNotEmpty)
-              _buildPdfPriceRow(
-                'Children (${bookingController.children.length})',
-                '${widget.currency} ${(widget.totalPrice * 0.75 * bookingController.children.length / (bookingController.adults.length + bookingController.children.length + bookingController.infants.length)).toStringAsFixed(2)}',
-              ),
-            if (bookingController.infants.isNotEmpty)
-              _buildPdfPriceRow(
-                'Infants (${bookingController.infants.length})',
-                '${widget.currency} ${(widget.totalPrice * 0.1 * bookingController.infants.length / (bookingController.adults.length + bookingController.children.length + bookingController.infants.length)).toStringAsFixed(2)}',
-              ),
-            pw.Divider(),
-            _buildPdfPriceRow(
-              'Total Amount',
-              '${bookingData['currency']} ${bookingData['total_amount']}',
-              isTotal: true,
-            ),
-            pw.SizedBox(height: 20),
-
-            // Important Notes
-            pw.Text(
-              'Important Notes:',
-              style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold),
-            ),
-            pw.SizedBox(height: 8),
-            pw.Text(
-              '• This booking is currently on HOLD status',
-              style: const pw.TextStyle(fontSize: 11, color: PdfColors.grey700),
-            ),
-            pw.Text(
-              '• Please complete payment before the deadline to confirm your booking',
-              style: const pw.TextStyle(fontSize: 11, color: PdfColors.grey700),
-            ),
-            pw.Text(
-              '• Contact our support team for any assistance',
-              style: const pw.TextStyle(fontSize: 11, color: PdfColors.grey700),
-            ),
-            pw.SizedBox(height: 20),
-
-            // Footer
-            pw.Center(
-              child: pw.Text(
-                'Thank you for booking with One Roof!',
-                style: pw.TextStyle(fontSize: 12, color: PdfColors.grey700),
-              ),
-            ),
-          ];
-        },
+            ],
+          ),
+          // Notice
+          pw.SizedBox(height: 8),
+          pw.Text('Notice', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 11)),
+          pw.Bullet(text: 'Refund Policy All Refunds are governed by the rule published by the airline which is self explanatory and shown in the search results page', style: pw.TextStyle(fontSize: 9)),
+          pw.SizedBox(height: 6),
+          pw.Text('Rules', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 11)),
+          pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: [
+              pw.Bullet(text: 'Please Report Airline Check in Counter 4 Hour Before Flight Departure.', style: pw.TextStyle(fontSize: 9)),
+              pw.Bullet(text: 'Please Reconfirm the Ticket Before 48 Hour of Flight Departure.', style: pw.TextStyle(fontSize: 9)),
+              pw.Bullet(text: 'All Visa and travel Documents are Traveler Own Responsible.', style: pw.TextStyle(fontSize: 9)),
+              pw.Bullet(text: 'All Groups Tickets are Non-Refundable and Non-Changeable.', style: pw.TextStyle(fontSize: 9)),
+              pw.Bullet(text: 'All (NON-PK market / LCC) tickets are NON-Refundable / NON-Changeable.', style: pw.TextStyle(fontSize: 9)),
+            ],
+          ),
+          pw.SizedBox(height: 12),
+        ],
       ),
     );
-
-    await Printing.layoutPdf(
-      onLayout: (PdfPageFormat format) async => pdf.save(),
-    );
+    await Printing.layoutPdf(onLayout: (PdfPageFormat format) async => pdf.save());
   }
 
   pw.Widget _buildPdfFlightSection() {
