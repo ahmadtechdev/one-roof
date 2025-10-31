@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:introduction_screen/introduction_screen.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:oneroof/screens/main_page.dart';
 import 'package:oneroof/views/home/home_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -25,7 +26,7 @@ class _IntroduceState extends State<Introduce> {
     await prefs.setBool('intro_shown', true);
     
     Navigator.of(context).pushReplacement(
-      MaterialPageRoute(builder: (_) => HomeScreen()),
+      MaterialPageRoute(builder: (_) => MainPage()),
     );
   }
 

@@ -28,6 +28,7 @@ class _AgentDashboardState extends State<AgentDashboard> {
   late TextEditingController _emailController;
   late TextEditingController _contactPersonController;
   late TextEditingController _phoneController;
+  late TextEditingController _whatsappController;
   late TextEditingController _cityController;
   late TextEditingController _countryController;
 
@@ -66,6 +67,9 @@ class _AgentDashboardState extends State<AgentDashboard> {
     _phoneController = TextEditingController(
       text: userData['cs_phone'] ?? "+92 3377513",
     );
+    _whatsappController = TextEditingController(
+      text: userData['cs_whatsapp'] ?? "",
+    );
     _cityController = TextEditingController(
       text: userData['cs_city'] ?? "Faisalabad",
     );
@@ -80,6 +84,7 @@ class _AgentDashboardState extends State<AgentDashboard> {
     _emailController.dispose();
     _contactPersonController.dispose();
     _phoneController.dispose();
+    _whatsappController.dispose();
     _cityController.dispose();
     _countryController.dispose();
     super.dispose();
@@ -100,7 +105,7 @@ class _AgentDashboardState extends State<AgentDashboard> {
         backgroundColor: TColors.primary,
         elevation: 0,
         title: const Text(
-          'Dashboard',
+          'My Profile',
           style: TextStyle(color: TColors.white, fontWeight: FontWeight.bold),
         ),
         centerTitle: false,
@@ -125,18 +130,18 @@ class _AgentDashboardState extends State<AgentDashboard> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Update Your Profile',
+            'My Profile',
             style: TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.bold,
               color: TColors.secondary,
             ),
           ),
-          const SizedBox(height: 8),
-          Text(
-            'Keep your agency information up to date',
-            style: TextStyle(fontSize: 14, color: TColors.grey),
-          ),
+          // const SizedBox(height: 8),
+          // Text(
+          //   'Keep your agency information up to date',
+          //   style: TextStyle(fontSize: 14, color: TColors.grey),
+          // ),
         ],
       ),
     );
@@ -154,7 +159,15 @@ class _AgentDashboardState extends State<AgentDashboard> {
               'Agency Name',
               _buildTextField(
                 controller: _agencyNameController,
-                hintText: 'Enter agency name',
+                hintText: 'Agency name',
+              ),
+            ),
+            const SizedBox(height: 20),
+            _buildFormRow(
+              'Contact Name',
+              _buildTextField(
+                controller: _contactPersonController,
+                hintText: 'Contact name',
               ),
             ),
             const SizedBox(height: 20),
@@ -162,33 +175,34 @@ class _AgentDashboardState extends State<AgentDashboard> {
               'Email',
               _buildTextField(
                 controller: _emailController,
-                hintText: 'Enter email address',
+                hintText: 'Email address',
                 keyboardType: TextInputType.emailAddress,
               ),
             ),
             const SizedBox(height: 20),
             _buildFormRow(
-              'Contact Person Name',
-              _buildTextField(
-                controller: _contactPersonController,
-                hintText: 'Enter contact person name',
-              ),
-            ),
-            const SizedBox(height: 20),
-            _buildFormRow(
-              'Phone No.',
+              'Phone Number',
               _buildTextField(
                 controller: _phoneController,
-                hintText: 'Enter phone number',
+                hintText: 'Phone number',
                 keyboardType: TextInputType.phone,
               ),
             ),
             const SizedBox(height: 20),
             _buildFormRow(
-              'City',
+              'WhatsApp Number',
+              _buildTextField(
+                controller: _whatsappController,
+                hintText: 'WhatsApp number',
+                keyboardType: TextInputType.phone,
+              ),
+            ),
+            const SizedBox(height: 20),
+            _buildFormRow(
+              'City/District',
               _buildTextField(
                 controller: _cityController,
-                hintText: 'Enter city',
+                hintText: 'City/District',
               ),
             ),
             const SizedBox(height: 20),
@@ -196,7 +210,7 @@ class _AgentDashboardState extends State<AgentDashboard> {
               'Country',
               _buildTextField(
                 controller: _countryController,
-                hintText: 'Enter country',
+                hintText: 'Country',
               ),
             ),
             const SizedBox(height: 30),
@@ -248,6 +262,9 @@ class _AgentDashboardState extends State<AgentDashboard> {
       child: TextFormField(
         controller: controller,
         keyboardType: keyboardType,
+        readOnly: true,
+        enableInteractiveSelection: false,
+        showCursor: false,
         decoration: InputDecoration(
           hintText: hintText,
           hintStyle: const TextStyle(color: TColors.placeholder),
@@ -367,45 +384,48 @@ class _AgentDashboardState extends State<AgentDashboard> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  CircleAvatar(
-                    backgroundColor: TColors.white,
-                    radius: 30,
-                    child:
-                        userData['cs_logo'] != null
+                  Row(
+                    children: [
+                      CircleAvatar(
+                        backgroundColor: TColors.white,
+                        radius: 30,
+                        child: userData['cs_logo'] != null
                             ? Image.network(userData['cs_logo'])
                             : Icon(
-                              Icons.person,
-                              size: 30,
-                              color: TColors.primary,
-                            ),
+                          Icons.person,
+                          size: 30,
+                          color: TColors.primary,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        userData['cs_company'] ?? 'Journey Online',
+                        style: TextStyle(
+                          color: TColors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 10),
-                  Text(
-                    userData['cs_company'] ?? 'Journey Online',
-                    style: TextStyle(
-                      color: TColors.white,
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  Text(
-                    userData['cs_email'] ?? 'tech@sastayhotels.pk',
-                    style: TextStyle(color: TColors.white, fontSize: 12),
-                  ),
+                  // Text(
+                  //   userData['cs_email'] ?? 'tech@sastayhotels.pk',
+                  //   style: TextStyle(color: TColors.white, fontSize: 12),
+                  // ),
                 ],
               ),
             ),
-            _buildDrawerItem(Icons.dashboard, 'Dashboard', true, () {}),
+            _buildDrawerItem(Icons.person, 'Profile', true, () {}),
             _buildDrawerItem(Icons.home, 'Home', false, () {
               Get.to(() => HomeScreen());
             }),
-            _buildDrawerItem(Icons.flight, 'All Flight Bookings', false, () {
+            _buildDrawerItem(Icons.flight, 'Flight Bookings', false, () {
               Get.to(() => AllFlightBookingScreen());
             }),
             _buildDrawerItem(Icons.hotel, 'Hotel Bookings', false, () {
               Get.to(() => AllHotelBooking());
             }),
-            _buildDrawerItem(Icons.group, 'All Group Bookings', false, () {
+            _buildDrawerItem(Icons.group, 'Group Bookings', false, () {
               Get.to(() => AllGroupBooking());
             }),
             _buildDrawerItem(Icons.logout, 'Logout', false, () async {

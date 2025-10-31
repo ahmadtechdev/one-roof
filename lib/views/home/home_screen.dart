@@ -345,20 +345,19 @@ class HomeScreenState extends State<HomeScreen>
               ),
               child: GridView.count(
                 shrinkWrap: true,
-                physics: NeverScrollableScrollPhysics(),
-                crossAxisCount: 4,
-                childAspectRatio: 1.0,
+                physics: const NeverScrollableScrollPhysics(),
+                crossAxisCount: 3,
+                childAspectRatio: 1.3,
                 children: [
-                  _buildGridItem('Flight + Hotel', Icons.card_travel, TColors.third),
-                  _buildGridItem('Bus', Icons.directions_bus, TColors.third),
-                  _buildGridItem('Activities', Icons.local_activity, TColors.third),
-                  _buildGridItem('Forex', Icons.currency_exchange, TColors.third),
-                  _buildGridItem('Activities', Icons.celebration, TColors.third),
-                  _buildGridItem('Gift Card', Icons.card_giftcard, TColors.third),
-                  _buildGridItem('Trains', Icons.train, TColors.third),
-                  _buildGridItem('Experiences', Icons.explore, TColors.third),
+                  _buildGridItem('Umrah Package', Icons.mosque, TColors.third),
+                  _buildGridItem('Visa', Icons.assignment_turned_in, TColors.third),
+                  _buildGridItem('Insurance', Icons.health_and_safety, TColors.third),
+                  _buildGridItem('Discount Sheet', Icons.receipt_long, TColors.third),
+                  _buildGridItem('Upcoming Flights', Icons.flight_takeoff, TColors.third),
+                  _buildGridItem('Transportation', Icons.directions_car, TColors.third),
                 ],
               ),
+
             ),
             const SizedBox(height: 16),
             // Customer Service Section
@@ -387,18 +386,19 @@ class HomeScreenState extends State<HomeScreen>
                     'Why Book With Us?',
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
+
                   SizedBox(height: 16),
                   _buildReasonCard(
-                    Icons.headset_mic,
-                    '24/7 Customer Support',
-                    'Our concierge team is on standby to help you out in any situation',
+                    Icons.security,
+                    'Secure and Easy Booking Process',
+                    'Feel safe during your booking process using the latest encryption',
                     TColors.primary,
                   ),
                   SizedBox(height: 16),
                   _buildReasonCard(
-                    Icons.security,
-                    'Secure Booking Process',
-                    'Feel safe during your booking process using the latest encryption',
+                    Icons.support_agent,
+                    'Expert Staff',
+                    'Our experienced team ensures personalized support and expert guidance at every step.',
                     TColors.primary,
                   ),
                   SizedBox(height: 16),
@@ -408,6 +408,14 @@ class HomeScreenState extends State<HomeScreen>
                     'Over thousands of people worldwide trust us as their travel partner',
                     TColors.primary,
                   ),
+                  SizedBox(height: 16),
+                  _buildReasonCard(
+                    Icons.location_on,
+                    'Meet and Assist (Address)',
+                    'Enjoy hassle-free travel with our meet and assist service right at your provided address.',
+                    TColors.primary,
+                  ),
+
 
                 ],
               ),
@@ -542,46 +550,51 @@ class HomeScreenState extends State<HomeScreen>
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  CircleAvatar(
-                    backgroundColor: TColors.white,
-                    radius: 30,
-                    child: userData['cs_logo'] != null
-                        ? Image.network(userData['cs_logo'])
-                        : Icon(
-                            Icons.person,
-                            size: 30,
-                            color: TColors.primary,
-                          ),
+                  Row(
+                    children: [
+                      CircleAvatar(
+                        backgroundColor: TColors.white,
+                        radius: 30,
+                        child: userData['cs_logo'] != null
+                            ? Image.network(userData['cs_logo'])
+                            : Icon(
+                                Icons.person,
+                                size: 30,
+                                color: TColors.primary,
+                              ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        userData['cs_company'] ?? 'Journey Online',
+                        style: TextStyle(
+                          color: TColors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 10),
-                  Text(
-                    userData['cs_company'] ?? 'Journey Online',
-                    style: TextStyle(
-                      color: TColors.white,
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  Text(
-                    userData['cs_email'] ?? 'tech@sastayhotels.pk',
-                    style: TextStyle(color: TColors.white, fontSize: 12),
-                  ),
+
+                  // Text(
+                  //   userData['cs_email'] ?? 'tech@sastayhotels.pk',
+                  //   style: TextStyle(color: TColors.white, fontSize: 12),
+                  // ),
                 ],
               ),
             ),
-            _buildDrawerItem(Icons.dashboard, 'Dashboard', false, () {
+            _buildDrawerItem(Icons.person, 'Profile', false, () {
               Get.to(() => AgentDashboard());
             }),
             _buildDrawerItem(Icons.home, 'Home', true, () {
               Get.to(() => HomeScreen());
             }),
-            _buildDrawerItem(Icons.flight, 'All Flight Bookings', false, () {
+            _buildDrawerItem(Icons.flight, 'Flight Bookings', false, () {
               Get.to(() => AllFlightBookingScreen());
             }),
             _buildDrawerItem(Icons.hotel, 'Hotel Bookings', false, () {
               Get.to(() => AllHotelBooking());
             }),
-            _buildDrawerItem(Icons.group, 'All Group Bookings', false, () {
+            _buildDrawerItem(Icons.group, 'Group Bookings', false, () {
               Get.to(() => AllGroupBooking());
             }),
             _buildDrawerItem(Icons.logout, 'Logout', false, () async {

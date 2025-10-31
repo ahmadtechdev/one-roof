@@ -8,6 +8,7 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:flutter/services.dart';
 import 'package:printing/printing.dart';
+import 'package:oneroof/widgets/app_drawer.dart';
 
 class AllHotelBooking extends StatelessWidget {
   final AllHotelBookingController bookingController = Get.put(
@@ -48,6 +49,14 @@ class AllHotelBooking extends StatelessWidget {
         foregroundColor: Colors.white,
         backgroundColor: TColors.background4,
         elevation: 0,
+        automaticallyImplyLeading: false,
+        leading: Builder(
+          builder: (ctx) => IconButton(
+            icon: const Icon(Icons.menu, color: Colors.white),
+            onPressed: () => Scaffold.of(ctx).openDrawer(),
+            tooltip: 'Menu',
+          ),
+        ),
         title: const Text(
           'Hotel Bookings',
           style: TextStyle(
@@ -78,6 +87,7 @@ class AllHotelBooking extends StatelessWidget {
           ),
         ],
       ),
+      drawer: const AppDrawer(),
       body: Column(
         children: [
           // Collapsible filter section
@@ -461,13 +471,25 @@ class _CollapsibleFilterSectionState extends State<_CollapsibleFilterSection> {
       ),
       child: Column(
         children: [
-          // Always visible status filter
+          // Always visible date filters
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             child: Row(
               children: [
                 Expanded(
-                  child: _buildStatusFilter(),
+                  child: _buildDateSelector(
+                    label: 'From',
+                    date: widget.controller.fromDate,
+                    onTap: () => _selectFromDate(),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _buildDateSelector(
+                    label: 'To',
+                    date: widget.controller.toDate,
+                    onTap: () => _selectToDate(),
+                  ),
                 ),
                 const SizedBox(width: 12),
                 // Expand/collapse button
@@ -506,29 +528,14 @@ class _CollapsibleFilterSectionState extends State<_CollapsibleFilterSection> {
                       children: [
                         const Divider(color: Colors.white24),
                         const SizedBox(height: 12),
-                        // Date filters
+                        // Dropdowns: Status and Destination
                         Row(
                           children: [
-                            Expanded(
-                              child: _buildDateSelector(
-                                label: 'From',
-                                date: widget.controller.fromDate,
-                                onTap: () => _selectFromDate(),
-                              ),
-                            ),
+                            Expanded(child: _buildStatusFilter()),
                             const SizedBox(width: 12),
-                            Expanded(
-                              child: _buildDateSelector(
-                                label: 'To',
-                                date: widget.controller.toDate,
-                                onTap: () => _selectToDate(),
-                              ),
-                            ),
+                            Expanded(child: _buildDestinationFilter()),
                           ],
-                        ),
-                        const SizedBox(height: 12),
-                        // Destination filter
-                        _buildDestinationFilter(),
+                         ),
                         const SizedBox(height: 16),
                         // Filter button
                         SizedBox(
@@ -924,7 +931,7 @@ class _CollapsibleBookingCardState extends State<_CollapsibleBookingCard> {
                           _buildInfoRow(
                             'Price',
                             widget.booking.price,
-                            Icons.attach_money_rounded,
+                            Icons.payments_rounded,
                             isHighlighted: true,
                           ),
                           const Divider(height: 24),

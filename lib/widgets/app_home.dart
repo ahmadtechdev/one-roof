@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:oneroof/screens/main_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:oneroof/views/introduce.dart';
 import 'package:oneroof/views/home/home_screen.dart';
@@ -74,6 +75,6 @@ class _AppHomeState extends State<AppHome> {
       return const Introduce();
     }
 
-    return const HomeScreen();
+    return const MainPage();
   }
 }

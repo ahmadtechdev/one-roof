@@ -9,13 +9,48 @@ import 'package:flutter/services.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
+import 'package:oneroof/widgets/app_drawer.dart';
 
-class AllFlightBookingScreen extends StatelessWidget {
-  final AllFlightBookingController controller = Get.put(
-    AllFlightBookingController(),
-  );
-
+class AllFlightBookingScreen extends StatefulWidget {
   AllFlightBookingScreen({super.key});
+
+  @override
+  State<AllFlightBookingScreen> createState() => _AllFlightBookingScreenState();
+}
+
+class _AllFlightBookingScreenState extends State<AllFlightBookingScreen> {
+  final AllFlightBookingController controller = Get.put(AllFlightBookingController());
+  String? _selectedStatusFilter; // null => all
+  String _selectedAirline = 'All Airlines';
+
+  List<BookingModel> _computeVisibleBookings() {
+    final base = controller.filteredBookings;
+    final statusFiltered = _selectedStatusFilter == null
+        ? base
+        : base.where((b) => b.status.toLowerCase() == _selectedStatusFilter!.toLowerCase()).toList();
+    final query = controller.searchController.text.trim().toLowerCase();
+    // Apply airline filter
+    final airlineFiltered = _selectedAirline == 'All Airlines'
+        ? statusFiltered
+        : statusFiltered.where((b) => b.supplier.toLowerCase() == _selectedAirline.toLowerCase()).toList();
+    if (query.isEmpty) return airlineFiltered;
+    return airlineFiltered.where((b) {
+      final supplier = b.supplier.toLowerCase();
+      return supplier.contains(query);
+    }).toList();
+  }
+
+  void _setStatusFilter(String? status) {
+    setState(() {
+      _selectedStatusFilter = status;
+    });
+  }
+
+  void _setAirlineFilter(String airline) {
+    setState(() {
+      _selectedAirline = airline;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -25,6 +60,14 @@ class AllFlightBookingScreen extends StatelessWidget {
         foregroundColor: Colors.white,
         backgroundColor: TColors.background4,
         elevation: 0,
+        automaticallyImplyLeading: false,
+        leading: Builder(
+          builder: (ctx) => IconButton(
+            icon: const Icon(Icons.menu, color: Colors.white),
+            onPressed: () => Scaffold.of(ctx).openDrawer(),
+            tooltip: 'Menu',
+          ),
+        ),
         title: const Text(
           'All Flights Booking',
           style: TextStyle(
@@ -55,10 +98,17 @@ class AllFlightBookingScreen extends StatelessWidget {
           ),
         ],
       ),
+      drawer: const AppDrawer(),
       body: Column(
         children: [
-          // Fixed date filter at top
-          _buildDateFilter(),
+          // Collapsible filter section
+          _CollapsibleFilterSection(
+            controller: controller,
+            selectedStatus: _selectedStatusFilter,
+            onStatusChanged: _setStatusFilter,
+            selectedAirline: _selectedAirline,
+            onAirlineChanged: _setAirlineFilter,
+          ),
           // Scrollable content area with stats and search
           Expanded(
             child: CustomScrollView(
@@ -81,7 +131,7 @@ class AllFlightBookingScreen extends StatelessWidget {
                     return SliverFillRemaining(
                       child: _buildErrorWidget(),
                     );
-                  } else if (controller.filteredBookings.isEmpty) {
+                  } else if (_computeVisibleBookings().isEmpty) {
                     return SliverFillRemaining(
                       child: _buildEmptyStateWidget(),
                     );
@@ -202,15 +252,19 @@ class AllFlightBookingScreen extends StatelessWidget {
                     controller.totalBookings.value,
                     const Color(0xFF6366F1),
                     Icons.flight_takeoff_rounded,
+                    onTap: () => _setStatusFilter(null),
+                    isSelected: _selectedStatusFilter == null,
                   ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: _buildStatCard(
-                    'Confirmed',
+                    'Ticketed',
                     controller.confirmedBookings.value,
                     const Color(0xFF10B981),
                     Icons.check_circle_rounded,
+                    onTap: () => _setStatusFilter('Confirmed'),
+                    isSelected: _selectedStatusFilter == 'Confirmed',
                   ),
                 ),
               ],
@@ -225,6 +279,8 @@ class AllFlightBookingScreen extends StatelessWidget {
                     controller.onHoldBookings.value,
                     const Color(0xFFF59E0B),
                     Icons.pause_circle_rounded,
+                    onTap: () => _setStatusFilter('On Hold'),
+                    isSelected: _selectedStatusFilter == 'On Hold',
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -234,6 +290,8 @@ class AllFlightBookingScreen extends StatelessWidget {
                     controller.cancelledBookings.value,
                     const Color(0xFFEF4444),
                     Icons.cancel_rounded,
+                    onTap: () => _setStatusFilter('Cancelled'),
+                    isSelected: _selectedStatusFilter == 'Cancelled',
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -243,6 +301,8 @@ class AllFlightBookingScreen extends StatelessWidget {
                     controller.errorBookings.value,
                     const Color(0xFF6B7280),
                     Icons.error_outline_rounded,
+                    onTap: () => _setStatusFilter('Error'),
+                    isSelected: _selectedStatusFilter == 'Error',
                   ),
                 ),
               ],
@@ -253,8 +313,10 @@ class AllFlightBookingScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildStatCard(String title, int count, Color color, IconData icon) {
-    return Container(
+  Widget _buildStatCard(String title, int count, Color color, IconData icon, {VoidCallback? onTap, bool isSelected = false}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -266,6 +328,9 @@ class AllFlightBookingScreen extends StatelessWidget {
             offset: const Offset(0, 2),
           ),
         ],
+        border: isSelected
+            ? Border.all(color: color, width: 1)
+            : null,
       ),
       child: Row(
         children: [
@@ -304,7 +369,7 @@ class AllFlightBookingScreen extends StatelessWidget {
           ),
         ],
       ),
-    );
+    ));
   }
 
   Widget _buildSearchBar() {
@@ -314,7 +379,7 @@ class AllFlightBookingScreen extends StatelessWidget {
         controller: controller.searchController,
         style: const TextStyle(color: TColors.text),
         decoration: InputDecoration(
-          hintText: 'Search by booking ID, PNR, passenger...',
+          hintText: 'Search by booking ID, PNR, passenger, airline...',
           hintStyle: TextStyle(
             color: TColors.grey.withOpacity(0.6),
             fontSize: 14,
@@ -347,6 +412,10 @@ class AllFlightBookingScreen extends StatelessWidget {
           ),
           contentPadding: const EdgeInsets.symmetric(vertical: 12),
         ),
+        onChanged: (_) {
+          // trigger UI refresh to apply local supplier filter
+          setState(() {});
+        },
       ),
     );
   }
@@ -468,13 +537,14 @@ class AllFlightBookingScreen extends StatelessWidget {
       sliver: SliverList(
         delegate: SliverChildBuilderDelegate(
           (context, index) {
-            final booking = controller.filteredBookings[index];
+            final visible = _computeVisibleBookings();
+            final booking = visible[index];
             return Padding(
               padding: const EdgeInsets.only(bottom: 12),
               child: _buildCollapsibleBookingCard(booking),
             );
           },
-          childCount: controller.filteredBookings.length,
+          childCount: _computeVisibleBookings().length,
         ),
       ),
     );
@@ -497,6 +567,272 @@ class _CollapsibleBookingCard extends StatefulWidget {
   @override
   State<_CollapsibleBookingCard> createState() =>
       _CollapsibleBookingCardState();
+}
+
+// Collapsible Filter Section Widget (like hotel bookings)
+class _CollapsibleFilterSection extends StatefulWidget {
+  final AllFlightBookingController controller;
+  final String? selectedStatus;
+  final void Function(String? value) onStatusChanged;
+  final String selectedAirline;
+  final void Function(String value) onAirlineChanged;
+
+  const _CollapsibleFilterSection({
+    required this.controller,
+    required this.selectedStatus,
+    required this.onStatusChanged,
+    required this.selectedAirline,
+    required this.onAirlineChanged,
+  });
+
+  @override
+  State<_CollapsibleFilterSection> createState() => _CollapsibleFilterSectionState();
+}
+
+class _CollapsibleFilterSectionState extends State<_CollapsibleFilterSection> {
+  bool _isExpanded = false;
+
+  final List<String> _statusOptions = const [
+    'All',
+    'Confirmed',
+    'On Hold',
+    'Cancelled',
+    'Error',
+  ];
+
+  final List<String> _airlineOptions = const [
+    'All Airlines',
+    'PIA',
+    'AIRBLUE',
+    'FLY JINNAH',
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: TColors.background4,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          // Always visible date filters
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            child: Row(
+              children: [
+                Expanded(
+                  child: _buildDateSelector(
+                    label: 'From',
+                    date: widget.controller.fromDate,
+                    onTap: () => widget.controller.selectFromDate(Get.context!),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _buildDateSelector(
+                    label: 'To',
+                    date: widget.controller.toDate,
+                    onTap: () => widget.controller.selectToDate(Get.context!),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                // Expand/collapse button
+                GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      _isExpanded = !_isExpanded;
+                    });
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(
+                      _isExpanded
+                          ? Icons.keyboard_arrow_up_rounded
+                          : Icons.filter_list_rounded,
+                      color: Colors.white,
+                      size: 20,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // Expandable filters
+          AnimatedSize(
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeInOut,
+            child: _isExpanded
+                ? Container(
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                    child: Column(
+                      children: [
+                        const Divider(color: Colors.white24),
+                        const SizedBox(height: 12),
+                        // Dropdowns: Status and Airline
+                        Row(
+                          children: [
+                            Expanded(child: _buildStatusFilter()),
+                            const SizedBox(width: 12),
+                            Expanded(child: _buildAirlineFilter()),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        // Filter button
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton.icon(
+                            onPressed: () async {
+                              await widget.controller.loadBookings();
+                              if (mounted) setState(() {});
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: TColors.primary,
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                            icon: const Icon(Icons.search_rounded, color: Colors.white),
+                            label: const Text(
+                              'Apply Filters',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                : const SizedBox.shrink(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatusFilter() {
+    final current = widget.selectedStatus;
+    final display = current ?? 'All';
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          value: display,
+          isExpanded: true,
+          icon: const Icon(Icons.keyboard_arrow_down, size: 16),
+          style: const TextStyle(color: TColors.text, fontSize: 13),
+          items: _statusOptions.map((String item) {
+            return DropdownMenuItem<String>(
+              value: item,
+              child: Text(item),
+            );
+          }).toList(),
+          onChanged: (value) {
+            if (value == null) return;
+            widget.onStatusChanged(value == 'All' ? null : value);
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAirlineFilter() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          value: widget.selectedAirline,
+          isExpanded: true,
+          icon: const Icon(Icons.keyboard_arrow_down, size: 16),
+          style: const TextStyle(color: TColors.text, fontSize: 14),
+          items: _airlineOptions.map((String item) {
+            return DropdownMenuItem<String>(
+              value: item,
+              child: Text(item),
+            );
+          }).toList(),
+          onChanged: (value) {
+            if (value == null) return;
+            widget.onAirlineChanged(value);
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDateSelector({
+    required String label,
+    required Rx<DateTime> date,
+    required VoidCallback onTap,
+  }) {
+    return Obx(
+      () => GestureDetector(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Row(
+            children: [
+              Icon(
+                Icons.calendar_today_rounded,
+                size: 16,
+                color: TColors.primary,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      label,
+                      style: const TextStyle(
+                        fontSize: 10,
+                        color: TColors.grey,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      DateFormat('dd/MM/yyyy').format(date.value),
+                      style: const TextStyle(
+                        color: TColors.text,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 class _CollapsibleBookingCardState extends State<_CollapsibleBookingCard> {
@@ -648,7 +984,7 @@ class _CollapsibleBookingCardState extends State<_CollapsibleBookingCard> {
                     ),
                     const Divider(height: 24),
                     _buildInfoRow(
-                      'Supplier',
+                      'Airline',
                       widget.booking.supplier,
                       Icons.airlines_rounded,
                     ),
@@ -669,7 +1005,7 @@ class _CollapsibleBookingCardState extends State<_CollapsibleBookingCard> {
                     _buildInfoRow(
                       'Total Price',
                       '${widget.booking.currency.isNotEmpty ? widget.booking.currency : "PKR"} ${widget.booking.totalSell.toStringAsFixed(0)}',
-                      Icons.attach_money_rounded,
+                      Icons.payments_rounded,
                       isHighlighted: true,
                     ),
                     if (widget.booking.deadlineTime != null) ...[

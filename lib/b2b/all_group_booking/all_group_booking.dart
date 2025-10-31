@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:oneroof/b2b/all_group_booking/all_group_booking_controller.dart';
 import 'package:oneroof/b2b/all_group_booking/model.dart';
 import 'package:oneroof/utility/colors.dart';
+import 'package:oneroof/widgets/app_drawer.dart';
 
 class AllGroupBooking extends StatelessWidget {
   AllGroupBooking({super.key});
@@ -20,6 +21,14 @@ class AllGroupBooking extends StatelessWidget {
         foregroundColor: Colors.white,
         backgroundColor: TColors.background4,
         elevation: 0,
+        automaticallyImplyLeading: false,
+        leading: Builder(
+          builder: (ctx) => IconButton(
+            icon: const Icon(Icons.menu, color: Colors.white),
+            onPressed: () => Scaffold.of(ctx).openDrawer(),
+            tooltip: 'Menu',
+          ),
+        ),
         title: const Text(
           'Group Booking Reports',
           style: TextStyle(
@@ -50,6 +59,7 @@ class AllGroupBooking extends StatelessWidget {
           ),
         ],
       ),
+      drawer: const AppDrawer(),
       body: Column(
         children: [
           // Collapsible filter section
@@ -433,13 +443,25 @@ class _CollapsibleFilterSectionState extends State<_CollapsibleFilterSection> {
       ),
       child: Column(
         children: [
-          // Always visible status filter
+          // Always visible date filters
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             child: Row(
               children: [
                 Expanded(
-                  child: _buildStatusFilter(),
+                  child: _buildDateSelector(
+                    label: 'From',
+                    date: widget.controller.fromDate,
+                    onTap: () => _selectFromDate(),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _buildDateSelector(
+                    label: 'To',
+                    date: widget.controller.toDate,
+                    onTap: () => _selectToDate(),
+                  ),
                 ),
                 const SizedBox(width: 12),
                 // Expand/collapse button
@@ -459,7 +481,7 @@ class _CollapsibleFilterSectionState extends State<_CollapsibleFilterSection> {
                       _isExpanded
                           ? Icons.keyboard_arrow_up_rounded
                           : Icons.filter_list_rounded,
-              color: Colors.white,
+                      color: Colors.white,
                       size: 20,
                     ),
                   ),
@@ -478,29 +500,14 @@ class _CollapsibleFilterSectionState extends State<_CollapsibleFilterSection> {
                       children: [
                         const Divider(color: Colors.white24),
                         const SizedBox(height: 12),
-                        // Date filters
+                        // Dropdowns: Status and Group Category
                         Row(
                           children: [
-                            Expanded(
-                              child: _buildDateSelector(
-                                label: 'From',
-                                date: widget.controller.fromDate,
-                                onTap: () => _selectFromDate(),
-                              ),
-                            ),
+                            Expanded(child: _buildStatusFilter()),
                             const SizedBox(width: 12),
-          Expanded(
-                              child: _buildDateSelector(
-                                label: 'To',
-                                date: widget.controller.toDate,
-                                onTap: () => _selectToDate(),
-                              ),
-                            ),
+                            Expanded(child: _buildGroupCategoryFilter()),
                           ],
                         ),
-                        const SizedBox(height: 12),
-                        // Group category filter
-                        _buildGroupCategoryFilter(),
                         const SizedBox(height: 16),
                         // Filter button
                         SizedBox(
@@ -894,8 +901,8 @@ class _CollapsibleBookingCardState extends State<_CollapsibleBookingCard> {
                           const Divider(height: 24),
                           _buildInfoRow(
                     'Total Price',
-                            'PKR ${NumberFormat('#,###').format(widget.booking.price)}',
-                            Icons.attach_money_rounded,
+                            'PKR ${NumberFormat('#,###').format(widget.booking.price)} x ${widget.booking.passengerStatus.holdTotal + widget.booking.passengerStatus.confirmTotal + widget.booking.passengerStatus.cancelledTotal}',
+                            Icons.payments_rounded,
                             isHighlighted: true,
                           ),
                           const SizedBox(height: 16),
