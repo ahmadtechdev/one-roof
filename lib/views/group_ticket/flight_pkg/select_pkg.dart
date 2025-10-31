@@ -184,7 +184,8 @@ class SelectPkgScreen extends StatelessWidget {
     final flightsBySector = <String, List<GroupFlightModel>>{};
 
     for (final flight in flights) {
-      final sector = '${flight.origin}-${flight.destination}'.toLowerCase();
+      final sector =
+          '${flight.segments.first.origin}-${flight.segments.last.destination}'.toLowerCase();
       flightsBySector.putIfAbsent(sector, () => []).add(flight);
     }
 

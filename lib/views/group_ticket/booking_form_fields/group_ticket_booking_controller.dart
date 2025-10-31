@@ -175,8 +175,8 @@ class GroupTicketBookingController extends GetxController {
 
       val.groupId = flight.group_id;
       val.groupName =
-          '${flight.airline}-${flight.origin}-${flight.destination}';
-      val.sector = '${flight.origin}-${flight.destination}';
+          '${flight.airline}-${flight.segments.first.origin}-${flight.segments.last.destination}';
+      val.sector = '${flight.segments.first.origin}-${flight.segments.last.destination}';
       val.adultPrice = flight.price.toDouble();
       val.childPrice = flight.price.toDouble();
       val.infantPrice = flight.price.toDouble();

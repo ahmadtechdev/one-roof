@@ -11,10 +11,15 @@ class GroupTicketingController extends GetxController {
   // Base URLs for different services
   static const String travelNetworkBaseUrl = 'https://travelnetwork.pk/api';
   static const String alhaiderBaseUrl = 'https://alhaidertravel.pk/api';
+  static const String ameerEMillatBaseUrl =
+      'https://fsdameeremillattourism.com/api';
 
   // Store the selected region
   final RxString selectedRegion = ''.obs;
   final RxString selectedRegion2 = ''.obs;
+
+
+
 
   // Margin variables
   var travelnetworkmargin = 0.0;
@@ -27,6 +32,9 @@ class GroupTicketingController extends GetxController {
 
   final String alhaiderAuthToken =
       'eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiI5ZTc4OTIxMS0zZjc0LTQ1ZTUtOWE3NC03YzZhYzNmMWVjZGQiLCJqdGkiOiIxNDE0NDE2YmNlNjE5OTk3YTJkNzE4MWYzYWY3YTRkMTA1YzZmZGUxNDYwNDFhZTJjYjVjZDA5ZTlhYTVhYjQ1Y2Q2M2EyNDI2MzBhZjdiZiIsImlhdCI6MTc0MzA3MjA1NC4yMDk1MTgsIm5iZiI6MTc0MzA3MjA1NC4yMDk1MjMsImV4cCI6MTc3NDYwODA1NC4xOTM4MzYsInN1YiI6Ijc0Iiwic2NvcGVzIjpbXX0.mv6GXni4w0wCJAUKWAtFOcfnH9fmI5bWTSIddDzkS3H3UUgk-0CcehU86U_m_91XRUwljgO_X06VtS3VQs29m3wwjBcNxZcL74gkmWk5zSzgjezhoaMSSuYsF_yHb3-XXODLFe6yq0-6yQ8nydhr57ifa1CLvRZRfVYdfPTCnkZqb6Y6pH_FXex4EjC5vHWHPPUOU9n6jrIvL1TM4sSs7Ie4PznkazOLdJME1XZqwrge1gdVhA7MYSVvEbPZBw7nuRdNAuA1xUHWgS2PC-qvrO_4atWEeWA__2jI6_0_Hr1nE1vUqVbRmtg3eiudmZgqo2Zfb2xjhwNfPdNgVqveFSZDiN2HmweWylN-7oGM6yKZyfa8RMSR1OH1-ubyr2TEcggUiv7Dew0gUGgq5J-kjUTWMIKpWJ_o_yZUXMCrMaBheKqDMXTZQ2w3C4CNqKf96Ky2YIU3kuQHtfgTOwhzysZSzU1Fpd9fCPo6UGbsPbzFut2vTj413dlvu1NdXWT6n-ZGhhbGxoi3JVUuOvWksKP-W1XugsbAUIeh5hyp_tr8iiORpf5DGiGjphD2PEksIxE7n9NTp1iR4TQZlSY_nUXyuW1TNd3KmdWb7eZFhP_lWc2Ycfkmt8Kq9ii_DbtTlrjtimTn24Nud33szwK19mFOfkXN55wA1DXAKA4anDs';
+
+  final String ameerEMillatAuthToken =
+      'eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiIxIiwianRpIjoiYzg0MmIwMWZlMGExZGQ5OWNmZTU4YmRkN2ViMTJmYTBiOWVjNjQwYTZhYmEyNjM0M2ZmN2M5ZTRkYWFhODlmY2Q5M2ZjMmE0Y2VlYmYyMWIiLCJpYXQiOjE3NjE4OTExMDQuMzg1OTU3LCJuYmYiOjE3NjE4OTExMDQuMzg1OTYxLCJleHAiOjE3OTM0MjcxMDQuMzgxMzMsInN1YiI6Ijk2MCIsInNjb3BlcyI6W119.gJLl6H6pet9N_iGTNb_FZiO7xxe-KhQVLQ-5RcnbYss3DYmhl0P7PoLFEVS_FasWzJ4EN8UZo0Kldy0wo4QyuPkq4ewKAa71V6NNzpgCNQ6TOWXIHrVLCV_ch7zHXHB5AsAZkzG1E6kIs39vmiHrnmuy53vYEMvxyDkgxH4AetRAZC9zII-W3pYFwM0UcCqs1Qto0ui2c26NzQCVzzOYKOf1dZ2N2EkwELb4DUW7zFluZYqyayOZIx9VTbCAzDust3N-Vjhc1JwAtk4IwIzsgva_sWsG3sJnUiVcCi0wNetivAy3QeIOQU5-MMiw9I-kCXKoSP3t3eFFTIXmyLqR8OG75lqBz5UnsJM6VNe6bzhjwEFD4KTGPGqRb7UgqOtMFjdvp6-V68ZTMXNSw6HVn8_bvV92DLjRiBveJK9NJzsoURx2XBjyvjU5u7DVewmdkDIeSkPM0f_w0V5-9AKzheKl7LWuphNVkooSPAUJPw1fZu0ocb9Fj14X2m-enuR2xBDnc_0qBE6jYYoyecIXkc42DdBAgH1wfOTP5ySjZNFXWl2GZ5wjBachA_ctUzKipY-nnAAQ2qhyGvkhnd4NMaPmenW5HvLvm7Z-GckZx7hzNkYkYoMpt98HNKcWbGZlxzCxXTH-u4wf73FNE_4L80N3FJNDouq8_RVktTks2Vo';
 
   @override
   void onInit() {
@@ -79,14 +87,14 @@ class GroupTicketingController extends GetxController {
                 double.tryParse(
                   marginData['travel_network_margin_b2c']?.toString() ?? '0',
                 ) ??
-                0.0;
+                    0.0;
 
             // Store Al Haider margin (B2C)
             al_haidermargin =
                 double.tryParse(
                   marginData['ah_b2cmargin']?.toString() ?? '0',
                 ) ??
-                0.0;
+                    0.0;
 
             if (kDebugMode) {
               print(
@@ -146,7 +154,14 @@ class GroupTicketingController extends GetxController {
       'Accept': 'application/json',
       'Authorization': 'Bearer $alhaiderAuthToken',
       'Cookie':
-          'XSRF-TOKEN=your_xsrf_token_here; al_haider_international_travels_tours_session=your_session_token_here',
+      'XSRF-TOKEN=your_xsrf_token_here; al_haider_international_travels_tours_session=your_session_token_here',
+    };
+  }
+
+  Map<String, String> getAmeerEMillatHeaders() {
+    return {
+      'Accept': 'application/json',
+      'Authorization': 'Bearer $ameerEMillatAuthToken',
     };
   }
 
@@ -232,18 +247,18 @@ class GroupTicketingController extends GetxController {
 
         // Apply margin to each group's price
         final processedGroups =
-            groups.map((group) {
-              if (group['price'] != null) {
-                final originalPrice =
-                    double.tryParse(group['price'].toString()) ?? 0.0;
-                final finalPrice = applyMarginToPrice(
-                  originalPrice,
-                  'travel_network',
-                );
-                group['price'] = finalPrice.toInt();
-              }
-              return group;
-            }).toList();
+        groups.map((group) {
+          if (group['price'] != null) {
+            final originalPrice =
+                double.tryParse(group['price'].toString()) ?? 0.0;
+            final finalPrice = applyMarginToPrice(
+              originalPrice,
+              'travel_network',
+            );
+            group['price'] = finalPrice.toInt();
+          }
+          return group;
+        }).toList();
 
         return processedGroups;
       } else {
@@ -285,7 +300,7 @@ class GroupTicketingController extends GetxController {
         return {
           'success': false,
           'message':
-              'Passenger count mismatch: Expected $expectedTotal, got ${passengers.length}',
+          'Passenger count mismatch: Expected $expectedTotal, got ${passengers.length}',
           'data': null,
         };
       }
@@ -370,22 +385,27 @@ class GroupTicketingController extends GetxController {
           "agent_notes": agentNotes ?? "",
         },
         "booking_details":
-            passengers
-                .map(
-                  (passenger) => {
-                    "surname": passenger['lastName']?.toString().trim() ?? "",
-                    "given_name":
-                        passenger['firstName']?.toString().trim() ?? "",
-                    "title": passenger['title']?.toString().trim() ?? "",
-                    "passport_no":
-                        passenger['passportNumber']?.toString().trim() ?? "",
-                    "dob": passenger['dateOfBirth']?.toString() ?? "",
-                    "doe": passenger['passportExpiry']?.toString() ?? "",
-                  },
-                )
-                .toList(),
-        "group_price_detail_id": groupPriceDetailId,
+        passengers
+            .map(
+              (passenger) => {
+            "surname": passenger['lastName']?.toString().trim() ?? "",
+            "given_name":
+            passenger['firstName']?.toString().trim() ?? "",
+            "title": passenger['title']?.toString().trim() ?? "",
+            "passport_no":
+            passenger['passportNumber']?.toString().trim() ?? "",
+            "dob": passenger['dateOfBirth']?.toString() ?? "",
+            "doe": passenger['passportExpiry']?.toString() ?? "",
+          },
+        )
+            .toList(),
       };
+
+      // Include group_price_detail_id only when it's a positive value
+      if (groupPriceDetailId > 0) {
+        (data as Map<String, dynamic>)["group_price_detail_id"] =
+            groupPriceDetailId;
+      }
 
       // Log the complete request data for debugging
       if (kDebugMode) {
@@ -396,12 +416,23 @@ class GroupTicketingController extends GetxController {
         print('========================');
       }
 
+      // Route booking to appropriate supplier endpoint
+      final bool isAmeer = groupPriceDetailId <= 0;
+
+      final String bookingUrl = isAmeer
+          ? '$ameerEMillatBaseUrl/create/booking'
+          : '$travelNetworkBaseUrl/create/booking';
+
+      final Map<String, String> bookingHeaders = isAmeer
+          ? getAmeerEMillatHeaders()
+          : getTravelNetworkHeaders();
+
       // Add timeout to avoid hanging requests
       var response = await dio1.post(
-        '$travelNetworkBaseUrl/create/booking',
+        bookingUrl,
         data: data,
         options: dio.Options(
-          headers: getTravelNetworkHeaders(),
+          headers: bookingHeaders,
           contentType: 'application/json',
           receiveTimeout: const Duration(seconds: 45),
           sendTimeout: const Duration(seconds: 45),
@@ -437,7 +468,7 @@ class GroupTicketingController extends GetxController {
             return {
               'success': false,
               'message':
-                  responseData['message']?.toString() ?? 'Booking failed',
+              responseData['message']?.toString() ?? 'Booking failed',
               'error_details': responseData.toString(),
               'data': null,
             };
@@ -448,7 +479,7 @@ class GroupTicketingController extends GetxController {
             return {
               'success': false,
               'message':
-                  responseData['message']?.toString() ?? 'Booking failed',
+              responseData['message']?.toString() ?? 'Booking failed',
               'error_details': responseData.toString(),
               'data': null,
             };
@@ -465,7 +496,7 @@ class GroupTicketingController extends GetxController {
                 return {
                   'success': false,
                   'message':
-                      innerData['message']?.toString() ??
+                  innerData['message']?.toString() ??
                       'Booking creation failed',
                   'error_details': innerData.toString(),
                   'data': null,
@@ -477,7 +508,7 @@ class GroupTicketingController extends GetxController {
                 return {
                   'success': false,
                   'message':
-                      innerData['message']?.toString() ??
+                  innerData['message']?.toString() ??
                       'Booking creation failed',
                   'error_details': innerData.toString(),
                   'data': null,
@@ -491,7 +522,7 @@ class GroupTicketingController extends GetxController {
                 return {
                   'success': false,
                   'message':
-                      innerData['message']?.toString() ??
+                  innerData['message']?.toString() ??
                       'Booking could not be created - no booking data returned',
                   'error_details': innerData.toString(),
                   'data': null,
@@ -509,7 +540,7 @@ class GroupTicketingController extends GetxController {
               return {
                 'success': false,
                 'message':
-                    'Server encountered an error. Please try again or contact support.',
+                'Server encountered an error. Please try again or contact support.',
                 'error_details': responseData.toString(),
                 'data': null,
               };
@@ -521,7 +552,7 @@ class GroupTicketingController extends GetxController {
         return {
           'success': true,
           'message':
-              responseData['message']?.toString() ??
+          responseData['message']?.toString() ??
               'Booking saved successfully',
           'data': responseData,
         };
@@ -529,7 +560,7 @@ class GroupTicketingController extends GetxController {
         return {
           'success': false,
           'message':
-              'HTTP Error: ${response.statusCode} - ${response.statusMessage}',
+          'HTTP Error: ${response.statusCode} - ${response.statusMessage}',
           'error_details': response.data?.toString() ?? 'No error details',
           'status_code': response.statusCode,
           'data': null,
@@ -553,32 +584,32 @@ class GroupTicketingController extends GetxController {
       switch (e.type) {
         case dio.DioExceptionType.connectionTimeout:
           errorMessage =
-              'Connection timed out. Please check your internet connection.';
+          'Connection timed out. Please check your internet connection.';
           break;
         case dio.DioExceptionType.sendTimeout:
           errorMessage =
-              'Request timed out while sending data. Please try again.';
+          'Request timed out while sending data. Please try again.';
           break;
         case dio.DioExceptionType.receiveTimeout:
           errorMessage =
-              'Request timed out while receiving response. Please try again.';
+          'Request timed out while receiving response. Please try again.';
           break;
         case dio.DioExceptionType.badResponse:
-          // Try to parse error response for more details
+        // Try to parse error response for more details
           final errorData = e.response?.data;
           if (errorData is Map<String, dynamic>) {
             errorMessage =
                 errorData['message']?.toString() ??
-                'Server returned error code ${e.response?.statusCode}';
+                    'Server returned error code ${e.response?.statusCode}';
             errorDetails = errorData.toString();
           } else if (errorData is String) {
             errorMessage =
-                errorData.isNotEmpty
-                    ? errorData
-                    : 'Server returned error code ${e.response?.statusCode}';
+            errorData.isNotEmpty
+                ? errorData
+                : 'Server returned error code ${e.response?.statusCode}';
           } else {
             errorMessage =
-                'Server returned error code ${e.response?.statusCode}';
+            'Server returned error code ${e.response?.statusCode}';
           }
           break;
         case dio.DioExceptionType.cancel:
@@ -636,18 +667,18 @@ class GroupTicketingController extends GetxController {
 
         // Apply margin to each group's price
         final processedGroups =
-            groups.map((group) {
-              if (group['price'] != null) {
-                final originalPrice =
-                    double.tryParse(group['price'].toString()) ?? 0.0;
-                final finalPrice = applyMarginToPrice(
-                  originalPrice,
-                  'alhaider',
-                );
-                group['price'] = finalPrice.toInt();
-              }
-              return group;
-            }).toList();
+        groups.map((group) {
+          if (group['price'] != null) {
+            final originalPrice =
+                double.tryParse(group['price'].toString()) ?? 0.0;
+            final finalPrice = applyMarginToPrice(
+              originalPrice,
+              'alhaider',
+            );
+            group['price'] = finalPrice.toInt();
+          }
+          return group;
+        }).toList();
 
         return processedGroups;
       } else {
@@ -676,24 +707,156 @@ class GroupTicketingController extends GetxController {
     }
   }
 
+  // AMEER-E-MILLAT API METHODS
+
+  // Helper: print large JSON responses in manageable chunks
+  void _debugPrintLargeJson(dynamic data, {String label = 'Response'}) {
+    if (!kDebugMode) return;
+    try {
+      final String jsonStr =
+      data is String ? data : jsonEncode(data);
+      const int chunkSize = 800; // console-friendly size
+      debugPrint('$label (length ${jsonStr.length}) — START');
+      for (int i = 0; i < jsonStr.length; i += chunkSize) {
+        final end = (i + chunkSize < jsonStr.length) ? i + chunkSize : jsonStr.length;
+        debugPrint(jsonStr.substring(i, end));
+      }
+      debugPrint('$label — END');
+    } catch (e) {
+      debugPrint('$label — failed to stringify: $e');
+    }
+  }
+
+  // Fetch Groups from Ameer-e-Millat
+  Future<List<dynamic>> fetchAmeerEMillatGroups(String type) async {
+    try {
+      String url = '$ameerEMillatBaseUrl/available/groups';
+      final normalizedType = (type.trim().toLowerCase() == 'all')
+          ? ''
+          : type.trim();
+      if (normalizedType.isNotEmpty) {
+        url += '?type=$normalizedType';
+      }
+
+      final response = await dio1.get(
+        url,
+        options: dio.Options(headers: getAmeerEMillatHeaders()),
+      );
+
+      if (response.statusCode == 200) {
+        final groups = response.data['groups'] as List;
+        // Debug: Print only Ameer-e-Millat data
+        if (kDebugMode) {
+          print('Ameer-e-Millat URL: ' + url);
+          print('Ameer-e-Millat status: ${response.statusCode}');
+          _debugPrintLargeJson(
+            response.data,
+            label: 'Ameer-e-Millat raw response',
+          );
+        }
+        // Normalize fields for downstream UI consistency
+        final normalized = groups.map((g) {
+          final map = Map<String, dynamic>.from(g as Map);
+          // Ensure airline_name exists; fallback to short_name
+          final airline = Map<String, dynamic>.from(map['airline'] ?? {});
+          if ((airline['airline_name'] == null || airline['airline_name'].toString().isEmpty) &&
+              (airline['short_name'] != null)) {
+            airline['airline_name'] = airline['short_name'];
+          }
+          map['airline'] = airline;
+
+          // Ensure group_price_detail_id is present (fallback from nested object)
+          if (map['group_price_detail_id'] == null || map['group_price_detail_id'].toString().isEmpty) {
+            final gpd = map['group_price_detail'];
+            if (gpd is Map && gpd['id'] != null) {
+              map['group_price_detail_id'] = gpd['id'];
+            }
+          }
+          return map;
+        }).toList();
+        return normalized;
+      }
+      // If non-200 or unexpected, try fallback without type
+      if (kDebugMode) {
+        print('Ameer-e-Millat primary request returned ${response.statusCode}. Retrying without type filter.');
+      }
+      final fallback = await dio1.get(
+        '$ameerEMillatBaseUrl/available/groups',
+        options: dio.Options(headers: getAmeerEMillatHeaders()),
+      );
+      if (fallback.statusCode == 200) {
+        final groups = fallback.data['groups'] as List;
+        if (kDebugMode) {
+          print('Ameer-e-Millat (fallback) URL: $ameerEMillatBaseUrl/available/groups');
+          _debugPrintLargeJson(
+            fallback.data,
+            label: 'Ameer-e-Millat (fallback) raw response',
+          );
+        }
+        final normalized = groups.map((g) {
+          final map = Map<String, dynamic>.from(g as Map);
+          final airline = Map<String, dynamic>.from(map['airline'] ?? {});
+          if ((airline['airline_name'] == null || airline['airline_name'].toString().isEmpty) &&
+              (airline['short_name'] != null)) {
+            airline['airline_name'] = airline['short_name'];
+          }
+          map['airline'] = airline;
+
+          if (map['group_price_detail_id'] == null || map['group_price_detail_id'].toString().isEmpty) {
+            final gpd = map['group_price_detail'];
+            if (gpd is Map && gpd['id'] != null) {
+              map['group_price_detail_id'] = gpd['id'];
+            }
+          }
+          return map;
+        }).toList();
+        return normalized;
+      }
+      return [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  // Fetch Airlines from Ameer-e-Millat
+  Future<List<dynamic>> fetchAmeerEMillatAirlines() async {
+    try {
+      final response = await dio1.get(
+        '$ameerEMillatBaseUrl/available/airlines',
+        options: dio.Options(headers: getAmeerEMillatHeaders()),
+      );
+      if (response.statusCode == 200) {
+        return response.data['airlines'] as List<dynamic>;
+      }
+      return [];
+    } catch (e) {
+      return [];
+    }
+  }
+
   // COMBINED API METHODS
 
-  // Fetch combined groups from both services
+  // Fetch combined groups from all services
   Future<List<dynamic>> fetchCombinedGroups(String type, String type2) async {
     selectedRegion.value = type;
 
     try {
-      // Fetch groups from both APIs concurrently
+      // Fetch groups from all APIs concurrently
       final travelNetworkFuture = fetchGroups(type);
       final alhaiderFuture = fetchAlhaiderGroups(type2);
+      final ameerFuture = fetchAmeerEMillatGroups(type2);
 
       // Wait for both to complete
       final travelNetworkGroups = await travelNetworkFuture;
       final alhaiderGroups = await alhaiderFuture;
+      final ameerGroups = await ameerFuture;
 
       // Combine the results (margins are already applied in individual methods)
-      final combinedGroups = [...travelNetworkGroups, ...alhaiderGroups];
-      print(combinedGroups);
+      final combinedGroups = [
+        ...travelNetworkGroups,
+        ...alhaiderGroups,
+        ...ameerGroups,
+      ];
 
       return combinedGroups;
     } catch (e) {
@@ -701,19 +864,25 @@ class GroupTicketingController extends GetxController {
     }
   }
 
-  // Fetch all airlines from both services
+  // Fetch all airlines from all services
   Future<List<dynamic>> fetchCombinedAirlinesLogos() async {
     try {
-      // Fetch airlines from both APIs concurrently
+      // Fetch airlines from all APIs concurrently
       final travelNetworkFuture = fetchtravelnetworkAirlines();
       final alhaiderFuture = fetchAlhaiderAirlines();
+      final ameerFuture = fetchAmeerEMillatAirlines();
 
       // Wait for both to complete
       final travelNetworkAirlines = await travelNetworkFuture;
       final alhaiderAirlines = await alhaiderFuture;
+      final ameerAirlines = await ameerFuture;
 
       // Combine the results
-      final combinedAirlines = [...travelNetworkAirlines, ...alhaiderAirlines];
+      final combinedAirlines = [
+        ...travelNetworkAirlines,
+        ...alhaiderAirlines,
+        ...ameerAirlines,
+      ];
 
       return combinedAirlines;
     } catch (e) {
@@ -816,81 +985,81 @@ class GroupTicketingController extends GetxController {
 
       // Process passengers data according to API structure
       List<Map<String, dynamic>> processedPassengers =
-          passengers.map((passenger) {
-            // Extract price information
-            double buying = apiFare ?? fares ?? 45000.0;
-            double selling = buying + travelnetworkmargin;
+      passengers.map((passenger) {
+        // Extract price information
+        double buying = apiFare ?? fares ?? 45000.0;
+        double selling = buying + travelnetworkmargin;
 
-            // Format dates safely
-            String dobFormatted = '';
-            String doeFormatted = '';
-            String doiFormatted = '';
+        // Format dates safely
+        String dobFormatted = '';
+        String doeFormatted = '';
+        String doiFormatted = '';
 
-            if (passenger['dateOfBirth'] != null) {
-              try {
-                DateTime dob = DateTime.parse(passenger['dateOfBirth']);
-                dobFormatted =
-                    "${dob.year.toString().padLeft(4, '0')}-${dob.month.toString().padLeft(2, '0')}-${dob.day.toString().padLeft(2, '0')}";
-              } catch (e) {
-                dobFormatted = formattedDate; // fallback
-              }
-            }
+        if (passenger['dateOfBirth'] != null) {
+          try {
+            DateTime dob = DateTime.parse(passenger['dateOfBirth']);
+            dobFormatted =
+            "${dob.year.toString().padLeft(4, '0')}-${dob.month.toString().padLeft(2, '0')}-${dob.day.toString().padLeft(2, '0')}";
+          } catch (e) {
+            dobFormatted = formattedDate; // fallback
+          }
+        }
 
-            if (passenger['passportExpiry'] != null) {
-              try {
-                DateTime doe = DateTime.parse(passenger['passportExpiry']);
-                doeFormatted =
-                    "${doe.year.toString().padLeft(4, '0')}-${doe.month.toString().padLeft(2, '0')}-${doe.day.toString().padLeft(2, '0')}";
-              } catch (e) {
-                doeFormatted = formattedDate; // fallback
-              }
-            }
+        if (passenger['passportExpiry'] != null) {
+          try {
+            DateTime doe = DateTime.parse(passenger['passportExpiry']);
+            doeFormatted =
+            "${doe.year.toString().padLeft(4, '0')}-${doe.month.toString().padLeft(2, '0')}-${doe.day.toString().padLeft(2, '0')}";
+          } catch (e) {
+            doeFormatted = formattedDate; // fallback
+          }
+        }
 
-            // Default DOI to current date - 2 years (passport issue date approximation)
-            DateTime doiDate = currentDate.subtract(const Duration(days: 730));
-            doiFormatted =
-                "${doiDate.year.toString().padLeft(4, '0')}-${doiDate.month.toString().padLeft(2, '0')}-${doiDate.day.toString().padLeft(2, '0')}";
+        // Default DOI to current date - 2 years (passport issue date approximation)
+        DateTime doiDate = currentDate.subtract(const Duration(days: 730));
+        doiFormatted =
+        "${doiDate.year.toString().padLeft(4, '0')}-${doiDate.month.toString().padLeft(2, '0')}-${doiDate.day.toString().padLeft(2, '0')}";
 
-            return {
-              "buying": buying.round(),
+        return {
+          "buying": buying.round(),
 
-              "selling": selling.round(),
-              "reo": exchangeRate,
-              "human_type": getHumanTypeNumber(
-                passenger['title']?.toString() ?? 'Mr',
-              ),
-              "type": getGenderFromTitle(
-                passenger['title']?.toString() ?? 'Mr',
-              ),
-              "sur_name": passenger['lastName']?.toString().trim() ?? '',
-              "given_name": passenger['firstName']?.toString().trim() ?? '',
-              "dob": dobFormatted,
-              "pass_no": passenger['passportNumber']?.toString().trim() ?? '',
-              "doe": doeFormatted,
-              "doi": doiFormatted,
-              "pnr_1":
-                  pnrValue ?? "PNR${DateTime.now().millisecondsSinceEpoch}",
-            };
-          }).toList();
+          "selling": selling.round(),
+          "reo": exchangeRate,
+          "human_type": getHumanTypeNumber(
+            passenger['title']?.toString() ?? 'Mr',
+          ),
+          "type": getGenderFromTitle(
+            passenger['title']?.toString() ?? 'Mr',
+          ),
+          "sur_name": passenger['lastName']?.toString().trim() ?? '',
+          "given_name": passenger['firstName']?.toString().trim() ?? '',
+          "dob": dobFormatted,
+          "pass_no": passenger['passportNumber']?.toString().trim() ?? '',
+          "doe": doeFormatted,
+          "doi": doiFormatted,
+          "pnr_1":
+          pnrValue ?? "PNR${DateTime.now().millisecondsSinceEpoch}",
+        };
+      }).toList();
 
       // Construct the request data according to the Postman structure
       final data = {
         "booker_details": {
           "name": bookername.isNotEmpty ? bookername : "OneRoofTravel",
           "email":
-              booker_email.isNotEmpty ? booker_email : "resOneroof@gmail.com",
+          booker_email.isNotEmpty ? booker_email : "resOneroof@gmail.com",
           "phone": bookername_num.isNotEmpty ? bookername_num : "03001232412",
         },
         "group_data": {
           "group_id": apiGroupId ?? groupId.toString(),
           "group_type": "international", // You might want to make this dynamic
           "no_of_seats":
-              noOfSeats ?? (adults + (children ?? 0) + (infants ?? 0)),
+          noOfSeats ?? (adults + (children ?? 0) + (infants ?? 0)),
           "status": "confirmed",
           "date_created": "${currentDate.toIso8601String().substring(0, 19)}Z",
           "api_fares": (apiFare ?? fares ?? 45000.0).round(),
           "api_booking_id":
-              apiBookingId ?? "APIBK${DateTime.now().millisecondsSinceEpoch}",
+          apiBookingId ?? "APIBK${DateTime.now().millisecondsSinceEpoch}",
           "api_group_id": apiGroupId ?? groupId.toString(),
           "api_status": "active",
           "api_booking_date": formattedDate,
@@ -943,7 +1112,7 @@ class GroupTicketingController extends GetxController {
         return {
           'success': false,
           'message':
-              'Failed to save booking to database. Status: ${response.statusCode}',
+          'Failed to save booking to database. Status: ${response.statusCode}',
           'error_details': response.data?.toString() ?? 'No error details',
           'data': null,
         };
@@ -964,31 +1133,31 @@ class GroupTicketingController extends GetxController {
       switch (e.type) {
         case dio.DioExceptionType.connectionTimeout:
           errorMessage =
-              'Database connection timed out. Please check your internet connection.';
+          'Database connection timed out. Please check your internet connection.';
           break;
         case dio.DioExceptionType.sendTimeout:
           errorMessage =
-              'Database request timed out while sending data. Please try again.';
+          'Database request timed out while sending data. Please try again.';
           break;
         case dio.DioExceptionType.receiveTimeout:
           errorMessage =
-              'Database request timed out while receiving response. Please try again.';
+          'Database request timed out while receiving response. Please try again.';
           break;
         case dio.DioExceptionType.badResponse:
           final errorData = e.response?.data;
           if (errorData is Map<String, dynamic>) {
             errorMessage =
                 errorData['message']?.toString() ??
-                'Database server returned error code ${e.response?.statusCode}';
+                    'Database server returned error code ${e.response?.statusCode}';
             errorDetails = errorData.toString();
           } else if (errorData is String) {
             errorMessage =
-                errorData.isNotEmpty
-                    ? errorData
-                    : 'Database server returned error code ${e.response?.statusCode}';
+            errorData.isNotEmpty
+                ? errorData
+                : 'Database server returned error code ${e.response?.statusCode}';
           } else {
             errorMessage =
-                'Database server returned error code ${e.response?.statusCode}';
+            'Database server returned error code ${e.response?.statusCode}';
           }
           break;
         case dio.DioExceptionType.cancel:
@@ -999,7 +1168,7 @@ class GroupTicketingController extends GetxController {
           break;
         default:
           errorMessage =
-              'Database network error: ${e.message ?? 'Unknown error'}';
+          'Database network error: ${e.message ?? 'Unknown error'}';
       }
 
       return {

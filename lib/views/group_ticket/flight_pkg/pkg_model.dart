@@ -195,10 +195,13 @@ class GroupFlightModel {
     return GroupFlightModel(
       id: json['id'] ?? 0,
       group_id: json['id'] ?? 0, // Using same ID as group_id for consistency
-      airline: airline['airline_name']?.toString() ?? 'Unknown Airline',
+      airline: (airline['airline_name'] ?? airline['short_name'])?.toString() ?? 'Unknown Airline',
       sector: json['sector']?.toString() ?? '',
       shortName: airline['short_name']?.toString() ?? '',
-      groupPriceDetailId: json['group_price_detail_id'] ?? 0,
+      groupPriceDetailId: (json['group_price_detail_id'] ??
+          (json['group_price_detail'] is Map
+              ? (json['group_price_detail']['id'] ?? 0)
+              : 0)),
       departure: departureDate,
       returnDate: returnDate,
       type: json['type']?.toString() ?? '',
